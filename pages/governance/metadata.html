@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <script type="module">document.addEventListener("DOMContentLoaded",()=>{const insScript=document.createElement("script");const date=Date.now();insScript.src="/inscode_devtools_sdk.js?v="+date;insScript.type="module";document.body.appendChild(insScript);});</script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>元数据管理 - 宁夏药监局数据中台</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+  <link rel="stylesheet" href="../../components/styles.css">
+  <script src="../../components/common.js"></script>
+</head>
+<body class="bg-slate-50">
+<!-- 侧边栏（复用原有结构，调整激活项） -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-logo">
+      <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+      </svg>
+      <div>
+        <div class="text-lg font-bold">宁夏药监局</div>
+        <div class="text-xs text-slate-400">数据中台</div>
+      </div>
+    </div>
+  </div>
+
+  <nav class="sidebar-nav">
+    <div class="nav-section">
+      <div class="nav-section-title">总览</div>
+      <a href="../../index.html" class="nav-item">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+        <span>数据驾驶舱</span>
+      </a>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-section-title">数据管理</div>
+      <a href="/pages/metadata/index.html" class="nav-item active">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        <span>元数据管理</span>
+      </a>
+      <a href="../dataasset/index.html" class="nav-item">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"/></svg>
+        <span>数据资产</span>
+      </a>
+      <a href="../datamap/index.html" class="nav-item">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 16V4m0 0L9 7"/></svg>
+        <span>数据地图</span>
+      </a>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-section-title">核心业务</div>
+      <a href="../approval/index.html" class="nav-item">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        <span>行政审批</span>
+      </a>
+      <a href="../supervision/index.html" class="nav-item">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
+        <span>日常监管</span>
+      </a>
+      <a href="../inspection/index.html" class="nav-item">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/></svg>
+        <span>检验检测</span>
+      </a>
+      <a href="../enforcement/index.html" class="nav-item">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"/></svg>
+        <span>执法办案</span>
+      </a>
+    </div>
+  </nav>
+</aside>
+
+<!-- 主内容区 -->
+<div class="content-with-sidebar">
+  <!-- 顶部导航 -->
+  <header class="top-header">
+    <div class="header-left">
+      <div class="breadcrumb">
+        <a href="../../index.html">首页</a>
+        <span class="breadcrumb-separator">/</span>
+        <a href="../metadata/index.html">数据管理</a>
+        <span class="breadcrumb-separator">/</span>
+        <span>元数据管理</span>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="user-menu">
+        <div class="user-avatar">张</div>
+        <div class="user-info hidden md:block">
+          <div class="user-name">张管理员</div>
+          <div class="user-role">系统管理员</div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- 页面内容 -->
+  <main class="main-content">
+    <!-- 页面标题 -->
+    <div class="page-header">
+      <h1 class="page-title">元数据管理</h1>
+      <p class="page-subtitle">统一管理数据中台所有元数据，包括业务元数据、技术元数据、管理元数据</p>
+    </div>
+
+    <!-- 操作栏 -->
+    <div class="flex justify-between items-center mb-6">
+      <div class="filter-bar flex flex-wrap gap-4">
+        <div class="filter-group">
+          <label class="filter-label">元数据类型</label>
+          <select class="form-select" id="metaTypeFilter">
+            <option value="">全部类型</option>
+            <option value="business">业务元数据</option>
+            <option value="technical">技术元数据</option>
+            <option value="management">管理元数据</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label class="filter-label">数据来源</label>
+          <select class="form-select" id="sourceFilter">
+            <option value="">全部来源</option>
+            <option value="approval">行政审批系统</option>
+            <option value="supervision">日常监管系统</option>
+            <option value="inspection">检验检测系统</option>
+            <option value="external">外部对接</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label class="filter-label">搜索</label>
+          <input type="text" class="form-input" placeholder="元数据名称/编码" id="metaSearchInput">
+        </div>
+        <button class="btn btn-primary" onclick="searchMetaData()">
+          <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+          </svg>
+          查询
+        </button>
+        <button class="btn btn-secondary" onclick="resetMetaFilter()">重置</button>
+      </div>
+      <button class="btn btn-primary" onclick="showAddMetaModal()">
+        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+        </svg>
+        新增元数据
+      </button>
+    </div>
+
+    <!-- 元数据概览卡片 -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+      <div class="card p-5">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-sm text-slate-500">元数据总数</span>
+          <span class="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded-full">已注册</span>
+        </div>
+        <div class="text-3xl font-bold text-slate-900 font-mono">286</div>
+        <div class="text-xs text-slate-400 mt-1">个</div>
+      </div>
+      <div class="card p-5">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-sm text-slate-500">业务元数据</span>
+          <span class="text-xs px-2 py-1 bg-emerald-100 text-emerald-700 rounded-full">占比42%</span>
+        </div>
+        <div class="text-3xl font-bold text-slate-900 font-mono">120</div>
+        <div class="text-xs text-slate-400 mt-1">个</div>
+      </div>
+      <div class="card p-5">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-sm text-slate-500">技术元数据</span>
+          <span class="text-xs px-2 py-1 bg-amber-100 text-amber-700 rounded-full">占比38%</span>
+        </div>
+        <div class="text-3xl font-bold text-slate-900 font-mono">109</div>
+        <div class="text-xs text-slate-400 mt-1">个</div>
+      </div>
+      <div class="card p-5">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-sm text-slate-500">未归档元数据</span>
+          <span class="text-xs px-2 py-1 bg-red-100 text-red-700 rounded-full">需处理</span>
+        </div>
+        <div class="text-3xl font-bold text-red-600 font-mono">15</div>
+        <div class="text-xs text-slate-400 mt-1">个</div>
+      </div>
+    </div>
+
+    <!-- 图表区域 -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">元数据类型分布</span>
+        </div>
+        <div class="card-body">
+          <div id="metaTypeChart" style="height: 280px;"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">元数据更新趋势</span>
+        </div>
+        <div class="card-body">
+          <div id="metaUpdateChart" style="height: 280px;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 元数据列表表格 -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">元数据列表</span>
+        <div class="flex gap-2">
+          <button class="btn btn-secondary btn-sm" onclick="exportMetaData()">
+            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+            </svg>
+            导出
+          </button>
+          <button class="btn btn-secondary btn-sm" onclick="batchArchive()">
+            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/>
+            </svg>
+            批量归档
+          </button>
+        </div>
+      </div>
+      <div class="card-body">
+        <table class="data-table">
+          <thead>
+          <tr>
+            <th><input type="checkbox" class="form-checkbox" onchange="checkAll(this)"></th>
+            <th>元数据编码</th>
+            <th>元数据名称</th>
+            <th>元数据类型</th>
+            <th>数据来源</th>
+            <th>创建时间</th>
+            <th>更新时间</th>
+            <th>状态</th>
+            <th>操作</th>
+          </tr>
+          </thead>
+          <tbody id="metaDataTable">
+          <!-- 数据由JS生成 -->
+          </tbody>
+        </table>
+
+        <!-- 分页 -->
+        <div class="pagination">
+          <div class="pagination-info">显示 1-10 条，共 286 条</div>
+          <div class="pagination-controls">
+            <button class="pagination-btn" disabled>
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+              </svg>
+            </button>
+            <button class="pagination-btn active">1</button>
+            <button class="pagination-btn">2</button>
+            <button class="pagination-btn">3</button>
+            <span class="text-slate-400">...</span>
+            <button class="pagination-btn">29</button>
+            <button class="pagination-btn">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- 新增/编辑元数据弹窗 -->
+<div id="metaModal" class="modal-backdrop hidden">
+  <div class="modal" style="max-width: 800px;">
+    <div class="modal-header">
+      <h3 class="modal-title" id="modalTitle">新增元数据</h3>
+      <div class="modal-close" onclick="closeMetaModal()">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </div>
+    </div>
+    <div class="modal-body">
+      <form id="metaForm" class="space-y-4">
+        <div class="grid grid-cols-2 gap-4">
+          <div class="form-group">
+            <label class="form-label">元数据编码 <span class="text-red-500">*</span></label>
+            <input type="text" class="form-input" id="metaCode" placeholder="如：META_APPROVAL_001" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">元数据名称 <span class="text-red-500">*</span></label>
+            <input type="text" class="form-input" id="metaName" placeholder="请输入元数据名称" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">元数据类型 <span class="text-red-500">*</span></label>
+            <select class="form-select" id="metaType" required>
+              <option value="">请选择</option>
+              <option value="business">业务元数据</option>
+              <option value="technical">技术元数据</option>
+              <option value="management">管理元数据</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">数据来源 <span class="text-red-500">*</span></label>
+            <select class="form-select" id="metaSource" required>
+              <option value="">请选择</option>
+              <option value="approval">行政审批系统</option>
+              <option value="supervision">日常监管系统</option>
+              <option value="inspection">检验检测系统</option>
+              <option value="external">外部对接</option>
+            </select>
+          </div>
+          <div class="form-group col-span-2">
+            <label class="form-label">元数据描述</label>
+            <textarea class="form-input h-24" id="metaDesc" placeholder="请输入元数据详细描述"></textarea>
+          </div>
+        </div>
+
+        <!-- 字段配置（技术元数据专属） -->
+        <div id="fieldConfigSection" class="border-t pt-4 mt-4 hidden">
+          <label class="form-label mb-2 block">字段配置</label>
+          <div class="space-y-3" id="fieldConfigContainer">
+            <div class="grid grid-cols-4 gap-3 field-row">
+              <input type="text" class="form-input" placeholder="字段名称" name="fieldName">
+              <input type="text" class="form-input" placeholder="字段编码" name="fieldCode">
+              <select class="form-select" name="fieldType">
+                <option value="">字段类型</option>
+                <option value="VARCHAR">字符串</option>
+                <option value="INT">整数</option>
+                <option value="DATE">日期</option>
+                <option value="DECIMAL">小数</option>
+              </select>
+              <div class="flex gap-2">
+                <button type="button" class="btn btn-sm btn-primary" onclick="addFieldRow()">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                  </svg>
+                </button>
+                <button type="button" class="btn btn-sm btn-danger" onclick="removeFieldRow(this)">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeMetaModal()">取消</button>
+      <button class="btn btn-primary" onclick="saveMetaData()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 元数据详情弹窗 -->
+<div id="metaDetailModal" class="modal-backdrop hidden">
+  <div class="modal" style="max-width: 900px;">
+    <div class="modal-header">
+      <h3 class="modal-title">元数据详情</h3>
+      <div class="modal-close" onclick="closeMetaDetailModal()">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </div>
+    </div>
+    <div class="modal-body" id="metaDetailContent">
+      <!-- 动态加载详情 -->
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeMetaDetailModal()">关闭</button>
+      <button class="btn btn-primary" onclick="editMetaData()">编辑</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // 全局变量
+  let currentMetaId = null;
+
+  // 初始化
+  document.addEventListener('DOMContentLoaded', () => {
+    initMetaCharts();
+    loadMetaDataTable();
+    // 监听元数据类型选择，显示/隐藏字段配置
+    document.getElementById('metaType').addEventListener('change', function() {
+      const fieldSection = document.getElementById('fieldConfigSection');
+      fieldSection.classList.toggle('hidden', this.value !== 'technical');
+    });
+  });
+
+  // 初始化图表
+  function initMetaCharts() {
+    // 元数据类型分布饼图
+    const typeChart = echarts.init(document.getElementById('metaTypeChart'));
+    typeChart.setOption({
+      ...ChartTheme.commonOption,
+      tooltip: { trigger: 'item', formatter: '{b}: {c}个 ({d}%)' },
+      legend: { orient: 'vertical', right: 20, top: 'center' },
+      series: [{
+        type: 'pie',
+        radius: ['40%', '70%'],
+        center: ['35%', '50%'],
+        avoidLabelOverlap: false,
+        label: { show: false },
+        data: [
+          { value: 120, name: '业务元数据', itemStyle: { color: '#0EA5E9' } },
+          { value: 109, name: '技术元数据', itemStyle: { color: '#10B981' } },
+          { value: 42, name: '管理元数据', itemStyle: { color: '#F59E0B' } },
+          { value: 15, name: '未分类', itemStyle: { color: '#8B5CF6' } }
+        ]
+      }]
+    });
+
+    // 元数据更新趋势折线图
+    const updateChart = echarts.init(document.getElementById('metaUpdateChart'));
+    updateChart.setOption({
+      ...ChartTheme.commonOption,
+      tooltip: { trigger: 'axis' },
+      legend: { data: ['新增', '更新'], bottom: 0 },
+      grid: { left: 10, right: 10, top: 20, bottom: 40, containLabel: true },
+      xAxis: {
+        type: 'category',
+        data: ['1月', '2月', '3月', '4月', '5月', '6月'],
+        axisLine: { lineStyle: { color: '#E2E8F0' } },
+        axisLabel: { color: '#64748B' }
+      },
+      yAxis: {
+        type: 'value',
+        axisLine: { show: false },
+        splitLine: { lineStyle: { color: '#F1F5F9' } },
+        axisLabel: { color: '#64748B' }
+      },
+      series: [
+        {
+          name: '新增',
+          type: 'line',
+          smooth: true,
+          data: [28, 35, 42, 38, 51, 45],
+          lineStyle: { color: '#0EA5E9', width: 2 },
+          areaStyle: {
+            color: {
+              type: 'linear',
+              x: 0, y: 0, x2: 0, y2: 1,
+              colorStops: [
+                { offset: 0, color: 'rgba(14, 165, 233, 0.3)' },
+                { offset: 1, color: 'rgba(14, 165, 233, 0.05)' }
+              ]
+            }
+          }
+        },
+        {
+          name: '更新',
+          type: 'line',
+          smooth: true,
+          data: [15, 22, 18, 25, 20, 28],
+          lineStyle: { color: '#10B981', width: 2 }
+        }
+      ]
+    });
+
+    // 响应式调整
+    window.addEventListener('resize', () => {
+      typeChart.resize();
+      updateChart.resize();
+    });
+  }
+
+  // 加载元数据表格
+  function loadMetaDataTable() {
+    const data = [
+      { id: 'META_APPROVAL_001', name: '审批申请主表', type: 'business', source: 'approval', createTime: '2024-01-15', updateTime: '2024-11-20', status: 'active' },
+      { id: 'META_APPROVAL_002', name: '企业基本信息', type: 'business', source: 'approval', createTime: '2024-01-20', updateTime: '2024-10-18', status: 'active' },
+      { id: 'META_TECH_001', name: '审批流水号生成规则', type: 'technical', source: 'approval', createTime: '2024-02-10', updateTime: '2024-12-05', status: 'active' },
+      { id: 'META_SUPERVISION_001', name: '日常检查记录', type: 'business', source: 'supervision', createTime: '2024-03-05', updateTime: '2024-11-12', status: 'active' },
+      { id: 'META_INSPECTION_001', name: '检验报告模板', type: 'management', source: 'inspection', createTime: '2024-04-18', updateTime: '2024-09-30', status: 'active' },
+      { id: 'META_TECH_002', name: '数据同步任务配置', type: 'technical', source: 'external', createTime: '2024-05-12', updateTime: '2024-12-01', status: 'pending' },
+      { id: 'META_MANAGE_001', name: '用户权限配置', type: 'management', source: 'approval', createTime: '2024-06-08', updateTime: '2024-08-15', status: 'active' },
+      { id: 'META_APPROVAL_003', name: '许可证书信息', type: 'business', source: 'approval', createTime: '2024-07-22', updateTime: '2024-11-28', status: 'active' },
+      { id: 'META_TECH_003', name: '索引配置', type: 'technical', source: 'supervision', createTime: '2024-08-10', updateTime: '2024-10-05', status: 'archived' },
+      { id: 'META_INSPECTION_002', name: '检验项目字典', type: 'business', source: 'inspection', createTime: '2024-09-15', updateTime: '2024-12-08', status: 'pending' }
+    ];
+
+    const tbody = document.getElementById('metaDataTable');
+    tbody.innerHTML = data.map(item => {
+      // 类型文本转换
+      const typeText = item.type === 'business' ? '业务元数据' :
+        item.type === 'technical' ? '技术元数据' : '管理元数据';
+      // 来源文本转换
+      const sourceText = item.source === 'approval' ? '行政审批系统' :
+        item.source === 'supervision' ? '日常监管系统' :
+          item.source === 'inspection' ? '检验检测系统' : '外部对接';
+      // 状态徽章
+      const statusBadge = item.status === 'active' ? '<span class="badge badge-success">已激活</span>' :
+        item.status === 'pending' ? '<span class="badge badge-warning">待归档</span>' :
+          '<span class="badge badge-secondary">已归档</span>';
+
+      return `
+        <tr>
+          <td><input type="checkbox" class="form-checkbox" value="${item.id}"></td>
+          <td class="font-mono text-sm">${item.id}</td>
+          <td>${item.name}</td>
+          <td>${typeText}</td>
+          <td>${sourceText}</td>
+          <td>${item.createTime}</td>
+          <td>${item.updateTime}</td>
+          <td>${statusBadge}</td>
+          <td>
+            <button class="btn btn-sm btn-ghost" onclick="viewMetaDetail('${item.id}')">查看</button>
+            <button class="btn btn-sm btn-secondary ml-2" onclick="editMeta('${item.id}')">编辑</button>
+            ${item.status !== 'archived' ? `<button class="btn btn-sm btn-danger ml-2" onclick="archiveMeta('${item.id}')">归档</button>` : ''}
+          </td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  // 全选/取消全选
+  function checkAll(checkbox) {
+    const checkboxes = document.querySelectorAll('#metaDataTable .form-checkbox');
+    checkboxes.forEach(cb => cb.checked = checkbox.checked);
+  }
+
+  // 显示新增元数据弹窗
+  function showAddMetaModal() {
+    currentMetaId = null;
+    document.getElementById('modalTitle').textContent = '新增元数据';
+    document.getElementById('metaForm').reset();
+    document.getElementById('fieldConfigSection').classList.add('hidden');
+    document.getElementById('metaModal').classList.remove('hidden');
+  }
+
+  // 关闭元数据弹窗
+  function closeMetaModal() {
+    document.getElementById('metaModal').classList.add('hidden');
+  }
+
+  // 关闭详情弹窗
+  function closeMetaDetailModal() {
+    document.getElementById('metaDetailModal').classList.add('hidden');
+  }
+
+  // 查看元数据详情
+  function viewMetaDetail(id) {
+    currentMetaId = id;
+    const content = document.getElementById('metaDetailContent');
+
+    // 模拟详情数据
+    const detailHtml = `
+      <div class="space-y-6">
+        <!-- 基本信息 -->
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="text-xs text-slate-500 uppercase">元数据编码</label>
+            <div class="text-sm font-mono font-medium">${id}</div>
+          </div>
+          <div>
+            <label class="text-xs text-slate-500 uppercase">元数据名称</label>
+            <div class="text-sm font-medium">审批申请主表</div>
+          </div>
+          <div>
+            <label class="text-xs text-slate-500 uppercase">元数据类型</label>
+            <div class="text-sm">业务元数据</div>
+          </div>
+          <div>
+            <label class="text-xs text-slate-500 uppercase">数据来源</label>
+            <div class="text-sm">行政审批系统</div>
+          </div>
+          <div>
+            <label class="text-xs text-slate-500 uppercase">创建时间</label>
+            <div class="text-sm">2024-01-15</div>
+          </div>
+          <div>
+            <label class="text-xs text-slate-500 uppercase">最后更新时间</label>
+            <div class="text-sm">2024-11-20</div>
+          </div>
+          <div class="col-span-2">
+            <label class="text-xs text-slate-500 uppercase">元数据描述</label>
+            <div class="text-sm">存储行政审批申请的核心信息，包括申请编号、企业信息、申请类型、申请时间、办理状态等关键字段，是行政审批业务的核心业务元数据。</div>
+          </div>
+        </div>
+
+        <!-- 字段详情（技术元数据展示） -->
+        <div class="border-t pt-4">
+          <label class="text-xs text-slate-500 uppercase mb-3 block">核心字段定义</label>
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="bg-slate-50">
+                  <th class="px-3 py-2 text-left">字段名称</th>
+                  <th class="px-3 py-2 text-left">字段编码</th>
+                  <th class="px-3 py-2 text-left">字段类型</th>
+                  <th class="px-3 py-2 text-left">是否必填</th>
+                  <th class="px-3 py-2 text-left">字段描述</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="border-t">
+                  <td class="px-3 py-2">申请编号</td>
+                  <td class="px-3 py-2 font-mono">APPLY_ID</td>
+                  <td class="px-3 py-2">VARCHAR(32)</td>
+                  <td class="px-3 py-2"><span class="badge badge-success">是</span></td>
+                  <td class="px-3 py-2">唯一标识审批申请的编号</td>
+                </tr>
+                <tr class="border-t">
+                  <td class="px-3 py-2">企业名称</td>
+                  <td class="px-3 py-2 font-mono">COMPANY_NAME</td>
+                  <td class="px-3 py-2">VARCHAR(200)</td>
+                  <td class="px-3 py-2"><span class="badge badge-success">是</span></td>
+                  <td class="px-3 py-2">申请企业的全称</td>
+                </tr>
+                <tr class="border-t">
+                  <td class="px-3 py-2">申请日期</td>
+                  <td class="px-3 py-2 font-mono">APPLY_DATE</td>
+                  <td class="px-3 py-2">DATE</td>
+                  <td class="px-3 py-2"><span class="badge badge-success">是</span></td>
+                  <td class="px-3 py-2">提交申请的日期</td>
+                </tr>
+                <tr class="border-t">
+                  <td class="px-3 py-2">办理状态</td>
+                  <td class="px-3 py-2 font-mono">PROCESS_STATUS</td>
+                  <td class="px-3 py-2">INT</td>
+                  <td class="px-3 py-2"><span class="badge badge-success">是</span></td>
+                  <td class="px-3 py-2">0-待受理 1-办理中 2-已办结 3-已驳回</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 版本记录 -->
+        <div class="border-t pt-4">
+          <label class="text-xs text-slate-500 uppercase mb-3 block">版本更新记录</label>
+          <div class="space-y-3">
+            <div class="flex items-start gap-3">
+              <div class="w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center text-white text-xs">V2</div>
+              <div>
+                <div class="text-sm font-medium">2024-11-20 · 张管理员</div>
+                <div class="text-xs text-slate-500">新增"办理时长"字段，优化状态码定义</div>
+              </div>
+            </div>
+            <div class="flex items-start gap-3">
+              <div class="w-6 h-6 rounded-full bg-slate-500 flex items-center justify-center text-white text-xs">V1</div>
+              <div>
+                <div class="text-sm font-medium">2024-01-15 · 李管理员</div>
+                <div class="text-xs text-slate-500">初始版本创建</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    content.innerHTML = detailHtml;
+    document.getElementById('metaDetailModal').classList.remove('hidden');
+  }
+
+  // 编辑元数据（弹窗）
+  function editMeta(id) {
+    currentMetaId = id;
+    document.getElementById('modalTitle').textContent = '编辑元数据';
+    // 模拟回显数据
+    document.getElementById('metaCode').value = id;
+    document.getElementById('metaCode').disabled = true; // 编码不可修改
+    document.getElementById('metaName').value = id.includes('APPROVAL') ? '审批申请主表' :
+      id.includes('TECH') ? '审批流水号生成规则' : '企业基本信息';
+    document.getElementById('metaType').value = id.includes('TECH') ? 'technical' : 'business';
+    document.getElementById('metaSource').value = 'approval';
+    document.getElementById('metaDesc').value = '存储行政审批申请的核心信息，包括申请编号、企业信息、申请类型、申请时间、办理状态等关键字段。';
+
+    // 显示字段配置（如果是技术元数据）
+    if (id.includes('TECH')) {
+      document.getElementById('fieldConfigSection').classList.remove('hidden');
+    }
+
+    document.getElementById('metaModal').classList.remove('hidden');
+  }
+
+  // 保存元数据
+  function saveMetaData() {
+    const form = document.getElementById('metaForm');
+    if (!form.checkValidity()) {
+      showToast('请填写必填字段', 'error');
+      return;
+    }
+
+    // 模拟保存逻辑
+    const action = currentMetaId ? '更新' : '新增';
+    showToast(`${action}元数据中...`, 'info');
+
+    setTimeout(() => {
+      showToast(`${action}元数据成功`, 'success');
+      closeMetaModal();
+      loadMetaDataTable();
+    }, 800);
+  }
+
+  // 归档元数据
+  function archiveMeta(id) {
+    if (confirm(`确定要归档元数据【${id}】吗？归档后将不可编辑`)) {
+      showToast('归档中...', 'info');
+      setTimeout(() => {
+        showToast('归档成功', 'success');
+        loadMetaDataTable();
+      }, 500);
+    }
+  }
+
+  // 批量归档
+  function batchArchive() {
+    const checked = document.querySelectorAll('#metaDataTable .form-checkbox:checked');
+    if (checked.length === 0) {
+      showToast('请选择要归档的元数据', 'warning');
+      return;
+    }
+
+    if (confirm(`确定要归档选中的${checked.length}条元数据吗？`)) {
+      showToast('批量归档中...', 'info');
+      setTimeout(() => {
+        showToast(`成功归档${checked.length}条元数据`, 'success');
+        loadMetaDataTable();
+      }, 800);
+    }
+  }
+
+  // 添加字段配置行
+  function addFieldRow() {
+    const container = document.getElementById('fieldConfigContainer');
+    const newRow = document.createElement('div');
+    newRow.className = 'grid grid-cols-4 gap-3 field-row';
+    newRow.innerHTML = `
+      <input type="text" class="form-input" placeholder="字段名称" name="fieldName">
+      <input type="text" class="form-input" placeholder="字段编码" name="fieldCode">
+      <select class="form-select" name="fieldType">
+        <option value="">字段类型</option>
+        <option value="VARCHAR">字符串</option>
+        <option value="INT">整数</option>
+        <option value="DATE">日期</option>
+        <option value="DECIMAL">小数</option>
+      </select>
+      <div class="flex gap-2">
+        <button type="button" class="btn btn-sm btn-primary" onclick="addFieldRow()">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+          </svg>
+        </button>
+        <button type="button" class="btn btn-sm btn-danger" onclick="removeFieldRow(this)">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+          </svg>
+        </button>
+      </div>
+    `;
+    container.appendChild(newRow);
+  }
+
+  // 移除字段配置行
+  function removeFieldRow(btn) {
+    const rows = document.querySelectorAll('.field-row');
+    if (rows.length > 1) {
+      btn.closest('.field-row').remove();
+    } else {
+      showToast('至少保留一行字段配置', 'warning');
+    }
+  }
+
+  // 搜索元数据
+  function searchMetaData() {
+    showToast('查询中...', 'info');
+    setTimeout(() => {
+      loadMetaDataTable();
+      showToast('查询完成', 'success');
+    }, 500);
+  }
+
+  // 重置筛选
+  function resetMetaFilter() {
+    document.getElementById('metaTypeFilter').value = '';
+    document.getElementById('sourceFilter').value = '';
+    document.getElementById('metaSearchInput').value = '';
+    loadMetaDataTable();
+    showToast('筛选已重置', 'success');
+  }
+
+  // 导出元数据
+  function exportMetaData() {
+    showToast('正在导出Excel...', 'info');
+    setTimeout(() => {
+      showToast('导出成功', 'success');
+    }, 1000);
+  }
+
+  // 编辑元数据（从详情页）
+  function editMetaData() {
+    closeMetaDetailModal();
+    editMeta(currentMetaId);
+  }
+
+  // Toast提示（复用原有逻辑）
+  function showToast(message, type = 'info') {
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.innerHTML = `
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+      </svg>
+      <span>${message}</span>
+    `;
+
+    let container = document.querySelector('.toast-container');
+    if (!container) {
+      container = document.createElement('div');
+      container.className = 'toast-container';
+      document.body.appendChild(container);
+    }
+
+    container.appendChild(toast);
+
+    setTimeout(() => {
+      toast.style.opacity = '0';
+      toast.style.transform = 'translateX(100%)';
+      setTimeout(() => toast.remove(), 300);
+    }, 3000);
+  }
+</script>
+</body>
+</html>

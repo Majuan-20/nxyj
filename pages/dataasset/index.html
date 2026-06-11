@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <script type="module">
+    document.addEventListener("DOMContentLoaded",()=>{
+      const insScript=document.createElement("script");
+      const date=Date.now();
+      insScript.src="/inscode_devtools_sdk.js?v="+date;
+      insScript.type="module";
+      document.body.appendChild(insScript);
+    });
+  </script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>数据资产 - 宁夏药监局数据中台</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+  <link rel="stylesheet" href="../../components/styles.css">
+  <script src="../../components/common.js"></script>
+</head>
+<body class="bg-slate-50">
+<!-- 侧边栏 -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-logo">
+      <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+      </svg>
+      <div>
+        <div class="text-lg font-bold">宁夏药监局</div>
+        <div class="text-xs text-slate-400">数据中台</div>
+      </div>
+    </div>
+  </div>
+
+  <nav class="sidebar-nav">
+    <div class="nav-section">
+      <div class="nav-section-title">总览</div>
+      <a href="../../index.html" class="nav-item">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+        <span>数据驾驶舱</span>
+      </a>
+      <a href="../workbench.html" class="nav-item">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
+        <span>个人工作台</span>
+      </a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">系统管理</div>
+      <a href="/pages/security/roles.html" class="nav-item">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+        <span>角色权限</span>
+      </a>
+      <a href="/pages/security/audit.html" class="nav-item">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        <span>操作审计</span>
+      </a>
+      <a href="../ops/sync.html" class="nav-item">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+        <span>运维监控</span>
+      </a>
+      <a href="/pages/governance/lineage.html" class="nav-item active">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+        <span>数据血缘</span>
+      </a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">核心业务</div>
+      <a href="/pages/approval/index.html" class="nav-item">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        <span>行政审批</span>
+      </a>
+      <a href="../supervision/index.html" class="nav-item">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
+        <span>日常监管</span>
+      </a>
+      <a href="../inspection/index.html" class="nav-item">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/></svg>
+        <span>检验检测</span>
+      </a>
+      <a href="../enforcement/index.html" class="nav-item">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"/></svg>
+        <span>执法办案</span>
+      </a>
+      <a href="../credit/index.html" class="nav-item">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+        <span>信用管理</span>
+      </a>
+      <a href="../trace/index.html" class="nav-item">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/></svg>
+        <span>药品追溯</span>
+      </a>
+      <a href="../pharmacy/index.html" class="nav-item">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/></svg>
+        <span>阳光药店</span>
+      </a>
+      <a href="../risk/index.html" class="nav-item">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+        <span>风险分级</span>
+      </a>
+    </div>
+  </nav>
+</aside>
+
+<!-- 主内容区 -->
+<div class="content-with-sidebar">
+  <!-- 顶部导航 -->
+  <header class="top-header">
+    <div class="header-left">
+      <div class="breadcrumb">
+        <a href="../../index.html">首页</a>
+        <span class="breadcrumb-separator">/</span>
+        <span>数据管理</span>
+        <span class="breadcrumb-separator">/</span>
+        <span>数据资产</span>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="user-menu">
+        <div class="user-avatar">张</div>
+        <div class="user-info hidden md:block">
+          <div class="user-name">张管理员</div>
+          <div class="user-role">系统管理员</div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- 页面内容 -->
+  <main class="main-content">
+    <!-- 页面标题 -->
+    <div class="page-header">
+      <h1 class="page-title">数据资产</h1>
+      <p class="page-subtitle">全局数据资产盘点、分类、管理与生命周期监控</p>
+    </div>
+
+    <!-- KPI卡片 -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+      <div class="card p-5">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-sm text-slate-500">资产总数</span>
+          <span class="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded-full">+8%</span>
+        </div>
+        <div class="text-3xl font-bold text-slate-900 font-mono">286</div>
+        <div class="text-xs text-slate-400 mt-1">个</div>
+      </div>
+      <div class="card p-5">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-sm text-slate-500">结构化资产</span>
+          <span class="text-xs px-2 py-1 bg-emerald-100 text-emerald-700 rounded-full">占78%</span>
+        </div>
+        <div class="text-3xl font-bold text-slate-900 font-mono">223</div>
+        <div class="text-xs text-slate-400 mt-1">个</div>
+      </div>
+      <div class="card p-5">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-sm text-slate-500">更新中资产</span>
+          <span class="text-xs px-2 py-1 bg-amber-100 text-amber-700 rounded-full">进行中</span>
+        </div>
+        <div class="text-3xl font-bold text-slate-900 font-mono">18</div>
+        <div class="text-xs text-slate-400 mt-1">个</div>
+      </div>
+      <div class="card p-5">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-sm text-slate-500">闲置资产</span>
+          <span class="text-xs px-2 py-1 bg-red-100 text-red-700 rounded-full">需清理</span>
+        </div>
+        <div class="text-3xl font-bold text-red-600 font-mono">12</div>
+        <div class="text-xs text-slate-400 mt-1">个</div>
+      </div>
+    </div>
+
+    <!-- 筛选栏 -->
+    <div class="filter-bar">
+      <div class="filter-group">
+        <label class="filter-label">资产类型</label>
+        <select class="form-select" id="assetTypeFilter">
+          <option value="">全部类型</option>
+          <option value="structured">结构化数据</option>
+          <option value="unstructured">非结构化数据</option>
+          <option value="semi-structured">半结构化数据</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label class="filter-label">数据域</label>
+        <select class="form-select" id="domainFilter">
+          <option value="">全部数据域</option>
+          <option value="approval">行政审批</option>
+          <option value="supervision">日常监管</option>
+          <option value="inspection">检验检测</option>
+          <option value="enforcement">执法办案</option>
+          <option value="credit">信用管理</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label class="filter-label">更新状态</label>
+        <select class="form-select" id="updateStatusFilter">
+          <option value="">全部状态</option>
+          <option value="normal">正常更新</option>
+          <option value="stopped">停止更新</option>
+          <option value="delayed">更新延迟</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label class="filter-label">搜索</label>
+        <input type="text" class="form-input" placeholder="资产名称/编码/负责人" id="searchInput">
+      </div>
+      <div class="flex gap-2">
+        <button class="btn btn-primary" onclick="searchData()">
+          <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+          </svg>
+          查询
+        </button>
+        <button class="btn btn-secondary" onclick="resetFilter()">重置</button>
+      </div>
+    </div>
+
+    <!-- 图表区域 -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">资产类型分布</span>
+        </div>
+        <div class="card-body">
+          <div id="assetTypeChart" style="height: 280px;"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">资产使用频次</span>
+          <div class="flex gap-2">
+            <button class="btn btn-sm btn-secondary">近30天</button>
+            <button class="btn btn-sm btn-primary">近90天</button>
+          </div>
+        </div>
+        <div class="card-body">
+          <div id="usageFrequencyChart" style="height: 280px;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 数据表格 -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">数据资产列表</span>
+        <div class="flex gap-2">
+          <button class="btn btn-primary btn-sm" onclick="addAsset()">
+            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+            </svg>
+            新增资产
+          </button>
+          <button class="btn btn-secondary btn-sm" onclick="exportData()">
+            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+            </svg>
+            导出
+          </button>
+        </div>
+      </div>
+      <div class="card-body">
+        <table class="data-table">
+          <thead>
+          <tr>
+            <th>资产编码</th>
+            <th>资产名称</th>
+            <th>资产类型</th>
+            <th>所属数据域</th>
+            <th>数据量</th>
+            <th>更新频率</th>
+            <th>负责人</th>
+            <th>状态</th>
+            <th>操作</th>
+          </tr>
+          </thead>
+          <tbody id="dataTable">
+          <!-- 数据由JS生成 -->
+          </tbody>
+        </table>
+
+        <!-- 分页 -->
+        <div class="pagination">
+          <div class="pagination-info">显示 1-10 条，共 286 条</div>
+          <div class="pagination-controls">
+            <button class="pagination-btn" disabled>
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+              </svg>
+            </button>
+            <button class="pagination-btn active">1</button>
+            <button class="pagination-btn">2</button>
+            <button class="pagination-btn">3</button>
+            <span class="text-slate-400">...</span>
+            <button class="pagination-btn">29</button>
+            <button class="pagination-btn">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- 详情弹窗 -->
+<div id="detailModal" class="modal-backdrop">
+  <div class="modal" style="max-width: 900px;">
+    <div class="modal-header">
+      <h3 class="modal-title">数据资产详情</h3>
+      <div class="modal-close" onclick="Modal.close('detailModal')">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </div>
+    </div>
+    <div class="modal-body" id="detailContent">
+      <!-- 动态内容 -->
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="Modal.close('detailModal')">关闭</button>
+      <button class="btn btn-primary" onclick="editAsset()">编辑资产</button>
+    </div>
+  </div>
+</div>
+
+<!-- 新增资产弹窗 -->
+<div id="addModal" class="modal-backdrop">
+  <div class="modal" style="max-width: 700px;">
+    <div class="modal-header">
+      <h3 class="modal-title">新增数据资产</h3>
+      <div class="modal-close" onclick="Modal.close('addModal')">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </div>
+    </div>
+    <div class="modal-body">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="form-group">
+          <label class="form-label">资产编码 <span class="text-red-500">*</span></label>
+          <input type="text" class="form-input" id="assetCode" placeholder="如 AS202412001">
+        </div>
+        <div class="form-group">
+          <label class="form-label">资产名称 <span class="text-red-500">*</span></label>
+          <input type="text" class="form-input" id="assetName" placeholder="请输入资产名称">
+        </div>
+        <div class="form-group">
+          <label class="form-label">资产类型 <span class="text-red-500">*</span></label>
+          <select class="form-select" id="assetType">
+            <option value="">请选择</option>
+            <option value="structured">结构化数据</option>
+            <option value="unstructured">非结构化数据</option>
+            <option value="semi-structured">半结构化数据</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">所属数据域 <span class="text-red-500">*</span></label>
+          <select class="form-select" id="dataDomain">
+            <option value="">请选择</option>
+            <option value="approval">行政审批</option>
+            <option value="supervision">日常监管</option>
+            <option value="inspection">检验检测</option>
+            <option value="enforcement">执法办案</option>
+            <option value="credit">信用管理</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">数据量</label>
+          <input type="text" class="form-input" id="dataVolume" placeholder="如 500MB / 10万条">
+        </div>
+        <div class="form-group">
+          <label class="form-label">更新频率 <span class="text-red-500">*</span></label>
+          <select class="form-select" id="updateFrequency">
+            <option value="">请选择</option>
+            <option value="real-time">实时</option>
+            <option value="hourly">每小时</option>
+            <option value="daily">每日</option>
+            <option value="weekly">每周</option>
+            <option value="monthly">每月</option>
+            <option value="manual">手动更新</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">负责人 <span class="text-red-500">*</span></label>
+          <input type="text" class="form-input" id="owner" placeholder="请输入负责人姓名">
+        </div>
+        <div class="form-group">
+          <label class="form-label">联系电话</label>
+          <input type="tel" class="form-input" id="phone" placeholder="请输入联系电话">
+        </div>
+      </div>
+      <div class="form-group mt-4">
+        <label class="form-label">资产描述</label>
+        <textarea class="form-input h-24" id="assetDesc" placeholder="请输入资产详细描述"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="Modal.close('addModal')">取消</button>
+      <button class="btn btn-primary" onclick="saveAsset()">保存</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // 初始化
+  document.addEventListener('DOMContentLoaded', () => {
+    initCharts();
+    loadTableData();
+  });
+
+  // 初始化图表
+  function initCharts() {
+    initAssetTypeChart();
+    initUsageFrequencyChart();
+  }
+
+  // 资产类型分布图表
+  function initAssetTypeChart() {
+    const chart = echarts.init(document.getElementById('assetTypeChart'));
+    const option = {
+      ...ChartTheme.commonOption,
+      tooltip: { trigger: 'item', formatter: '{b}: {c}个 ({d}%)' },
+      legend: { orient: 'vertical', right: 20, top: 'center' },
+      series: [{
+        type: 'pie',
+        radius: ['40%', '70%'],
+        center: ['35%', '50%'],
+        avoidLabelOverlap: false,
+        label: { show: false },
+        data: [
+          { value: 223, name: '结构化数据', itemStyle: { color: '#0EA5E9' } },
+          { value: 42, name: '非结构化数据', itemStyle: { color: '#10B981' } },
+          { value: 21, name: '半结构化数据', itemStyle: { color: '#F59E0B' } }
+        ]
+      }]
+    };
+    chart.setOption(option);
+    window.addEventListener('resize', () => chart.resize());
+  }
+
+  // 资产使用频次图表
+  function initUsageFrequencyChart() {
+    const chart = echarts.init(document.getElementById('usageFrequencyChart'));
+    const option = {
+      ...ChartTheme.commonOption,
+      tooltip: { trigger: 'axis' },
+      legend: { data: ['高频使用', '中频使用', '低频使用', '闲置'], bottom: 0 },
+      grid: { left: 10, right: 10, top: 20, bottom: 40, containLabel: true },
+      xAxis: {
+        type: 'category',
+        data: ['行政审批', '日常监管', '检验检测', '执法办案', '信用管理', '药品追溯', '阳光药店'],
+        axisLine: { lineStyle: { color: '#E2E8F0' } },
+        axisLabel: { color: '#64748B', rotate: 15 }
+      },
+      yAxis: {
+        type: 'value',
+        axisLine: { show: false },
+        splitLine: { lineStyle: { color: '#F1F5F9' } },
+        axisLabel: { color: '#64748B' }
+      },
+      series: [
+        {
+          name: '高频使用',
+          type: 'bar',
+          stack: 'total',
+          data: [45, 38, 29, 22, 18, 15, 12],
+          itemStyle: { color: '#0EA5E9' }
+        },
+        {
+          name: '中频使用',
+          type: 'bar',
+          stack: 'total',
+          data: [28, 25, 22, 18, 15, 12, 10],
+          itemStyle: { color: '#10B981' }
+        },
+        {
+          name: '低频使用',
+          type: 'bar',
+          stack: 'total',
+          data: [15, 12, 10, 8, 6, 5, 4],
+          itemStyle: { color: '#F59E0B' }
+        },
+        {
+          name: '闲置',
+          type: 'bar',
+          stack: 'total',
+          data: [5, 3, 2, 1, 1, 0, 0],
+          itemStyle: { color: '#EF4444' }
+        }
+      ]
+    };
+    chart.setOption(option);
+    window.addEventListener('resize', () => chart.resize());
+  }
+
+  // 加载表格数据
+  function loadTableData() {
+    const data = [
+      { code: 'AS202412001', name: '行政审批事项明细表', type: '结构化数据', domain: '行政审批', volume: '120万条', frequency: '每日', owner: '王数据', status: 'normal' },
+      { code: 'AS202412002', name: '企业基础信息库', type: '结构化数据', domain: '信用管理', volume: '85万条', frequency: '实时', owner: '李信息', status: 'normal' },
+      { code: 'AS202412003', name: '日常监管检查报告', type: '非结构化数据', domain: '日常监管', volume: '2.5GB', frequency: '每周', owner: '张监管', status: 'normal' },
+      { code: 'AS202412004', name: '检验检测报告PDF', type: '非结构化数据', domain: '检验检测', volume: '8.2GB', frequency: '每日', owner: '赵检验', status: 'delayed' },
+      { code: 'AS202412005', name: '执法办案流程数据', type: '结构化数据', domain: '执法办案', volume: '45万条', frequency: '实时', owner: '钱办案', status: 'normal' },
+      { code: 'AS202412006', name: '药品追溯码映射表', type: '结构化数据', domain: '药品追溯', volume: '500万条', frequency: '每小时', owner: '孙追溯', status: 'normal' },
+      { code: 'AS202412007', name: '阳光药店视频监控', type: '非结构化数据', domain: '阳光药店', volume: '120GB', frequency: '每日', owner: '周药店', status: 'stopped' },
+      { code: 'AS202412008', name: '风险分级评估模型', type: '半结构化数据', domain: '风险分级', volume: '1.8GB', frequency: '每月', owner: '吴风险', status: 'normal' },
+      { code: 'AS202412009', name: '历史审批档案扫描件', type: '非结构化数据', domain: '行政审批', volume: '5.6GB', frequency: '手动更新', owner: '郑档案', status: 'stopped' },
+      { code: 'AS202412010', name: '信用评级结果表', type: '结构化数据', domain: '信用管理', volume: '28万条', frequency: '每周', owner: '王信用', status: 'delayed' }
+    ];
+
+    const tbody = document.getElementById('dataTable');
+    tbody.innerHTML = data.map(item => {
+      // 状态标签
+      const statusBadge = item.status === 'normal' ?
+        '<span class="badge badge-success">正常更新</span>' :
+        (item.status === 'stopped' ?
+          '<span class="badge badge-danger">停止更新</span>' :
+          '<span class="badge badge-warning">更新延迟</span>');
+
+      // 资产类型标签
+      const typeText = item.type === 'structured' ? '结构化数据' :
+        (item.type === 'unstructured' ? '非结构化数据' : '半结构化数据');
+
+      // 数据域标签
+      const domainText = {
+        'approval': '行政审批',
+        'supervision': '日常监管',
+        'inspection': '检验检测',
+        'enforcement': '执法办案',
+        'credit': '信用管理',
+        'trace': '药品追溯',
+        'pharmacy': '阳光药店',
+        'risk': '风险分级'
+      }[item.domain] || item.domain;
+
+      // 更新频率标签
+      const frequencyText = {
+        'real-time': '实时',
+        'hourly': '每小时',
+        'daily': '每日',
+        'weekly': '每周',
+        'monthly': '每月',
+        'manual': '手动更新'
+      }[item.frequency] || item.frequency;
+
+      return `
+        <tr>
+          <td class="font-mono text-sm">${item.code}</td>
+          <td>${item.name}</td>
+          <td>${typeText}</td>
+          <td>${domainText}</td>
+          <td>${item.volume}</td>
+          <td>${frequencyText}</td>
+          <td>${item.owner}</td>
+          <td>${statusBadge}</td>
+          <td>
+            <button class="btn btn-sm btn-ghost" onclick="viewDetail('${item.code}')">查看</button>
+            ${item.status !== 'normal' ?
+        '<button class="btn btn-sm btn-amber ml-2" onclick="refreshAsset(\''+item.code+'\')">刷新</button>' :
+        ''
+      }
+          </td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  // 查看资产详情
+  function viewDetail(code) {
+    const content = document.getElementById('detailContent');
+    content.innerHTML = `
+      <div class="space-y-6">
+        <!-- 基本信息 -->
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="text-xs text-slate-500 uppercase">资产编码</label>
+            <div class="text-sm font-mono font-medium">${code}</div>
+          </div>
+          <div>
+            <label class="text-xs text-slate-500 uppercase">创建时间</label>
+            <div class="text-sm">2024-06-15</div>
+          </div>
+          <div>
+            <label class="text-xs text-slate-500 uppercase">资产名称</label>
+            <div class="text-sm font-medium">行政审批事项明细表</div>
+          </div>
+          <div>
+            <label class="text-xs text-slate-500 uppercase">最后更新时间</label>
+            <div class="text-sm">2024-12-18 02:30</div>
+          </div>
+          <div>
+            <label class="text-xs text-slate-500 uppercase">资产类型</label>
+            <div class="text-sm">结构化数据 (MySQL)</div>
+          </div>
+          <div>
+            <label class="text-xs text-slate-500 uppercase">数据量</label>
+            <div class="text-sm">120万条 (850MB)</div>
+          </div>
+          <div>
+            <label class="text-xs text-slate-500 uppercase">所属数据域</label>
+            <div class="text-sm">行政审批</div>
+          </div>
+          <div>
+            <label class="text-xs text-slate-500 uppercase">更新频率</label>
+            <div class="text-sm">每日 (凌晨2点)</div>
+          </div>
+          <div>
+            <label class="text-xs text-slate-500 uppercase">负责人</label>
+            <div class="text-sm">王数据 (13800138000)</div>
+          </div>
+          <div>
+            <label class="text-xs text-slate-500 uppercase">数据质量评分</label>
+            <div class="text-sm">98/100</div>
+          </div>
+        </div>
+
+        <!-- 资产详情 -->
+        <div>
+          <label class="text-xs text-slate-500 uppercase mb-3 block">资产描述</label>
+          <div class="text-sm bg-slate-50 p-3 rounded border border-slate-200">
+            包含宁夏全区药品、医疗器械、化妆品行政审批事项的全量明细数据，涵盖申请编号、企业信息、审批类型、申请材料、办理进度、审批结果等核心字段，是行政审批业务的核心基础数据资产。
+          </div>
+        </div>
+
+        <!-- 字段信息 -->
+        <div>
+          <label class="text-xs text-slate-500 uppercase mb-3 block">核心字段信息</label>
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="bg-slate-50">
+                  <th class="px-3 py-2 text-left">字段名</th>
+                  <th class="px-3 py-2 text-left">数据类型</th>
+                  <th class="px-3 py-2 text-left">是否主键</th>
+                  <th class="px-3 py-2 text-left">是否非空</th>
+                  <th class="px-3 py-2 text-left">字段描述</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="border-b border-slate-200">
+                  <td class="px-3 py-2 font-mono">apply_id</td>
+                  <td class="px-3 py-2">VARCHAR(32)</td>
+                  <td class="px-3 py-2"><span class="badge badge-xs badge-success">是</span></td>
+                  <td class="px-3 py-2"><span class="badge badge-xs badge-success">是</span></td>
+                  <td class="px-3 py-2">申请编号</td>
+                </tr>
+                <tr class="border-b border-slate-200">
+                  <td class="px-3 py-2 font-mono">company_name</td>
+                  <td class="px-3 py-2">VARCHAR(128)</td>
+                  <td class="px-3 py-2"><span class="badge badge-xs badge-danger">否</span></td>
+                  <td class="px-3 py-2"><span class="badge badge-xs badge-success">是</span></td>
+                  <td class="px-3 py-2">企业名称</td>
+                </tr>
+                <tr class="border-b border-slate-200">
+                  <td class="px-3 py-2 font-mono">apply_date</td>
+                  <td class="px-3 py-2">DATE</td>
+                  <td class="px-3 py-2"><span class="badge badge-xs badge-danger">否</span></td>
+                  <td class="px-3 py-2"><span class="badge badge-xs badge-success">是</span></td>
+                  <td class="px-3 py-2">申请日期</td>
+                </tr>
+                <tr class="border-b border-slate-200">
+                  <td class="px-3 py-2 font-mono">approval_type</td>
+                  <td class="px-3 py-2">VARCHAR(64)</td>
+                  <td class="px-3 py-2"><span class="badge badge-xs badge-danger">否</span></td>
+                  <td class="px-3 py-2"><span class="badge badge-xs badge-success">是</span></td>
+                  <td class="px-3 py-2">审批类型</td>
+                </tr>
+                <tr>
+                  <td class="px-3 py-2 font-mono">approval_status</td>
+                  <td class="px-3 py-2">INT(2)</td>
+                  <td class="px-3 py-2"><span class="badge badge-xs badge-danger">否</span></td>
+                  <td class="px-3 py-2"><span class="badge badge-xs badge-success">是</span></td>
+                  <td class="px-3 py-2">审批状态</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 使用统计 -->
+        <div>
+          <label class="text-xs text-slate-500 uppercase mb-3 block">使用统计（近90天）</label>
+          <div class="grid grid-cols-3 gap-4">
+            <div class="bg-slate-50 p-3 rounded border border-slate-200">
+              <div class="text-xs text-slate-500">访问次数</div>
+              <div class="text-xl font-bold text-slate-900">1,286</div>
+            </div>
+            <div class="bg-slate-50 p-3 rounded border border-slate-200">
+              <div class="text-xs text-slate-500">访问用户数</div>
+              <div class="text-xl font-bold text-slate-900">42</div>
+            </div>
+            <div class="bg-slate-50 p-3 rounded border border-slate-200">
+              <div class="text-xs text-slate-500">平均响应时间</div>
+              <div class="text-xl font-bold text-slate-900">0.35s</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+    Modal.open('detailModal');
+  }
+
+  // 新增资产
+  function addAsset() {
+    // 清空表单
+    document.getElementById('assetCode').value = '';
+    document.getElementById('assetName').value = '';
+    document.getElementById('assetType').value = '';
+    document.getElementById('dataDomain').value = '';
+    document.getElementById('dataVolume').value = '';
+    document.getElementById('updateFrequency').value = '';
+    document.getElementById('owner').value = '';
+    document.getElementById('phone').value = '';
+    document.getElementById('assetDesc').value = '';
+
+    Modal.open('addModal');
+  }
+
+  // 保存资产
+  function saveAsset() {
+    // 简单校验
+    if (!document.getElementById('assetCode').value || !document.getElementById('assetName').value) {
+      showToast('请填写必填字段', 'error');
+      return;
+    }
+
+    showToast('资产新增成功', 'success');
+    Modal.close('addModal');
+    // 重新加载数据
+    setTimeout(() => loadTableData(), 500);
+  }
+
+  // 编辑资产
+  function editAsset() {
+    showToast('资产编辑功能开发中', 'info');
+  }
+
+  // 刷新资产
+  function refreshAsset(code) {
+    showToast(`正在刷新资产 ${code}...`, 'info');
+    setTimeout(() => {
+      showToast(`资产 ${code} 刷新成功`, 'success');
+      loadTableData();
+    }, 800);
+  }
+
+  // 搜索
+  function searchData() {
+    showToast('查询中...', 'info');
+    setTimeout(() => {
+      loadTableData();
+      showToast('查询完成', 'success');
+    }, 500);
+  }
+
+  // 重置筛选
+  function resetFilter() {
+    document.getElementById('assetTypeFilter').value = '';
+    document.getElementById('domainFilter').value = '';
+    document.getElementById('updateStatusFilter').value = '';
+    document.getElementById('searchInput').value = '';
+    loadTableData();
+    showToast('筛选已重置', 'success');
+  }
+
+  // 导出数据
+  function exportData() {
+    showToast('正在导出Excel...', 'info');
+    setTimeout(() => {
+      showToast('导出成功', 'success');
+    }, 1000);
+  }
+
+  // Toast提示
+  function showToast(message, type = 'info') {
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+
+    // 不同类型的图标
+    let iconSvg = '';
+    if (type === 'success') {
+      iconSvg = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>';
+    } else if (type === 'error') {
+      iconSvg = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/>';
+    } else if (type === 'warning') {
+      iconSvg = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>';
+    } else {
+      iconSvg = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>';
+    }
+
+    toast.innerHTML = `
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        ${iconSvg}
+      </svg>
+      <span>${message}</span>
+    `;
+
+    let container = document.querySelector('.toast-container');
+    if (!container) {
+      container = document.createElement('div');
+      container.className = 'toast-container';
+      document.body.appendChild(container);
+    }
+
+    container.appendChild(toast);
+
+    setTimeout(() => {
+      toast.style.opacity = '0';
+      toast.style.transform = 'translateX(100%)';
+      setTimeout(() => toast.remove(), 300);
+    }, 3000);
+  }
+</script>
+</body>
+</html>

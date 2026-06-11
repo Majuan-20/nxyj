@@ -1,0 +1,1316 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <!-- 元信息优先加载 -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>药品监管大数据可视化驾驶舱 - 宁夏药监局数据中台</title>
+
+  <!-- 外部资源 CDN 优化（按加载优先级排序） -->
+  <link href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+
+  <!-- 内联关键样式（减少首屏渲染阻塞） -->
+  <style>
+    /* 基础重置与全局样式 */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+      background: linear-gradient(135deg, #0a0f1a 0%, #0d1421 50%, #0a0f1a 100%);
+      color: #e2e8f0;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* 背景装饰动画 */
+    .bg-decoration {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+      z-index: 0;
+    }
+
+    .bg-decoration::before, .bg-decoration::after {
+      content: '';
+      position: absolute;
+      border: 1px solid rgba(59, 130, 246, 0.1);
+      border-radius: 50%;
+      animation: rotate linear infinite;
+    }
+
+    .bg-decoration::before {
+      top: 10%;
+      left: 10%;
+      width: 300px;
+      height: 300px;
+      animation-duration: 30s;
+    }
+
+    .bg-decoration::after {
+      bottom: 20%;
+      right: 15%;
+      width: 200px;
+      height: 200px;
+      animation-duration: 25s;
+      animation-direction: reverse;
+    }
+
+    @keyframes rotate {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    /* 霓虹光效边框 */
+    .neon-border {
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      box-shadow: 0 0 20px rgba(59, 130, 246, 0.1), inset 0 0 20px rgba(59, 130, 246, 0.05);
+      position: relative;
+      border-radius: inherit;
+    }
+
+    .neon-border::before {
+      content: '';
+      position: absolute;
+      top: -1px;
+      left: -1px;
+      right: -1px;
+      bottom: -1px;
+      border-radius: inherit;
+      padding: 1px;
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.5), rgba(6, 182, 212, 0.3), rgba(59, 130, 246, 0.5));
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      pointer-events: none;
+    }
+
+    /* 数据卡片（抽离公共样式） */
+    .data-card {
+      background: linear-gradient(135deg, rgba(30, 58, 138, 0.15) 0%, rgba(15, 23, 42, 0.6) 100%);
+      border: 1px solid rgba(59, 130, 246, 0.2);
+      backdrop-filter: blur(10px);
+      border-radius: 12px;
+      transition: all 0.3s ease;
+      position: relative;
+    }
+
+    .data-card:hover {
+      border-color: rgba(59, 130, 246, 0.4);
+      box-shadow: 0 0 30px rgba(59, 130, 246, 0.15);
+      transform: translateY(-2px);
+    }
+
+    /* 角标装饰（简化写法） */
+    .data-card .corner-decoration {
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      border: 2px solid rgba(59, 130, 246, 0.5);
+    }
+
+    .corner-tl { top: -1px; left: -1px; border-right: none; border-bottom: none; }
+    .corner-tr { top: -1px; right: -1px; border-left: none; border-bottom: none; }
+    .corner-bl { bottom: -1px; left: -1px; border-right: none; border-top: none; }
+    .corner-br { bottom: -1px; right: -1px; border-left: none; border-top: none; }
+
+    /* KPI 数字样式 */
+    .kpi-value {
+      font-size: 2.5rem;
+      font-weight: 700;
+      font-family: 'Fira Code', 'Consolas', monospace;
+      background: linear-gradient(135deg, #60a5fa 0%, #22d3ee 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-shadow: 0 0 30px rgba(96, 165, 250, 0.3);
+    }
+
+    /* 脉冲动画 */
+    .pulse-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #10b981;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(1.2); }
+    }
+
+    /* 顶部标题栏 */
+    .header-bar {
+      background: linear-gradient(135deg, rgba(30, 58, 138, 0.2) 0%, rgba(15, 23, 42, 0.8) 100%);
+      border-bottom: 1px solid rgba(59, 130, 246, 0.3);
+      backdrop-filter: blur(10px);
+    }
+
+    /* 侧边栏样式 */
+    .sidebar {
+      background: linear-gradient(180deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.95) 100%);
+      border-right: 1px solid rgba(59, 130, 246, 0.2);
+    }
+
+    .nav-item {
+      color: #94a3b8;
+      transition: all 0.3s ease;
+      border-left: 3px solid transparent;
+    }
+
+    .nav-item:hover, .nav-item.active {
+      color: #60a5fa;
+      background: rgba(59, 130, 246, 0.1);
+      border-left-color: #3b82f6;
+    }
+
+    /* 按钮与选择器样式（统一交互） */
+    .tech-btn {
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(6, 182, 212, 0.2) 100%);
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      color: #60a5fa;
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+
+    .tech-btn:hover {
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.4) 0%, rgba(6, 182, 212, 0.4) 100%);
+      border-color: rgba(59, 130, 246, 0.6);
+      box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+    }
+
+    .tech-btn.active {
+      background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
+      color: white;
+      border-color: transparent;
+    }
+
+    .tech-select {
+      background: rgba(30, 41, 59, 0.8);
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      color: #e2e8f0;
+      outline: none;
+      cursor: pointer;
+    }
+
+    .tech-select:focus {
+      border-color: #3b82f6;
+      box-shadow: 0 0 10px rgba(59, 130, 246, 0.3);
+    }
+
+    /* 预警等级样式（语义化命名） */
+    .warning-critical { border-left-color: #ef4444; background: rgba(239, 68, 68, 0.1); }
+    .warning-high { border-left-color: #f97316; background: rgba(249, 115, 22, 0.1); }
+    .warning-medium { border-left-color: #f59e0b; background: rgba(245, 158, 11, 0.1); }
+    .warning-low { border-left-color: #10b981; background: rgba(16, 185, 129, 0.1); }
+
+    /* 进度条样式 */
+    .tech-progress {
+      height: 4px;
+      background: rgba(59, 130, 246, 0.2);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .tech-progress-bar {
+      height: 100%;
+      background: linear-gradient(90deg, #3b82f6 0%, #06b6d4 100%);
+      border-radius: 2px;
+      transition: width 1s ease;
+    }
+
+    /* 图表容器 */
+    .chart-container, .map-container {
+      background: radial-gradient(circle at center, rgba(59, 130, 246, 0.05) 0%, transparent 70%);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .map-container {
+      height: 400px;
+      position: relative;
+    }
+
+    /* 滚动条样式（统一浏览器表现） */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: rgba(15, 23, 42, 0.5);
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: rgba(59, 130, 246, 0.3);
+      border-radius: 3px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(59, 130, 246, 0.5);
+    }
+
+    /* 全屏模式 */
+    .fullscreen-mode {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      background: linear-gradient(135deg, #0a0f1a 0%, #0d1421 50%, #0a0f1a 100%);
+      padding: 20px;
+    }
+
+    /* 数据流动画 */
+    .data-flow {
+      animation: dataFlow 3s ease-in-out infinite;
+    }
+
+    @keyframes dataFlow {
+      0%, 100% { opacity: 0.6; }
+      50% { opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+<!-- 背景装饰 -->
+<div class="bg-decoration"></div>
+
+<!-- 侧边栏（语义化标签 + 结构优化） -->
+<aside class="sidebar fixed left-0 top-0 h-full w-64 z-50 overflow-y-auto" id="sidebar">
+  <div class="p-6 border-b border-blue-500/20">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center">
+        <i class="fas fa-shield-alt text-white text-lg"></i>
+      </div>
+      <div>
+        <div class="text-lg font-bold text-white">宁夏药监局</div>
+        <div class="text-xs text-blue-300">数据中台</div>
+      </div>
+    </div>
+  </div>
+
+  <nav class="p-4 space-y-4">
+    <!-- 总览模块 -->
+    <div class="nav-section">
+      <div class="nav-section-title text-sm text-slate-400 mb-2">总览</div>
+      <a href="/index.html" class="nav-item active flex items-center gap-3 px-3 py-2.5 rounded-lg">
+        <i class="fas fa-chart-pie w-5"></i>
+        <span>数据驾驶舱</span>
+      </a>
+      <a href="/pages/intelligence/warning.html" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg">
+        <i class="fas fa-bell w-5"></i>
+        <span>智能预警中心</span>
+      </a>
+      <a href="/pages/intelligence/ai-query.html" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg">
+        <i class="fas fa-robot w-5"></i>
+        <span>AI 问数</span>
+      </a>
+      <a href="/pages/workbench.html" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg">
+        <i class="fas fa-desktop w-5"></i>
+        <span>个人工作台</span>
+      </a>
+    </div>
+
+    <!-- 系统管理模块 -->
+    <div class="nav-section">
+      <div class="nav-section-title text-sm text-slate-400 mb-2">系统管理</div>
+      <a href="/pages/security/roles.html" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg">
+        <i class="fas fa-project-diagram w-5"></i>
+        <span>角色权限</span>
+      </a>
+      <a href="/pages/security/audit.html" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg">
+        <i class="fas fa-history w-5"></i>
+        <span>操作审计</span>
+      </a>
+      <a href="/pages/ops/sync.html" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg">
+        <i class="fas fa-server w-5"></i>
+        <span>运维监控</span>
+      </a>
+      <a href="/pages/governance/lineage.html" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg">
+        <i class="fas fa-sitemap w-5"></i>
+        <span>数据血缘</span>
+      </a>
+    </div>
+
+    <!-- 核心业务模块 -->
+    <div class="nav-section">
+      <div class="nav-section-title text-sm text-slate-400 mb-2">核心业务</div>
+      <a href="/pages/approval/index.html" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg">
+        <i class="fas fa-check-circle w-5"></i>
+        <span>行政审批</span>
+      </a>
+      <a href="/pages/supervision/index.html" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg">
+        <i class="fas fa-search w-5"></i>
+        <span>日常监管</span>
+      </a>
+      <a href="/pages/inspection/index.html" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg">
+        <i class="fas fa-flask w-5"></i>
+        <span>检验检测</span>
+      </a>
+      <a href="/pages/enforcement/index.html" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg">
+        <i class="fas fa-gavel w-5"></i>
+        <span>执法办案</span>
+      </a>
+      <a href="/pages/credit/index.html" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg">
+        <i class="fas fa-star w-5"></i>
+        <span>信用管理</span>
+      </a>
+      <a href="/pages/trace/index.html" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg">
+        <i class="fas fa-tracking w-5"></i>
+        <span>药品追溯</span>
+      </a>
+      <a href="/pages/pharmacy/index.html" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg">
+        <i class="fas fa-store w-5"></i>
+        <span>阳光药店</span>
+      </a>
+      <a href="/pages/risk/index.html" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg">
+        <i class="fas fa-exclamation-triangle w-5"></i>
+        <span>风险分级</span>
+      </a>
+    </div>
+  </nav>
+</aside>
+
+<!-- 主内容区 -->
+<div class="ml-64 min-h-screen relative z-10" id="mainContent">
+  <!-- 顶部标题栏 -->
+  <header class="header-bar sticky top-0 z-40 px-6 py-4 flex items-center justify-between">
+    <div class="flex items-center gap-4">
+      <h1 class="text-2xl font-bold text-white flex items-center gap-3">
+        <i class="fas fa-chart-line text-blue-400"></i>
+        药品监管大数据驾驶舱
+      </h1>
+      <div class="text-sm text-blue-300" id="currentTime">2024-12-18 14:30:00</div>
+    </div>
+
+    <div class="flex items-center gap-4">
+      <!-- 行政区划选择 -->
+      <div class="relative">
+        <select id="regionSelect" class="tech-select px-4 py-2 rounded-lg text-sm min-w-[140px]">
+          <option value="640000">宁夏回族自治区</option>
+          <option value="640100">银川市</option>
+          <option value="640200">石嘴山市</option>
+          <option value="640300">吴忠市</option>
+          <option value="640400">固原市</option>
+          <option value="640500">中卫市</option>
+        </select>
+      </div>
+
+      <!-- 时间维度切换 -->
+      <div class="flex gap-1 bg-slate-800/50 rounded-lg p-1" id="timeRangeGroup">
+        <button class="tech-btn active px-4 py-1.5 rounded-md text-sm" data-range="today">今日</button>
+        <button class="tech-btn px-4 py-1.5 rounded-md text-sm" data-range="week">本周</button>
+        <button class="tech-btn px-4 py-1.5 rounded-md text-sm" data-range="month">本月</button>
+        <button class="tech-btn px-4 py-1.5 rounded-md text-sm" data-range="year">本年</button>
+      </div>
+
+      <div class="flex items-center gap-3 text-sm text-slate-400">
+        <span>数据更新：<span id="updateTime" class="text-blue-300">2024-12-18 14:30</span></span>
+        <button class="tech-btn w-9 h-9 rounded-lg flex items-center justify-center" id="fullscreenBtn" title="全屏展示">
+          <i class="fas fa-expand"></i>
+        </button>
+      </div>
+
+      <div class="flex items-center gap-3 pl-4 border-l border-slate-700">
+        <div class="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-white font-bold text-sm">
+          张
+        </div>
+        <div class="hidden md:block">
+          <div class="text-sm text-white font-medium">张管理员</div>
+          <div class="text-xs text-slate-400">系统管理员</div>
+        </div>
+        <a href="./login.html" class="p-2 text-gray-400 hover:text-red-600 transition-colors" title="退出登录">
+          <i class="fas fa-sign-out-alt"></i>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- 驾驶舱内容 -->
+  <main class="p-6">
+    <!-- KPI 指标卡片 -->
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
+      <!-- 监管企业 -->
+      <div class="data-card p-5 cursor-pointer overflow-hidden" data-drill="enterprises">
+        <div class="corner-decoration corner-tl"></div>
+        <div class="corner-decoration corner-tr"></div>
+        <div class="corner-decoration corner-bl"></div>
+        <div class="corner-decoration corner-br"></div>
+        <div class="flex items-center justify-between mb-3">
+          <span class="text-sm text-slate-400">监管企业</span>
+          <i class="fas fa-building text-blue-400 text-lg"></i>
+        </div>
+        <div class="kpi-value" id="kpiEnterprises">3,156</div>
+        <div class="flex items-center gap-2 mt-2">
+            <span class="text-xs text-emerald-400 flex items-center gap-1">
+              <i class="fas fa-arrow-up"></i>
+              <span>+2.3%</span>
+            </span>
+          <span class="text-xs text-slate-500">环比</span>
+        </div>
+      </div>
+
+      <!-- 许可审批 -->
+      <div class="data-card p-5 cursor-pointer overflow-hidden" data-drill="licenses">
+        <div class="corner-decoration corner-tl"></div>
+        <div class="corner-decoration corner-tr"></div>
+        <div class="corner-decoration corner-bl"></div>
+        <div class="corner-decoration corner-br"></div>
+        <div class="flex items-center justify-between mb-3">
+          <span class="text-sm text-slate-400">许可审批</span>
+          <i class="fas fa-certificate text-cyan-400 text-lg"></i>
+        </div>
+        <div class="kpi-value" id="kpiLicenses">68</div>
+        <div class="flex items-center gap-2 mt-2">
+            <span class="text-xs text-emerald-400 flex items-center gap-1">
+              <i class="fas fa-arrow-up"></i>
+              <span>+12.5%</span>
+            </span>
+          <span class="text-xs text-slate-500">环比</span>
+        </div>
+      </div>
+
+      <!-- 监督检查 -->
+      <div class="data-card p-5 cursor-pointer overflow-hidden" data-drill="inspections">
+        <div class="corner-decoration corner-tl"></div>
+        <div class="corner-decoration corner-tr"></div>
+        <div class="corner-decoration corner-bl"></div>
+        <div class="corner-decoration corner-br"></div>
+        <div class="flex items-center justify-between mb-3">
+          <span class="text-sm text-slate-400">监督检查</span>
+          <i class="fas fa-search text-blue-400 text-lg"></i>
+        </div>
+        <div class="kpi-value" id="kpiInspections">1,452</div>
+        <div class="flex items-center gap-2 mt-2">
+            <span class="text-xs text-emerald-400 flex items-center gap-1">
+              <i class="fas fa-arrow-up"></i>
+              <span>+8.7%</span>
+            </span>
+          <span class="text-xs text-slate-500">环比</span>
+        </div>
+      </div>
+
+      <!-- 风险预警 -->
+      <div class="data-card p-5 cursor-pointer overflow-hidden" data-drill="warnings">
+        <div class="corner-decoration corner-tl"></div>
+        <div class="corner-decoration corner-tr"></div>
+        <div class="corner-decoration corner-bl"></div>
+        <div class="corner-decoration corner-br"></div>
+        <div class="flex items-center justify-between mb-3">
+          <span class="text-sm text-slate-400">风险预警</span>
+          <i class="fas fa-exclamation-triangle text-red-400 text-lg"></i>
+        </div>
+        <div class="kpi-value text-red-400" id="kpiWarnings" style="background: linear-gradient(135deg, #f87171 0%, #ef4444 100%); -webkit-background-clip: text;">32</div>
+        <div class="flex items-center gap-2 mt-2">
+            <span class="text-xs text-red-400 flex items-center gap-1">
+              <i class="fas fa-arrow-down"></i>
+              <span>-15.2%</span>
+            </span>
+          <span class="text-xs text-slate-500">环比</span>
+        </div>
+      </div>
+
+      <!-- 执法案件 -->
+      <div class="data-card p-5 cursor-pointer overflow-hidden" data-drill="cases">
+        <div class="corner-decoration corner-tl"></div>
+        <div class="corner-decoration corner-tr"></div>
+        <div class="corner-decoration corner-bl"></div>
+        <div class="corner-decoration corner-br"></div>
+        <div class="flex items-center justify-between mb-3">
+          <span class="text-sm text-slate-400">执法案件</span>
+          <i class="fas fa-gavel text-orange-400 text-lg"></i>
+        </div>
+        <div class="kpi-value" id="kpiCases">18</div>
+        <div class="flex items-center gap-2 mt-2">
+            <span class="text-xs text-emerald-400 flex items-center gap-1">
+              <i class="fas fa-arrow-up"></i>
+              <span>+5.8%</span>
+            </span>
+          <span class="text-xs text-slate-500">环比</span>
+        </div>
+      </div>
+
+      <!-- 信用 A 级企业 -->
+      <div class="data-card p-5 cursor-pointer overflow-hidden" data-drill="credit">
+        <div class="corner-decoration corner-tl"></div>
+        <div class="corner-decoration corner-tr"></div>
+        <div class="corner-decoration corner-bl"></div>
+        <div class="corner-decoration corner-br"></div>
+        <div class="flex items-center justify-between mb-3">
+          <span class="text-sm text-slate-400">信用 A 级企业</span>
+          <i class="fas fa-star text-emerald-400 text-lg"></i>
+        </div>
+        <div class="kpi-value text-emerald-400" id="kpiCreditA" style="background: linear-gradient(135deg, #34d399 0%, #10b981 100%); -webkit-background-clip: text;">2,847</div>
+        <div class="flex items-center gap-2 mt-2">
+          <span class="text-sm text-slate-300">占比 <span class="font-semibold text-emerald-400">90.2%</span></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 主内容网格 -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <!-- 左侧：地图 + 趋势 -->
+      <div class="lg:col-span-2 space-y-6">
+        <!-- 地图 -->
+        <div class="data-card p-5">
+          <div class="corner-decoration corner-tl"></div>
+          <div class="corner-decoration corner-tr"></div>
+          <div class="corner-decoration corner-bl"></div>
+          <div class="corner-decoration corner-br"></div>
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-semibold text-white flex items-center gap-2">
+              <i class="fas fa-map-marked-alt text-blue-400"></i>
+              监管企业分布
+            </h3>
+            <div class="flex items-center gap-3">
+              <div class="flex items-center gap-1">
+                <span class="w-3 h-3 rounded bg-emerald-500"></span>
+                <span class="text-xs text-slate-400">正常</span>
+              </div>
+              <div class="flex items-center gap-1">
+                <span class="w-3 h-3 rounded bg-amber-500"></span>
+                <span class="text-xs text-slate-400">关注</span>
+              </div>
+              <div class="flex items-center gap-1">
+                <span class="w-3 h-3 rounded bg-red-500"></span>
+                <span class="text-xs text-slate-400">异常</span>
+              </div>
+            </div>
+          </div>
+          <div id="mapChart" class="map-container"></div>
+        </div>
+
+        <!-- 趋势图表 -->
+        <div class="data-card p-5">
+          <div class="corner-decoration corner-tl"></div>
+          <div class="corner-decoration corner-tr"></div>
+          <div class="corner-decoration corner-bl"></div>
+          <div class="corner-decoration corner-br"></div>
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-semibold text-white flex items-center gap-2">
+              <i class="fas fa-chart-area text-cyan-400"></i>
+              监管趋势分析
+            </h3>
+            <div class="flex gap-2" id="trendChartTab">
+              <button class="tech-btn active px-3 py-1 text-xs rounded" data-type="check">检查数</button>
+              <button class="tech-btn px-3 py-1 text-xs rounded" data-type="license">许可数</button>
+              <button class="tech-btn px-3 py-1 text-xs rounded" data-type="case">案件数</button>
+            </div>
+          </div>
+          <div id="trendChart" style="height: 280px;"></div>
+        </div>
+      </div>
+
+      <!-- 右侧：预警 + 统计 -->
+      <div class="space-y-6">
+        <!-- 风险预警 -->
+        <div class="data-card p-5">
+          <div class="corner-decoration corner-tl"></div>
+          <div class="corner-decoration corner-tr"></div>
+          <div class="corner-decoration corner-bl"></div>
+          <div class="corner-decoration corner-br"></div>
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-semibold text-white flex items-center gap-2">
+              <span class="pulse-dot"></span>
+              风险预警
+            </h3>
+            <a href="pages/intelligence/warning.html" class="text-sm text-blue-400 hover:text-blue-300 transition-colors">
+              查看全部 <i class="fas fa-arrow-right text-xs"></i>
+            </a>
+          </div>
+          <div id="warningList" class="space-y-2 max-h-[220px] overflow-y-auto pr-1"></div>
+        </div>
+
+        <!-- 企业类型分布 -->
+        <div class="data-card p-5">
+          <div class="corner-decoration corner-tl"></div>
+          <div class="corner-decoration corner-tr"></div>
+          <div class="corner-decoration corner-bl"></div>
+          <div class="corner-decoration corner-br"></div>
+          <h3 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+            <i class="fas fa-chart-pie text-blue-400"></i>
+            企业类型分布
+          </h3>
+          <div id="pieChart" style="height: 220px;"></div>
+        </div>
+
+        <!-- 信用等级分布 -->
+        <div class="data-card p-5">
+          <div class="corner-decoration corner-tl"></div>
+          <div class="corner-decoration corner-tr"></div>
+          <div class="corner-decoration corner-bl"></div>
+          <div class="corner-decoration corner-br"></div>
+          <h3 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+            <i class="fas fa-award text-emerald-400"></i>
+            信用等级分布
+          </h3>
+          <div id="creditChart" style="height: 180px;"></div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- 预警详情弹窗 -->
+<div id="warningModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden items-center justify-center">
+  <div class="data-card w-full max-w-lg mx-4 p-0 overflow-hidden">
+    <div class="flex items-center justify-between p-5 border-b border-blue-500/20">
+      <h3 class="text-lg font-semibold text-white">预警详情</h3>
+      <button id="closeModalBtn" class="text-slate-400 hover:text-white transition-colors">
+        <i class="fas fa-times text-lg"></i>
+      </button>
+    </div>
+    <div class="p-5" id="warningModalContent"></div>
+    <div class="flex justify-end gap-3 p-5 border-t border-blue-500/20">
+      <button id="modalCancelBtn" class="tech-btn px-4 py-2 rounded-lg text-sm">关闭</button>
+      <button id="modalHandleBtn" class="px-4 py-2 rounded-lg text-sm bg-gradient-to-r from-blue-500 to-cyan-500 text-white hover:from-blue-600 hover:to-cyan-600 transition-all">
+        立即处置
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- 异步加载非核心脚本 -->
+<script>
+  // 性能优化：DOM 加载完成后执行
+  document.addEventListener('DOMContentLoaded', () => {
+    // 全局状态管理（模块化）
+    const appState = {
+      currentRegion: '640000',
+      currentTimeRange: 'today',
+      isFullscreen: false,
+      charts: {}, // 缓存图表实例，避免重复初始化
+      warningData: [] // 预警数据缓存
+    };
+
+    // ========== 工具函数 ==========
+    /**
+     * 格式化日期时间
+     * @param {Date} date - 日期对象
+     * @returns {string} 格式化后的字符串
+     */
+    const formatDateTime = (date) => {
+      return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}:${String(date.getSeconds()).padStart(2, '0')}`;
+    };
+
+    /**
+     * 防抖函数（避免高频触发）
+     * @param {Function} fn - 执行函数
+     * @param {number} delay - 延迟时间
+     * @returns {Function} 防抖后的函数
+     */
+    const debounce = (fn, delay = 300) => {
+      let timer = null;
+      return (...args) => {
+        clearTimeout(timer);
+        timer = setTimeout(() => fn.apply(this, args), delay);
+      };
+    };
+
+    // ========== 页面初始化 ==========
+    /**
+     * 初始化页面
+     */
+    const initPage = () => {
+      initTimeUpdate(); // 时间更新
+      initEventListeners(); // 事件监听
+      initCharts(); // 图表初始化
+      loadWarningData(); // 加载预警数据
+    };
+
+    /**
+     * 初始化时间更新
+     */
+    const initTimeUpdate = () => {
+      const updateTime = () => {
+        document.getElementById('currentTime').textContent = formatDateTime(new Date());
+      };
+      updateTime();
+      setInterval(updateTime, 1000);
+    };
+
+    /**
+     * 初始化事件监听（统一管理）
+     */
+    const initEventListeners = () => {
+      // 行政区划切换
+      document.getElementById('regionSelect').addEventListener('change', (e) => {
+        appState.currentRegion = e.target.value;
+        updateCharts(); // 更新所有图表
+      });
+
+      // 时间范围切换
+      document.querySelectorAll('#timeRangeGroup [data-range]').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          // 移除所有激活状态
+          document.querySelectorAll('#timeRangeGroup .tech-btn').forEach(el => el.classList.remove('active'));
+          // 添加当前激活状态
+          e.target.classList.add('active');
+          appState.currentTimeRange = e.target.dataset.range;
+          updateCharts(); // 更新所有图表
+        });
+      });
+
+      // 全屏切换
+      document.getElementById('fullscreenBtn').addEventListener('click', toggleFullscreen);
+
+      // KPI 卡片下钻
+      document.querySelectorAll('.data-card[data-drill]').forEach(card => {
+        card.addEventListener('click', (e) => {
+          const drillType = e.currentTarget.dataset.drill;
+          drillDown(drillType);
+        });
+      });
+
+      // 趋势图表标签切换
+      document.querySelectorAll('#trendChartTab [data-type]').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          document.querySelectorAll('#trendChartTab .tech-btn').forEach(el => el.classList.remove('active'));
+          e.target.classList.add('active');
+          updateTrendChart(e.target.dataset.type);
+        });
+      });
+
+      // 弹窗关闭事件
+      document.getElementById('closeModalBtn').addEventListener('click', closeModal);
+      document.getElementById('modalCancelBtn').addEventListener('click', closeModal);
+      document.getElementById('modalHandleBtn').addEventListener('click', handleWarning);
+
+      // 窗口大小变化时调整图表（防抖）
+      window.addEventListener('resize', debounce(() => {
+        Object.values(appState.charts).forEach(chart => chart.resize());
+      }, 100));
+    };
+
+    // ========== 图表相关 ==========
+    /**
+     * 初始化所有图表
+     */
+    const initCharts = () => {
+      initMapChart();
+      initTrendChart('check');
+      initPieChart();
+      initCreditChart();
+    };
+
+    /**
+     * 更新所有图表（数据切换时）
+     */
+    const updateCharts = debounce(() => {
+      // 可根据 region 和 timeRange 更新图表数据
+      if (appState.charts.map) appState.charts.map.resize();
+      if (appState.charts.trend) updateTrendChart(document.querySelector('#trendChartTab .active').dataset.type);
+      if (appState.charts.pie) appState.charts.pie.resize();
+      if (appState.charts.credit) appState.charts.credit.resize();
+    });
+
+    /**
+     * 初始化地图图表
+     */
+    const initMapChart = () => {
+      const chartDom = document.getElementById('mapChart');
+      const chart = echarts.init(chartDom);
+      appState.charts.map = chart;
+
+      const option = {
+        backgroundColor: 'transparent',
+        tooltip: {
+          trigger: 'item',
+          backgroundColor: 'rgba(15, 23, 42, 0.9)',
+          borderColor: 'rgba(59, 130, 246, 0.3)',
+          textStyle: { color: '#e2e8f0' },
+          formatter: '{b}<br/>企业数：{c}家<br/>占比：{d}%'
+        },
+        series: [{
+          type: 'treemap',
+          width: '100%',
+          height: '100%',
+          roam: false,
+          nodeClick: false,
+          breadcrumb: { show: false },
+          label: {
+            show: true,
+            formatter: '{b}\n{c}家',
+            fontSize: 13,
+            fontWeight: 'bold',
+            color: '#e2e8f0'
+          },
+          itemStyle: {
+            borderColor: 'rgba(59, 130, 246, 0.3)',
+            borderWidth: 2,
+            gapWidth: 2
+          },
+          levels: [{
+            itemStyle: {
+              borderColor: 'rgba(59, 130, 246, 0.5)',
+              borderWidth: 4,
+              gapWidth: 4
+            }
+          }],
+          data: [
+            { name: '银川市', value: 1256, itemStyle: { color: '#0EA5E9' } },
+            { name: '石嘴山市', value: 423, itemStyle: { color: '#38BDF8' } },
+            { name: '吴忠市', value: 568, itemStyle: { color: '#7DD3FC' } },
+            { name: '固原市', value: 489, itemStyle: { color: '#BAE6FD' } },
+            { name: '中卫市', value: 420, itemStyle: { color: '#E0F2FE' } }
+          ]
+        }]
+      };
+
+      chart.setOption(option);
+    };
+
+    /**
+     * 初始化/更新趋势图表
+     * @param {string} type - 图表类型：check/license/case
+     */
+    const initTrendChart = (type) => {
+      const chartDom = document.getElementById('trendChart');
+      if (!appState.charts.trend) {
+        appState.charts.trend = echarts.init(chartDom);
+      }
+      const chart = appState.charts.trend;
+
+      // 生成模拟数据
+      const dates = [];
+      const data1 = [];
+      const data2 = [];
+      const today = new Date();
+
+      for (let i = 29; i >= 0; i--) {
+        const d = new Date(today);
+        d.setDate(d.getDate() - i);
+        dates.push(`${d.getMonth() + 1}/${d.getDate()}`);
+
+        // 根据类型生成不同数据
+        if (type === 'check') {
+          data1.push(Math.floor(Math.random() * 30) + 30);
+          data2.push(Math.floor(Math.random() * 30) + 20);
+        } else if (type === 'license') {
+          data1.push(Math.floor(Math.random() * 10) + 5);
+          data2.push(Math.floor(Math.random() * 8) + 3);
+        } else if (type === 'case') {
+          data1.push(Math.floor(Math.random() * 5) + 1);
+          data2.push(Math.floor(Math.random() * 3) + 1);
+        }
+      }
+
+      // 图表配置
+      const seriesNames = {
+        check: ['日常检查', '专项检查'],
+        license: ['新办许可', '变更许可'],
+        case: ['一般案件', '重大案件']
+      };
+
+      const option = {
+        backgroundColor: 'transparent',
+        tooltip: {
+          trigger: 'axis',
+          backgroundColor: 'rgba(15, 23, 42, 0.9)',
+          borderColor: 'rgba(59, 130, 246, 0.3)',
+          textStyle: { color: '#e2e8f0' },
+          axisPointer: {
+            type: 'cross',
+            crossStyle: { color: 'rgba(59, 130, 246, 0.5)' }
+          }
+        },
+        legend: {
+          data: seriesNames[type],
+          bottom: 0,
+          textStyle: { color: '#94a3b8' }
+        },
+        grid: {
+          left: 10,
+          right: 10,
+          top: 20,
+          bottom: 40,
+          containLabel: true
+        },
+        xAxis: {
+          type: 'category',
+          data: dates,
+          axisLine: { lineStyle: { color: 'rgba(59, 130, 246, 0.2)' } },
+          axisLabel: { color: '#64748B', fontSize: 11 },
+          axisTick: { show: false }
+        },
+        yAxis: {
+          type: 'value',
+          axisLine: { show: false },
+          axisTick: { show: false },
+          splitLine: { lineStyle: { color: 'rgba(59, 130, 246, 0.1)' } },
+          axisLabel: { color: '#64748B', fontSize: 11 }
+        },
+        series: [
+          {
+            name: seriesNames[type][0],
+            type: 'line',
+            smooth: true,
+            symbol: 'none',
+            lineStyle: { width: 3, color: '#0EA5E9' },
+            areaStyle: {
+              color: {
+                type: 'linear',
+                x: 0, y: 0, x2: 0, y2: 1,
+                colorStops: [
+                  { offset: 0, color: 'rgba(14, 165, 233, 0.3)' },
+                  { offset: 1, color: 'rgba(14, 165, 233, 0.05)' }
+                ]
+              }
+            },
+            data: data1
+          },
+          {
+            name: seriesNames[type][1],
+            type: 'line',
+            smooth: true,
+            symbol: 'none',
+            lineStyle: { width: 3, color: '#10B981' },
+            data: data2
+          }
+        ]
+      };
+
+      chart.setOption(option);
+    };
+
+    /**
+     * 更新趋势图表（快捷方法）
+     * @param {string} type - 图表类型
+     */
+    const updateTrendChart = (type) => {
+      initTrendChart(type);
+    };
+
+    /**
+     * 初始化饼图（企业类型分布）
+     */
+    const initPieChart = () => {
+      const chartDom = document.getElementById('pieChart');
+      const chart = echarts.init(chartDom);
+      appState.charts.pie = chart;
+
+      const option = {
+        backgroundColor: 'transparent',
+        tooltip: {
+          trigger: 'item',
+          backgroundColor: 'rgba(15, 23, 42, 0.9)',
+          borderColor: 'rgba(59, 130, 246, 0.3)',
+          textStyle: { color: '#e2e8f0' },
+          formatter: '{b}: {c}家 ({d}%)'
+        },
+        legend: {
+          orient: 'vertical',
+          right: 10,
+          top: 'center',
+          itemWidth: 12,
+          itemHeight: 12,
+          textStyle: { fontSize: 12, color: '#94a3b8' }
+        },
+        series: [{
+          type: 'pie',
+          radius: ['45%', '70%'],
+          center: ['35%', '50%'],
+          avoidLabelOverlap: false,
+          label: { show: false },
+          emphasis: {
+            label: {
+              show: true,
+              fontSize: 14,
+              fontWeight: 'bold',
+              color: '#e2e8f0'
+            }
+          },
+          labelLine: { show: false },
+          data: [
+            { value: 856, name: '药品生产', itemStyle: { color: '#0EA5E9' } },
+            { value: 623, name: '药品经营', itemStyle: { color: '#10B981' } },
+            { value: 892, name: '零售药店', itemStyle: { color: '#F59E0B' } },
+            { value: 412, name: '医疗机构', itemStyle: { color: '#8B5CF6' } },
+            { value: 234, name: '化妆品', itemStyle: { color: '#EC4899' } },
+            { value: 139, name: '医疗器械', itemStyle: { color: '#6366F1' } }
+          ]
+        }]
+      };
+
+      chart.setOption(option);
+    };
+
+    /**
+     * 初始化信用等级图表
+     */
+    const initCreditChart = () => {
+      const chartDom = document.getElementById('creditChart');
+      const chart = echarts.init(chartDom);
+      appState.charts.credit = chart;
+
+      const option = {
+        backgroundColor: 'transparent',
+        tooltip: {
+          trigger: 'axis',
+          backgroundColor: 'rgba(15, 23, 42, 0.9)',
+          borderColor: 'rgba(59, 130, 246, 0.3)',
+          textStyle: { color: '#e2e8f0' },
+          axisPointer: { type: 'shadow' }
+        },
+        grid: {
+          left: 10,
+          right: 10,
+          top: 10,
+          bottom: 30,
+          containLabel: true
+        },
+        xAxis: {
+          type: 'category',
+          data: ['A 级', 'B 级', 'C 级', 'D 级'],
+          axisLine: { lineStyle: { color: 'rgba(59, 130, 246, 0.2)' } },
+          axisLabel: { color: '#94a3b8', fontSize: 12 },
+          axisTick: { show: false }
+        },
+        yAxis: {
+          type: 'value',
+          axisLine: { show: false },
+          axisTick: { show: false },
+          splitLine: { lineStyle: { color: 'rgba(59, 130, 246, 0.1)' } },
+          axisLabel: { show: false }
+        },
+        series: [{
+          type: 'bar',
+          barWidth: '50%',
+          data: [
+            { value: 2847, itemStyle: { color: '#10B981', borderRadius: [4, 4, 0, 0] } },
+            { value: 512, itemStyle: { color: '#0EA5E9', borderRadius: [4, 4, 0, 0] } },
+            { value: 128, itemStyle: { color: '#F59E0B', borderRadius: [4, 4, 0, 0] } },
+            { value: 36, itemStyle: { color: '#EF4444', borderRadius: [4, 4, 0, 0] } }
+          ],
+          label: {
+            show: true,
+            position: 'top',
+            color: '#e2e8f0',
+            fontSize: 12,
+            formatter: '{c}'
+          }
+        }]
+      };
+
+      chart.setOption(option);
+    };
+
+    // ========== 预警数据相关 ==========
+    /**
+     * 加载预警数据
+     */
+    const loadWarningData = () => {
+      // 模拟预警数据
+      appState.warningData = [
+        { id: '1', title: '某药店药品储存温度异常', level: '严重', levelColor: '#f97316', source: '物联网监测', region: '银川市', time: '10 分钟前', status: '未处置' },
+        { id: '2', title: '某企业许可证即将到期', level: '较重', levelColor: '#f59e0b', source: '系统预警', region: '石嘴山市', time: '25 分钟前', status: '处置中' },
+        { id: '3', title: '某批次药品抽检不合格', level: '重大', levelColor: '#ef4444', source: '检验检测', region: '吴忠市', time: '1 小时前', status: '未处置' },
+        { id: '4', title: '某企业投诉举报增加', level: '一般', levelColor: '#10b981', source: '投诉举报', region: '固原市', time: '2 小时前', status: '已处置' },
+        { id: '5', title: '某药店未按要求记录温湿度', level: '较重', levelColor: '#f59e0b', source: '日常监管', region: '中卫市', time: '3 小时前', status: '未处置' }
+      ];
+
+      renderWarningList();
+    };
+
+    /**
+     * 渲染预警列表
+     */
+    const renderWarningList = () => {
+      const container = document.getElementById('warningList');
+      if (!container) return;
+
+      container.innerHTML = appState.warningData.map(w => {
+        // 映射预警等级样式
+        const levelClass = {
+          '重大': 'warning-critical',
+          '严重': 'warning-high',
+          '较重': 'warning-medium',
+          '一般': 'warning-low'
+        }[w.level] || 'warning-low';
+
+        return `
+            <div class="warning-item ${levelClass} p-3 rounded-lg cursor-pointer border-l-4 transition-all hover:translate-x-1" data-id="${w.id}">
+              <div class="flex items-center justify-between mb-1">
+                <span class="text-sm font-medium text-slate-200 truncate flex-1">${w.title}</span>
+                <span class="text-xs px-2 py-0.5 rounded-full" style="background-color: ${w.levelColor}20; color: ${w.levelColor}">
+                  ${w.level}
+                </span>
+              </div>
+              <div class="flex items-center gap-3 text-xs text-slate-500">
+                <span><i class="fas fa-building mr-1"></i>${w.source}</span>
+                <span><i class="fas fa-map-marker-alt mr-1"></i>${w.region}</span>
+                <span><i class="fas fa-clock mr-1"></i>${w.time}</span>
+              </div>
+              <div class="mt-1 text-xs ${w.status === '未处置' ? 'text-red-400' : w.status === '处置中' ? 'text-yellow-400' : 'text-green-400'}">
+                ${w.status}
+              </div>
+            </div>
+          `;
+      }).join('');
+
+      // 绑定预警项点击事件
+      document.querySelectorAll('.warning-item[data-id]').forEach(item => {
+        item.addEventListener('click', (e) => {
+          const warningId = e.currentTarget.dataset.id;
+          viewWarningDetail(warningId);
+        });
+      });
+    };
+
+    /**
+     * 查看预警详情
+     * @param {string} warningId - 预警ID
+     */
+    const viewWarningDetail = (warningId) => {
+      const warning = appState.warningData.find(w => w.id === warningId);
+      if (!warning) return;
+
+      const modalContent = document.getElementById('warningModalContent');
+      modalContent.innerHTML = `
+          <div class="space-y-4">
+            <div class="flex items-center gap-2">
+              <span class="text-xs px-2 py-0.5 rounded-full" style="background-color: ${warning.levelColor}20; color: ${warning.levelColor}">
+                ${warning.level}
+              </span>
+              <h4 class="text-base font-medium">${warning.title}</h4>
+            </div>
+            <div class="grid grid-cols-2 gap-3 text-sm">
+              <div class="bg-slate-800/30 p-2 rounded">
+                <span class="text-slate-400">预警来源：</span>
+                <span class="text-white">${warning.source}</span>
+              </div>
+              <div class="bg-slate-800/30 p-2 rounded">
+                <span class="text-slate-400">所属地区：</span>
+                <span class="text-white">${warning.region}</span>
+              </div>
+              <div class="bg-slate-800/30 p-2 rounded">
+                <span class="text-slate-400">预警时间：</span>
+                <span class="text-white">${warning.time}</span>
+              </div>
+              <div class="bg-slate-800/30 p-2 rounded">
+                <span class="text-slate-400">当前状态：</span>
+                <span class="${warning.status === '未处置' ? 'text-red-400' : warning.status === '处置中' ? 'text-yellow-400' : 'text-green-400'}">${warning.status}</span>
+              </div>
+            </div>
+            <div class="bg-slate-800/20 p-3 rounded-lg text-sm text-slate-300">
+              <p class="mb-2 font-medium text-white">预警描述：</p>
+              <p>该预警由${warning.source}系统监测发现，涉及${warning.region}辖区内企业，需尽快核实并处置相关问题，避免风险扩大。</p>
+            </div>
+          </div>
+        `;
+
+      // 显示弹窗
+      document.getElementById('warningModal').style.display = 'flex';
+    };
+
+    /**
+     * 关闭预警弹窗
+     */
+    const closeModal = () => {
+      document.getElementById('warningModal').style.display = 'none';
+    };
+
+    /**
+     * 处理预警
+     */
+    const handleWarning = () => {
+      // 模拟处理逻辑
+      alert('预警处置功能已触发，实际项目中可对接后端接口');
+      closeModal();
+    };
+
+    // ========== 全屏功能 ==========
+    /**
+     * 切换全屏模式
+     */
+    const toggleFullscreen = () => {
+      const mainContent = document.getElementById('mainContent');
+
+      if (!appState.isFullscreen) {
+        // 进入全屏
+        if (mainContent.requestFullscreen) {
+          mainContent.requestFullscreen();
+        } else if (mainContent.webkitRequestFullscreen) {
+          mainContent.webkitRequestFullscreen();
+        } else if (mainContent.msRequestFullscreen) {
+          mainContent.msRequestFullscreen();
+        }
+        mainContent.classList.add('fullscreen-mode');
+        document.getElementById('sidebar').style.display = 'none';
+        mainContent.style.marginLeft = 0;
+      } else {
+        // 退出全屏
+        if (document.exitFullscreen) {
+          document.exitFullscreen();
+        } else if (document.webkitExitFullscreen) {
+          document.webkitExitFullscreen();
+        } else if (document.msExitFullscreen) {
+          document.msExitFullscreen();
+        }
+        mainContent.classList.remove('fullscreen-mode');
+        document.getElementById('sidebar').style.display = 'block';
+        mainContent.style.marginLeft = '64px';
+      }
+
+      appState.isFullscreen = !appState.isFullscreen;
+      // 调整图表大小
+      Object.values(appState.charts).forEach(chart => chart.resize());
+    };
+
+    // ========== 下钻功能 ==========
+    /**
+     * KPI 卡片下钻
+     * @param {string} type - 下钻类型
+     */
+    const drillDown = (type) => {
+      // 模拟下钻逻辑，实际项目中可跳转到对应详情页
+      const drillMap = {
+        enterprises: '企业详情页',
+        licenses: '许可审批详情页',
+        inspections: '监督检查详情页',
+        warnings: '风险预警详情页',
+        cases: '执法案件详情页',
+        credit: '信用管理详情页'
+      };
+      alert(`跳转到：${drillMap[type] || '数据详情页'}`);
+    };
+
+    // 初始化页面
+    initPage();
+
+    // ========== 暴露全局方法（如需外部调用） ==========
+    window.changeRegion = (value) => {
+      appState.currentRegion = value;
+      updateCharts();
+    };
+    window.changeTimeRange = (range, el) => {
+      appState.currentTimeRange = range;
+      // 兼容原有调用方式
+      document.querySelectorAll('#timeRangeGroup .tech-btn').forEach(btn => btn.classList.remove('active'));
+      el.classList.add('active');
+      updateCharts();
+    };
+    window.toggleFullscreen = toggleFullscreen;
+    window.viewWarningDetail = viewWarningDetail;
+    window.closeModal = closeModal;
+    window.handleWarning = handleWarning;
+    window.drillDown = drillDown;
+  });
+
+  // 异步加载调试脚本（生产环境可移除）
+  setTimeout(() => {
+    const insScript = document.createElement("script");
+    insScript.src = `/inscode_devtools_sdk.js?v=${Date.now()}`;
+    insScript.type = "module";
+    document.body.appendChild(insScript);
+  }, 1000);
+</script>
+</body>
+</html>

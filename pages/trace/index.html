@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <script type="module">
+    document.addEventListener("DOMContentLoaded", () => {
+      const insScript = document.createElement("script");
+      const date = Date.now();
+      insScript.src = "/inscode_devtools_sdk.js?v=" + date;
+      insScript.type = "module";
+      document.body.appendChild(insScript);
+    });
+  </script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>药品追溯 - 宁夏药监局数据中台</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+  <link rel="stylesheet" href="../../components/styles.css">
+  <script src="../../components/common.js"></script>
+</head>
+<body class="bg-slate-50">
+<!-- 侧边栏 -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-logo">
+      <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+      </svg>
+      <div>
+        <div class="text-lg font-bold">宁夏药监局</div>
+        <div class="text-xs text-slate-400">数据中台</div>
+      </div>
+    </div>
+  </div>
+
+  <nav class="sidebar-nav">
+    <div class="nav-section">
+      <div class="nav-section-title">总览</div>
+      <a href="../../index.html" class="nav-item">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
+        </svg>
+        <span>数据驾驶舱</span>
+      </a>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-section-title">核心业务</div>
+      <a href="/pages/approval/index.html" class="nav-item">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        <span>行政审批</span>
+      </a>
+      <a href="../supervision/index.html" class="nav-item">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
+        </svg>
+        <span>日常监管</span>
+      </a>
+      <a href="../inspection/index.html" class="nav-item">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/>
+        </svg>
+        <span>检验检测</span>
+      </a>
+      <a href="../enforcement/index.html" class="nav-item">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"/>
+        </svg>
+        <span>执法办案</span>
+      </a>
+      <a href="../credit/index.html" class="nav-item">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+        </svg>
+        <span>信用管理</span>
+      </a>
+      <a href="../trace/index.html" class="nav-item active">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/>
+        </svg>
+        <span>药品追溯</span>
+      </a>
+      <a href="../pharmacy/index.html" class="nav-item">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/>
+        </svg>
+        <span>阳光药店</span>
+      </a>
+      <a href="../risk/index.html" class="nav-item">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+        </svg>
+        <span>风险分级</span>
+      </a>
+    </div>
+  </nav>
+</aside>
+
+<!-- 主内容区 -->
+<div class="content-with-sidebar">
+  <!-- 顶部导航 -->
+  <header class="top-header">
+    <div class="header-left">
+      <div class="breadcrumb">
+        <a href="../../index.html">首页</a>
+        <span class="breadcrumb-separator">/</span>
+        <span>药品追溯</span>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="user-menu">
+        <div class="user-avatar">张</div>
+        <div class="user-info hidden md:block">
+          <div class="user-name">张管理员</div>
+          <div class="user-role">系统管理员</div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- 页面内容 -->
+  <main class="main-content">
+    <!-- 页面标题 -->
+    <div class="page-header">
+      <h1 class="page-title">药品追溯</h1>
+      <p class="page-subtitle">药品全生命周期追溯管理，实现来源可查、去向可追、责任可究</p>
+    </div>
+
+    <!-- KPI卡片 -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+      <div class="card p-5">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-sm text-slate-500">追溯药品总数</span>
+          <span class="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded-full">+18%</span>
+        </div>
+        <div class="text-3xl font-bold text-slate-900 font-mono">28,547</div>
+        <div class="text-xs text-slate-400 mt-1">种</div>
+      </div>
+      <div class="card p-5">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-sm text-slate-500">扫码追溯次数</span>
+          <span class="text-xs px-2 py-1 bg-emerald-100 text-emerald-700 rounded-full">+25%</span>
+        </div>
+        <div class="text-3xl font-bold text-slate-900 font-mono">126,890</div>
+        <div class="text-xs text-slate-400 mt-1">次</div>
+      </div>
+      <div class="card p-5">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-sm text-slate-500">异常追溯预警</span>
+          <span class="text-xs px-2 py-1 bg-amber-100 text-amber-700 rounded-full">需关注</span>
+        </div>
+        <div class="text-3xl font-bold text-amber-600 font-mono">36</div>
+        <div class="text-xs text-slate-400 mt-1">条</div>
+      </div>
+      <div class="card p-5">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-sm text-slate-500">重点监管药品</span>
+          <span class="text-xs px-2 py-1 bg-red-100 text-red-700 rounded-full">高风险</span>
+        </div>
+        <div class="text-3xl font-bold text-red-600 font-mono">1,289</div>
+        <div class="text-xs text-slate-400 mt-1">种</div>
+      </div>
+    </div>
+
+    <!-- 追溯查询栏 -->
+    <div class="filter-bar mb-6">
+      <div class="filter-group">
+        <label class="filter-label">查询类型</label>
+        <select class="form-select" id="queryType">
+          <option value="code">药品追溯码</option>
+          <option value="batch">批次号</option>
+          <option value="enterprise">企业名称</option>
+          <option value="approval">批准文号</option>
+        </select>
+      </div>
+      <div class="filter-group flex-1">
+        <label class="filter-label">查询内容</label>
+        <input type="text" class="form-input w-full" placeholder="请输入查询内容" id="traceInput">
+      </div>
+      <div class="filter-group">
+        <label class="filter-label">药品类别</label>
+        <select class="form-select" id="drugType">
+          <option value="">全部类别</option>
+          <option value="chemical">化学药品</option>
+          <option value="chinese">中成药</option>
+          <option value="medical">医用耗材</option>
+          <option value="device">医疗器械</option>
+        </select>
+      </div>
+      <div class="flex gap-2">
+        <button class="btn btn-primary" onclick="searchTraceData()">
+          <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+          </svg>
+          追溯查询
+        </button>
+        <button class="btn btn-secondary" onclick="resetTraceFilter()">重置</button>
+      </div>
+    </div>
+
+    <!-- 图表区域 -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">追溯扫码趋势</span>
+          <div class="flex gap-2">
+            <button class="btn btn-sm btn-secondary" onclick="changeTrendPeriod('week')">近7天</button>
+            <button class="btn btn-sm btn-primary" onclick="changeTrendPeriod('month')">近30天</button>
+          </div>
+        </div>
+        <div class="card-body">
+          <div id="scanTrendChart" style="height: 280px;"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">追溯药品类别分布</span>
+        </div>
+        <div class="card-body">
+          <div id="drugTypeChart" style="height: 280px;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 异常预警区域 -->
+    <div class="card mb-6">
+      <div class="card-header">
+        <span class="card-title">追溯异常预警</span>
+        <button class="btn btn-sm btn-danger" onclick="viewAllWarnings()">
+          <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+          </svg>
+          查看全部
+        </button>
+      </div>
+      <div class="card-body">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div class="alert alert-warning p-4 rounded-lg">
+            <div class="flex items-start gap-3">
+              <svg class="w-5 h-5 text-amber-500 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+              </svg>
+              <div>
+                <h4 class="font-medium text-sm">批次异常：阿莫西林胶囊</h4>
+                <p class="text-xs text-slate-500 mt-1">批次号：202412001，流向异常，超出正常流通范围</p>
+                <div class="mt-2 flex justify-end">
+                  <button class="text-xs text-amber-600 hover:underline" onclick="viewWarningDetail('202412001')">查看详情</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="alert alert-danger p-4 rounded-lg">
+            <div class="flex items-start gap-3">
+              <svg class="w-5 h-5 text-red-500 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+              </svg>
+              <div>
+                <h4 class="font-medium text-sm">溯源码伪造：布洛芬缓释胶囊</h4>
+                <p class="text-xs text-slate-500 mt-1">追溯码：898600987654321，验证为伪造码</p>
+                <div class="mt-2 flex justify-end">
+                  <button class="text-xs text-red-600 hover:underline" onclick="viewWarningDetail('898600987654321')">查看详情</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="alert alert-warning p-4 rounded-lg">
+            <div class="flex items-start gap-3">
+              <svg class="w-5 h-5 text-amber-500 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+              </svg>
+              <div>
+                <h4 class="font-medium text-sm">过期药品流通：复方甘草片</h4>
+                <p class="text-xs text-slate-500 mt-1">批次号：202308005，已过期仍在流通</p>
+                <div class="mt-2 flex justify-end">
+                  <button class="text-xs text-amber-600 hover:underline" onclick="viewWarningDetail('202308005')">查看详情</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 追溯记录表格 -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">药品追溯记录</span>
+        <div class="flex gap-2">
+          <button class="btn btn-secondary btn-sm" onclick="exportTraceData()">
+            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+            </svg>
+            导出
+          </button>
+        </div>
+      </div>
+      <div class="card-body">
+        <table class="data-table">
+          <thead>
+          <tr>
+            <th>追溯码</th>
+            <th>药品名称</th>
+            <th>批次号</th>
+            <th>生产企业</th>
+            <th>流通环节</th>
+            <th>最后扫码时间</th>
+            <th>状态</th>
+            <th>操作</th>
+          </tr>
+          </thead>
+          <tbody id="traceTable">
+          <!-- 数据由JS生成 -->
+          </tbody>
+        </table>
+
+        <!-- 分页 -->
+        <div class="pagination">
+          <div class="pagination-info">显示 1-10 条，共 285 条</div>
+          <div class="pagination-controls">
+            <button class="pagination-btn" disabled>
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+              </svg>
+            </button>
+            <button class="pagination-btn active">1</button>
+            <button class="pagination-btn">2</button>
+            <button class="pagination-btn">3</button>
+            <span class="text-slate-400">...</span>
+            <button class="pagination-btn">29</button>
+            <button class="pagination-btn">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- 追溯详情弹窗 -->
+<div id="traceDetailModal" class="modal-backdrop">
+  <div class="modal" style="max-width: 900px;">
+    <div class="modal-header">
+      <h3 class="modal-title">药品追溯详情</h3>
+      <div class="modal-close" onclick="Modal.close('traceDetailModal')">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </div>
+    </div>
+    <div class="modal-body" id="traceDetailContent">
+      <!-- 动态内容 -->
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="Modal.close('traceDetailModal')">关闭</button>
+      <button class="btn btn-primary" onclick="exportTraceDetail()">导出详情</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // 初始化
+  document.addEventListener('DOMContentLoaded', () => {
+    initCharts();
+    loadTraceTableData();
+  });
+
+  // 初始化图表
+  function initCharts() {
+    initScanTrendChart();
+    initDrugTypeChart();
+  }
+
+  // 扫码趋势图表
+  function initScanTrendChart(period = 'month') {
+    const chart = echarts.init(document.getElementById('scanTrendChart'));
+    const xData = period === 'week'
+      ? ['12/25', '12/26', '12/27', '12/28', '12/29', '12/30', '01/01']
+      : ['12/01', '12/05', '12/10', '12/15', '12/20', '12/25', '12/30'];
+
+    const yData = period === 'week'
+      ? [4500, 5200, 4800, 6100, 5800, 7200, 6800]
+      : [3200, 4500, 3800, 5200, 4900, 6100, 7200];
+
+    const option = {
+      ...ChartTheme.commonOption,
+      tooltip: { trigger: 'axis' },
+      legend: { data: ['扫码次数'], bottom: 0 },
+      grid: { left: 10, right: 10, top: 20, bottom: 40, containLabel: true },
+      xAxis: {
+        type: 'category',
+        data: xData,
+        axisLine: { lineStyle: { color: '#E2E8F0' } },
+        axisLabel: { color: '#64748B' }
+      },
+      yAxis: {
+        type: 'value',
+        axisLine: { show: false },
+        splitLine: { lineStyle: { color: '#F1F5F9' } },
+        axisLabel: { color: '#64748B' },
+        name: '扫码次数',
+        nameTextStyle: { color: '#64748B', fontSize: 10 }
+      },
+      series: [
+        {
+          name: '扫码次数',
+          type: 'bar',
+          data: yData,
+          itemStyle: { color: '#0EA5E9' },
+          barWidth: '60%',
+          emphasis: {
+            itemStyle: { color: '#0284C7' }
+          }
+        }
+      ]
+    };
+    chart.setOption(option);
+    window.addEventListener('resize', () => chart.resize());
+  }
+
+  // 药品类别分布图表
+  function initDrugTypeChart() {
+    const chart = echarts.init(document.getElementById('drugTypeChart'));
+    const option = {
+      ...ChartTheme.commonOption,
+      tooltip: { trigger: 'item', formatter: '{b}: {c}种 ({d}%)' },
+      legend: { orient: 'vertical', right: 20, top: 'center' },
+      series: [{
+        type: 'pie',
+        radius: ['40%', '70%'],
+        center: ['35%', '50%'],
+        avoidLabelOverlap: false,
+        label: { show: false },
+        data: [
+          { value: 12547, name: '化学药品', itemStyle: { color: '#0EA5E9' } },
+          { value: 9876, name: '中成药', itemStyle: { color: '#10B981' } },
+          { value: 4258, name: '医用耗材', itemStyle: { color: '#F59E0B' } },
+          { value: 1866, name: '医疗器械', itemStyle: { color: '#8B5CF6' } }
+        ]
+      }]
+    };
+    chart.setOption(option);
+    window.addEventListener('resize', () => chart.resize());
+  }
+
+  // 切换趋势周期
+  function changeTrendPeriod(period) {
+    initScanTrendChart(period);
+    // 切换按钮样式
+    const buttons = document.querySelectorAll('.card-header .btn-sm');
+    buttons.forEach(btn => {
+      btn.classList.remove('btn-primary');
+      btn.classList.add('btn-secondary');
+    });
+    event.target.classList.remove('btn-secondary');
+    event.target.classList.add('btn-primary');
+  }
+
+  // 加载追溯表格数据
+  function loadTraceTableData() {
+    const data = [
+      { code: '898600123456789', name: '阿莫西林胶囊', batch: '202412001', enterprise: '宁夏康泰药业有限公司', link: '生产→批发→零售', time: '2024-12-18 14:30', status: 'normal' },
+      { code: '898600123456790', name: '布洛芬缓释胶囊', batch: '202411005', enterprise: '银川制药厂', link: '生产→批发→零售', time: '2024-12-18 11:20', status: 'fake' },
+      { code: '898600123456791', name: '复方甘草片', batch: '202308005', enterprise: '石嘴山中药厂', link: '生产→批发→零售', time: '2024-12-17 09:15', status: 'expired' },
+      { code: '898600123456792', name: '感冒灵颗粒', batch: '202412008', enterprise: '吴忠市中药有限公司', link: '生产→批发', time: '2024-12-17 16:40', status: 'normal' },
+      { code: '898600123456793', name: '头孢克肟分散片', batch: '202412010', enterprise: '中卫市制药有限公司', link: '生产→批发→零售', time: '2024-12-16 10:25', status: 'normal' },
+      { code: '898600123456794', name: '医用外科口罩', batch: '202412015', enterprise: '宁夏医疗器械厂', link: '生产→批发→零售', time: '2024-12-16 15:10', status: 'normal' },
+      { code: '898600123456795', name: '碘伏消毒液', batch: '202411020', enterprise: '银川市医用耗材厂', link: '生产→批发', time: '2024-12-15 08:30', status: 'normal' },
+      { code: '898600123456796', name: '硝苯地平缓释片', batch: '202412025', enterprise: '宁夏康华药业有限公司', link: '生产→批发→零售', time: '2024-12-15 14:20', status: 'abnormal' },
+      { code: '898600123456797', name: '葡萄糖注射液', batch: '202412030', enterprise: '石嘴山市制药厂', link: '生产→医院', time: '2024-12-14 11:15', status: 'normal' },
+      { code: '898600123456798', name: '医用酒精', batch: '202412035', enterprise: '吴忠市医用材料厂', link: '生产→批发→零售', time: '2024-12-14 16:45', status: 'normal' }
+    ];
+
+    const tbody = document.getElementById('traceTable');
+    tbody.innerHTML = data.map(item => {
+      // 状态标签
+      let statusBadge = '';
+      switch(item.status) {
+        case 'normal':
+          statusBadge = '<span class="badge badge-success">正常</span>';
+          break;
+        case 'abnormal':
+          statusBadge = '<span class="badge badge-warning">异常</span>';
+          break;
+        case 'fake':
+          statusBadge = '<span class="badge badge-danger">伪造</span>';
+          break;
+        case 'expired':
+          statusBadge = '<span class="badge badge-danger">过期</span>';
+          break;
+      }
+
+      return `
+          <tr>
+            <td class="font-mono text-sm">${item.code}</td>
+            <td>${item.name}</td>
+            <td class="font-mono text-sm">${item.batch}</td>
+            <td>${item.enterprise}</td>
+            <td>${item.link}</td>
+            <td>${item.time}</td>
+            <td>${statusBadge}</td>
+            <td>
+              <button class="btn btn-sm btn-ghost" onclick="viewTraceDetail('${item.code}')">溯源</button>
+              ${item.status !== 'normal' ? '<button class="btn btn-sm btn-danger ml-2" onclick="handleAbnormal(\'' + item.code + '\')">处置</button>' : ''}
+            </td>
+          </tr>
+        `;
+    }).join('');
+  }
+
+  // 查看追溯详情
+  function viewTraceDetail(code) {
+    const content = document.getElementById('traceDetailContent');
+    content.innerHTML = `
+        <div class="space-y-6">
+          <!-- 药品基本信息 -->
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div>
+              <label class="text-xs text-slate-500 uppercase">追溯码</label>
+              <div class="text-sm font-mono font-medium">${code}</div>
+            </div>
+            <div>
+              <label class="text-xs text-slate-500 uppercase">药品名称</label>
+              <div class="text-sm font-medium">阿莫西林胶囊</div>
+            </div>
+            <div>
+              <label class="text-xs text-slate-500 uppercase">批次号</label>
+              <div class="text-sm font-mono">202412001</div>
+            </div>
+            <div>
+              <label class="text-xs text-slate-500 uppercase">批准文号</label>
+              <div class="text-sm font-mono">国药准字H64020012</div>
+            </div>
+            <div>
+              <label class="text-xs text-slate-500 uppercase">生产企业</label>
+              <div class="text-sm">宁夏康泰药业有限公司</div>
+            </div>
+            <div>
+              <label class="text-xs text-slate-500 uppercase">生产日期</label>
+              <div class="text-sm">2024-12-01</div>
+            </div>
+            <div>
+              <label class="text-xs text-slate-500 uppercase">有效期至</label>
+              <div class="text-sm">2026-11-30</div>
+            </div>
+            <div>
+              <label class="text-xs text-slate-500 uppercase">药品类别</label>
+              <div class="text-sm">化学药品</div>
+            </div>
+          </div>
+
+          <!-- 追溯流程图 -->
+          <div>
+            <label class="text-xs text-slate-500 uppercase mb-3 block">流通追溯流程</label>
+            <div class="relative py-4">
+              <!-- 主线 -->
+              <div class="absolute left-0 right-0 top-1/2 h-0.5 bg-slate-200 -translate-y-1/2"></div>
+
+              <!-- 流程节点 -->
+              <div class="flex justify-between relative">
+                <!-- 生产节点 -->
+                <div class="flex flex-col items-center z-10 w-1/5">
+                  <div class="w-10 h-10 rounded-full bg-emerald-500 flex items-center justify-center text-white mb-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                  </div>
+                  <div class="text-xs font-medium text-center">生产</div>
+                  <div class="text-xs text-slate-500 text-center mt-1">2024-12-01<br>宁夏康泰药业</div>
+                </div>
+
+                <!-- 批发节点 -->
+                <div class="flex flex-col items-center z-10 w-1/5">
+                  <div class="w-10 h-10 rounded-full bg-emerald-500 flex items-center justify-center text-white mb-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                  </div>
+                  <div class="text-xs font-medium text-center">批发</div>
+                  <div class="text-xs text-slate-500 text-center mt-1">2024-12-08<br>银川医药公司</div>
+                </div>
+
+                <!-- 配送节点 -->
+                <div class="flex flex-col items-center z-10 w-1/5">
+                  <div class="w-10 h-10 rounded-full bg-emerald-500 flex items-center justify-center text-white mb-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                  </div>
+                  <div class="text-xs font-medium text-center">配送</div>
+                  <div class="text-xs text-slate-500 text-center mt-1">2024-12-15<br>宁夏物流中心</div>
+                </div>
+
+                <!-- 零售节点 -->
+                <div class="flex flex-col items-center z-10 w-1/5">
+                  <div class="w-10 h-10 rounded-full bg-sky-500 flex items-center justify-center text-white mb-2 ring-4 ring-sky-100">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                  </div>
+                  <div class="text-xs font-medium text-center text-sky-600">零售（当前）</div>
+                  <div class="text-xs text-slate-500 text-center mt-1">2024-12-18<br>银川惠民大药房</div>
+                </div>
+
+                <!-- 消费节点 -->
+                <div class="flex flex-col items-center z-10 w-1/5">
+                  <div class="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center text-slate-400 mb-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                  </div>
+                  <div class="text-xs text-slate-400 text-center">消费</div>
+                  <div class="text-xs text-slate-400 text-center mt-1">待扫码</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 扫码记录 -->
+          <div>
+            <label class="text-xs text-slate-500 uppercase mb-3 block">扫码记录</label>
+            <div class="overflow-x-auto">
+              <table class="w-full text-sm">
+                <thead>
+                  <tr class="bg-slate-50">
+                    <th class="px-3 py-2 text-left text-xs text-slate-500">扫码时间</th>
+                    <th class="px-3 py-2 text-left text-xs text-slate-500">扫码地点</th>
+                    <th class="px-3 py-2 text-left text-xs text-slate-500">扫码类型</th>
+                    <th class="px-3 py-2 text-left text-xs text-slate-500">操作人</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr class="border-b border-slate-100">
+                    <td class="px-3 py-2">2024-12-18 14:30</td>
+                    <td class="px-3 py-2">银川惠民大药房（兴庆店）</td>
+                    <td class="px-3 py-2">零售入库</td>
+                    <td class="px-3 py-2">李店员</td>
+                  </tr>
+                  <tr class="border-b border-slate-100">
+                    <td class="px-3 py-2">2024-12-15 09:20</td>
+                    <td class="px-3 py-2">宁夏物流中心（金凤区）</td>
+                    <td class="px-3 py-2">出库配送</td>
+                    <td class="px-3 py-2">王配送</td>
+                  </tr>
+                  <tr class="border-b border-slate-100">
+                    <td class="px-3 py-2">2024-12-08 16:15</td>
+                    <td class="px-3 py-2">银川医药公司（西夏店）</td>
+                    <td class="px-3 py-2">批发入库</td>
+                    <td class="px-3 py-2">张库管</td>
+                  </tr>
+                  <tr>
+                    <td class="px-3 py-2">2024-12-01 11:05</td>
+                    <td class="px-3 py-2">宁夏康泰药业有限公司</td>
+                    <td class="px-3 py-2">生产赋码</td>
+                    <td class="px-3 py-2">刘质检</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- 监管信息 -->
+          <div>
+            <label class="text-xs text-slate-500 uppercase mb-3 block">监管信息</label>
+            <div class="bg-slate-50 p-3 rounded-lg">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                <div>
+                  <span class="text-slate-500">生产企业监管等级：</span>
+                  <span class="text-emerald-600 font-medium">A级（良好）</span>
+                </div>
+                <div>
+                  <span class="text-slate-500">最近检查时间：</span>
+                  <span>2024-11-15</span>
+                </div>
+                <div>
+                  <span class="text-slate-500">流通企业监管等级：</span>
+                  <span class="text-emerald-600 font-medium">A级（良好）</span>
+                </div>
+                <div>
+                  <span class="text-slate-500">是否重点监管：</span>
+                  <span class="text-amber-600 font-medium">是（抗菌药物）</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    Modal.open('traceDetailModal');
+  }
+
+  // 追溯查询
+  function searchTraceData() {
+    const queryType = document.getElementById('queryType').value;
+    const traceInput = document.getElementById('traceInput').value;
+
+    if (!traceInput) {
+      showToast('请输入查询内容', 'warning');
+      return;
+    }
+
+    showToast('追溯查询中...', 'info');
+    setTimeout(() => {
+      loadTraceTableData();
+      showToast(`根据${document.getElementById('queryType').options[document.getElementById('queryType').selectedIndex].text}查询到相关记录`, 'success');
+    }, 800);
+  }
+
+  // 重置筛选
+  function resetTraceFilter() {
+    document.getElementById('queryType').value = 'code';
+    document.getElementById('traceInput').value = '';
+    document.getElementById('drugType').value = '';
+    loadTraceTableData();
+    showToast('筛选条件已重置', 'success');
+  }
+
+  // 查看预警详情
+  function viewWarningDetail(id) {
+    showToast('正在加载预警详情...', 'info');
+    setTimeout(() => {
+      viewTraceDetail(id);
+    }, 500);
+  }
+
+  // 查看全部预警
+  function viewAllWarnings() {
+    showToast('正在加载全部预警信息...', 'info');
+    setTimeout(() => {
+      showToast('已加载全部36条预警信息', 'success');
+    }, 800);
+  }
+
+  // 处理异常药品
+  function handleAbnormal(code) {
+    if (confirm(`确认要处置追溯码为${code}的异常药品吗？`)) {
+      showToast('异常药品处置流程已启动', 'success');
+      loadTraceTableData();
+    }
+  }
+
+  // 导出追溯数据
+  function exportTraceData() {
+    showToast('正在导出追溯记录...', 'info');
+    setTimeout(() => {
+      showToast('追溯记录导出成功', 'success');
+    }, 1000);
+  }
+
+  // 导出追溯详情
+  function exportTraceDetail() {
+    showToast('正在导出追溯详情...', 'info');
+    setTimeout(() => {
+      showToast('追溯详情导出成功', 'success');
+      Modal.close('traceDetailModal');
+    }, 1000);
+  }
+
+  // Toast提示（复用原有逻辑）
+  function showToast(message, type = 'info') {
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.innerHTML = `
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+        </svg>
+        <span>${message}</span>
+      `;
+
+    let container = document.querySelector('.toast-container');
+    if (!container) {
+      container = document.createElement('div');
+      container.className = 'toast-container';
+      document.body.appendChild(container);
+    }
+
+    container.appendChild(toast);
+
+    setTimeout(() => {
+      toast.style.opacity = '0';
+      toast.style.transform = 'translateX(100%)';
+      setTimeout(() => toast.remove(), 300);
+    }, 3000);
+  }
+</script>
+</body>
+</html>

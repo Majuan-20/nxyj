@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head><script type="module">document.addEventListener("DOMContentLoaded",()=>{const insScript=document.createElement("script");const date=Date.now();insScript.src="/inscode_devtools_sdk.js?v="+date;insScript.type="module";document.body.appendChild(insScript);});</script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>个人工作台 - 宁夏药监局数据中台</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+  <link href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="../components/styles.css">
+  <style>
+    .page-container {
+      min-height: 100vh;
+      background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    }
+
+    .stat-card {
+      background: white;
+      border-radius: 12px;
+      padding: 1.5rem;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .todo-item {
+      background: white;
+      border-radius: 8px;
+      padding: 1rem;
+      border-left: 4px solid transparent;
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+
+    .todo-item:hover {
+      background: #f8fafc;
+      transform: translateX(4px);
+    }
+
+    .todo-item.priority-urgent { border-left-color: #ef4444; }
+    .todo-item.priority-high { border-left-color: #f97316; }
+    .todo-item.priority-normal { border-left-color: #3b82f6; }
+
+    .shortcut-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+    }
+
+    .shortcut-item:hover .shortcut-icon {
+      transform: scale(1.1);
+    }
+
+    .chart-card {
+      background: white;
+      border-radius: 12px;
+      padding: 1.25rem;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    .drag-handle {
+      cursor: move;
+      cursor: grab;
+    }
+
+    .drag-handle:active {
+      cursor: grabbing;
+    }
+
+    .layout-editor {
+      border: 2px dashed #3b82f6;
+      border-radius: 12px;
+      min-height: 200px;
+      padding: 1rem;
+      background: rgba(59, 130, 246, 0.05);
+    }
+  </style>
+</head>
+<body>
+<div class="page-container">
+  <!-- 顶部导航栏 -->
+  <nav class="bg-white border-b border-gray-200 sticky top-0 z-30">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between h-16">
+        <div class="flex items-center">
+          <a href="../index.html" class="flex items-center space-x-3">
+            <div class="w-10 h-10 bg-gradient-to-r from-blue-600 to-blue-800 rounded-lg flex items-center justify-center">
+              <i class="fas fa-pills text-white"></i>
+            </div>
+            <div>
+              <h1 class="text-lg font-bold text-gray-900">宁夏药监局数据中台</h1>
+              <p class="text-xs text-gray-500">个人工作台</p>
+            </div>
+          </a>
+        </div>
+
+        <div class="flex items-center space-x-4">
+          <button class="p-2 text-gray-400 hover:text-gray-600" onclick="toggleLayoutEdit()" title="布局编辑">
+            <i class="fas fa-th-large"></i>
+          </button>
+          <button class="p-2 text-gray-400 hover:text-gray-600 relative" onclick="showNotifications()">
+            <i class="fas fa-bell"></i>
+            <span id="notification-badge" class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+          </button>
+          <div class="flex items-center space-x-2 pl-4 border-l">
+            <div class="w-8 h-8 bg-gradient-to-r from-blue-500 to-blue-700 rounded-full flex items-center justify-center text-white text-sm font-semibold">
+              张
+            </div>
+            <div class="hidden md:block">
+              <div class="text-sm font-medium text-gray-900">张管理员</div>
+              <div class="text-xs text-gray-500">系统管理员 · 宁夏区</div>
+            </div>
+          </div>
+          <a href=".././login.html" class="p-2 text-gray-400 hover:text-red-600" title="退出登录">
+            <i class="fas fa-sign-out-alt"></i>
+          </a>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- 主内容区 -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <!-- 欢迎横幅 -->
+    <div class="bg-gradient-to-r from-blue-600 to-blue-800 rounded-2xl p-6 mb-6 text-white">
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="text-2xl font-bold mb-2">早上好，张管理员！👋</h2>
+          <p class="text-blue-100">今日有 <span class="font-semibold text-white" id="today-todo-count">5</span> 项待办事项，请及时处理</p>
+        </div>
+        <div class="hidden md:flex items-center space-x-4">
+          <div class="text-center">
+            <div class="text-3xl font-bold" id="pending-approvals">12</div>
+            <div class="text-blue-200 text-sm">待审批</div>
+          </div>
+          <div class="w-px h-12 bg-blue-500"></div>
+          <div class="text-center">
+            <div class="text-3xl font-bold text-orange-400" id="pending-warnings">8</div>
+            <div class="text-blue-200 text-sm">待处置预警</div>
+          </div>
+          <div class="w-px h-12 bg-blue-500"></div>
+          <div class="text-center">
+            <div class="text-3xl font-bold text-yellow-400" id="pending-issues">5</div>
+            <div class="text-blue-200 text-sm">待整改问题</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 快捷操作区 -->
+    <div class="mb-6">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-semibold text-gray-900">常用功能</h3>
+        <button class="text-sm text-blue-600 hover:text-blue-700 flex items-center" onclick="customizeShortcuts()">
+          <i class="fas fa-cog mr-1"></i> 自定义
+        </button>
+      </div>
+      <div class="grid grid-cols-4 md:grid-cols-8 gap-4" id="shortcuts-grid">
+        <!-- 动态生成 -->
+      </div>
+    </div>
+
+    <!-- 主要内容网格 -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <!-- 左侧：待办事项 -->
+      <div class="lg:col-span-2 space-y-6">
+        <!-- 待办事项列表 -->
+        <div class="chart-card">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-semibold text-gray-900">我的待办</h3>
+            <div class="flex items-center space-x-2">
+              <select id="todo-filter" class="text-sm border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500" onchange="filterTodos(this.value)">
+                <option value="all">全部</option>
+                <option value="approval">待审批</option>
+                <option value="warning">待处置预警</option>
+                <option value="inspection">待整改问题</option>
+              </select>
+              <a href="#" class="text-sm text-blue-600 hover:text-blue-700">查看全部</a>
+            </div>
+          </div>
+          <div id="todo-list" class="space-y-3">
+            <!-- 动态生成 -->
+          </div>
+        </div>
+
+        <!-- 个人统计图表 -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="chart-card">
+            <h3 class="text-base font-semibold text-gray-900 mb-4">本周办理趋势</h3>
+            <div id="weekly-trend-chart" class="h-48"></div>
+          </div>
+          <div class="chart-card">
+            <h3 class="text-base font-semibold text-gray-900 mb-4">事项类型分布</h3>
+            <div id="type-distribution-chart" class="h-48"></div>
+          </div>
+        </div>
+
+        <!-- 最近处理记录 -->
+        <div class="chart-card">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-semibold text-gray-900">最近处理记录</h3>
+            <a href="#" class="text-sm text-blue-600 hover:text-blue-700">查看全部</a>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+              <thead class="bg-gray-50">
+              <tr>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">事项</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">类型</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">处理时间</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">状态</th>
+              </tr>
+              </thead>
+              <tbody id="recent-history" class="bg-white divide-y divide-gray-200">
+              <!-- 动态生成 -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- 右侧：通知与快速入口 -->
+      <div class="space-y-6">
+        <!-- 紧急通知 -->
+        <div class="chart-card bg-gradient-to-br from-orange-50 to-red-50 border border-orange-200">
+          <h3 class="text-base font-semibold text-gray-900 mb-3 flex items-center">
+            <i class="fas fa-exclamation-triangle text-orange-500 mr-2"></i>
+            紧急通知
+          </h3>
+          <div id="urgent-notices" class="space-y-3">
+            <!-- 动态生成 -->
+          </div>
+        </div>
+
+        <!-- 负责区域统计 -->
+        <div class="chart-card">
+          <h3 class="text-base font-semibold text-gray-900 mb-4">负责区域概况</h3>
+          <div class="space-y-4">
+            <div class="flex items-center justify-between">
+              <span class="text-sm text-gray-600">监管企业</span>
+              <span class="text-lg font-semibold text-gray-900" id="region-enterprises">3,256</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-sm text-gray-600">本月检查</span>
+              <span class="text-lg font-semibold text-gray-900" id="region-inspections">892</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-sm text-gray-600">合规率</span>
+              <span class="text-lg font-semibold text-green-600" id="region-compliance">97.8%</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-sm text-gray-600">风险预警</span>
+              <span class="text-lg font-semibold text-orange-600" id="region-warnings">45</span>
+            </div>
+          </div>
+          <a href="dashboard.html" class="mt-4 block w-full bg-blue-600 hover:bg-blue-700 text-white text-center py-2 rounded-lg text-sm font-medium transition-colors">
+            查看驾驶舱
+          </a>
+        </div>
+
+        <!-- 快速上报 -->
+        <div class="chart-card">
+          <h3 class="text-base font-semibold text-gray-900 mb-4">快速上报</h3>
+          <div class="grid grid-cols-2 gap-3">
+            <button class="p-3 bg-blue-50 hover:bg-blue-100 rounded-lg text-center transition-colors" onclick="quickReport('inspection')">
+              <i class="fas fa-search-plus text-blue-600 text-xl mb-1"></i>
+              <div class="text-xs text-gray-700">检查记录</div>
+            </button>
+            <button class="p-3 bg-purple-50 hover:bg-purple-100 rounded-lg text-center transition-colors" onclick="quickReport('warning')">
+              <i class="fas fa-exclamation-triangle text-purple-600 text-xl mb-1"></i>
+              <div class="text-xs text-gray-700">风险预警</div>
+            </button>
+            <button class="p-3 bg-green-50 hover:bg-green-100 rounded-lg text-center transition-colors" onclick="quickReport('case')">
+              <i class="fas fa-gavel text-green-600 text-xl mb-1"></i>
+              <div class="text-xs text-gray-700">案件登记</div>
+            </button>
+            <button class="p-3 bg-yellow-50 hover:bg-yellow-100 rounded-lg text-center transition-colors" onclick="quickReport('report')">
+              <i class="fas fa-file-alt text-yellow-600 text-xl mb-1"></i>
+              <div class="text-xs text-gray-700">工作报告</div>
+            </button>
+          </div>
+        </div>
+
+        <!-- 工作日历 -->
+        <div class="chart-card">
+          <h3 class="text-base font-semibold text-gray-900 mb-4">今日日程</h3>
+          <div id="today-schedule" class="space-y-3">
+            <!-- 动态生成 -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- 布局编辑模态框 -->
+<div id="layout-modal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
+  <div class="bg-white rounded-xl max-w-2xl w-full mx-4 p-6">
+    <div class="flex justify-between items-center mb-4">
+      <h3 class="text-lg font-semibold">自定义工作台布局</h3>
+      <button onclick="closeLayoutModal()" class="text-gray-400 hover:text-gray-600">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="layout-editor mb-4">
+      <p class="text-sm text-gray-600 text-center py-8">拖拽模块调整布局（功能开发中）</p>
+    </div>
+    <div class="flex justify-end space-x-3">
+      <button onclick="closeLayoutModal()" class="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg">取消</button>
+      <button onclick="saveLayout()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg">保存布局</button>
+    </div>
+  </div>
+</div>
+
+<script src="../components/common.js"></script>
+<script>
+  // ============================================
+  // 全局状态
+  // ============================================
+  let isLayoutEditing = false;
+  let currentTodoFilter = 'all';
+  let charts = {};
+
+  // 快捷方式配置
+  const defaultShortcuts = [
+    { id: 'approval', name: '行政审批', icon: 'fa-file-signature', color: 'blue', url: 'approval/index.html' },
+    { id: 'supervision', name: '日常监管', icon: 'fa-search', color: 'purple', url: 'supervision/index.html' },
+    { id: 'inspection', name: '检验检测', icon: 'fa-flask', color: 'green', url: 'inspection/index.html' },
+    { id: 'enforcement', name: '执法办案', icon: 'fa-gavel', color: 'red', url: 'enforcement/overview.html' },
+    { id: 'credit', name: '信用管理', icon: 'fa-star', color: 'yellow', url: 'credit/overview.html' },
+    { id: 'trace', name: '药品追溯', icon: 'fa-barcode', color: 'cyan', url: 'trace/overview.html' },
+    { id: 'pharmacy', name: '阳光药店', icon: 'fa-store', color: 'emerald', url: 'pharmacy/overview.html' },
+    { id: 'risk', name: '风险分级', icon: 'fa-chart-line', color: 'orange', url: 'risk/overview.html' },
+    { id: 'warning', name: '风险预警', icon: 'fa-bell', color: 'rose', url: 'intelligence/warning.html' },
+    { id: 'ai-query', name: 'AI 问数', icon: 'fa-robot', color: 'indigo', url: 'intelligence/ai-query.html' },
+    { id: 'report', name: '报表设计', icon: 'fa-chart-bar', color: 'teal', url: 'intelligence/report-designer.html' },
+    { id: 'datamap', name: '数据地图', icon: 'fa-map', color: 'sky', url: 'governance/datamap.html' }
+  ];
+
+  // ============================================
+  // 初始化
+  // ============================================
+  document.addEventListener('DOMContentLoaded', function() {
+    loadShortcuts();
+    loadTodos();
+    loadRecentHistory();
+    loadUrgentNotices();
+    loadTodaySchedule();
+    initCharts();
+    updateRegionStats();
+
+    console.log('个人工作台已加载');
+  });
+
+  // ============================================
+  // 快捷方式
+  // ============================================
+  function loadShortcuts() {
+    const container = document.getElementById('shortcuts-grid');
+    const userShortcuts = JSON.parse(localStorage.getItem('userShortcuts') || '[]');
+    const shortcuts = userShortcuts.length > 0 ? userShortcuts : defaultShortcuts.slice(0, 8);
+
+    container.innerHTML = shortcuts.map(s => `
+                <div class="shortcut-item flex flex-col items-center p-3 rounded-xl hover:bg-gray-50 cursor-pointer transition-colors" onclick="location.href='${s.url}'">
+                    <div class="shortcut-icon bg-${s.color}-100 text-${s.color}-600 mb-2">
+                        <i class="fas ${s.icon} text-xl"></i>
+                    </div>
+                    <span class="text-xs text-gray-700 text-center">${s.name}</span>
+                </div>
+            `).join('');
+  }
+
+  function customizeShortcuts() {
+    // 打开自定义快捷方式模态框
+    alert('自定义快捷方式功能开发中...');
+  }
+
+  // ============================================
+  // 待办事项
+  // ============================================
+  function loadTodos() {
+    const todos = MockData.generateTodoData();
+    const urgentTodos = [
+      { id: 1, type: 'approval', title: '药品经营许可证变更审批', deadline: '2024-12-18', priority: 'urgent', enterprise: '宁夏同仁堂药业' },
+      { id: 2, type: 'warning', title: '抽检不合格产品处置', deadline: '2024-12-17', priority: 'urgent', enterprise: '银川康源大药房' },
+      { id: 3, type: 'inspection', title: '飞行检查问题整改', deadline: '2024-12-20', priority: 'high', enterprise: '固原市人民医院' },
+      { id: 4, type: 'approval', title: '医疗器械注册证延续', deadline: '2024-12-22', priority: 'high', enterprise: '宁夏医疗器材公司' },
+      { id: 5, type: 'warning', title: '投诉举报核查', deadline: '2024-12-19', priority: 'normal', enterprise: '吴忠阳光药店' },
+      { id: 6, type: 'credit', title: '企业信用等级评定', deadline: '2024-12-25', priority: 'normal', enterprise: '中卫康健医院' },
+      { id: 7, type: 'case', title: '行政处罚案件审核', deadline: '2024-12-21', priority: 'high', enterprise: '石嘴山医药集团' },
+      { id: 8, type: 'inspection', title: '年度监督检查计划', deadline: '2024-12-28', priority: 'normal', enterprise: '多家企业' }
+    ];
+
+    const container = document.getElementById('todo-list');
+    const filtered = currentTodoFilter === 'all' ? urgentTodos : urgentTodos.filter(t => t.type === currentTodoFilter);
+
+    document.getElementById('today-todo-count').textContent = urgentTodos.length;
+    document.getElementById('pending-approvals').textContent = urgentTodos.filter(t => t.type === 'approval').length;
+    document.getElementById('pending-warnings').textContent = urgentTodos.filter(t => t.type === 'warning').length;
+    document.getElementById('pending-issues').textContent = urgentTodos.filter(t => t.type === 'inspection').length;
+
+    container.innerHTML = filtered.map(todo => {
+      const typeConfig = {
+        approval: { icon: 'fa-file-signature', color: 'blue', label: '审批' },
+        warning: { icon: 'fa-exclamation-triangle', color: 'orange', label: '预警' },
+        inspection: { icon: 'fa-search', color: 'purple', label: '整改' },
+        credit: { icon: 'fa-star', color: 'yellow', label: '信用' },
+        case: { icon: 'fa-gavel', color: 'red', label: '案件' }
+      };
+      const config = typeConfig[todo.type] || typeConfig.approval;
+      const priorityClass = `priority-${todo.priority}`;
+      const deadlineColor = todo.priority === 'urgent' ? 'text-red-600' : todo.priority === 'high' ? 'text-orange-600' : 'text-gray-500';
+
+      return `
+                    <div class="todo-item ${priorityClass}" onclick="handleTodo(${todo.id})">
+                        <div class="flex items-start justify-between">
+                            <div class="flex-1">
+                                <div class="flex items-center space-x-2 mb-1">
+                                    <i class="fas ${config.icon} text-${config.color}-500"></i>
+                                    <span class="text-sm font-medium text-gray-900">${todo.title}</span>
+                                </div>
+                                <div class="text-xs text-gray-500 ml-6">${todo.enterprise}</div>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-xs ${deadlineColor} font-medium">截止：${todo.deadline}</div>
+                                <div class="text-xs text-gray-400 mt-1">${config.label}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+    }).join('');
+  }
+
+  function filterTodos(filter) {
+    currentTodoFilter = filter;
+    loadTodos();
+  }
+
+  function handleTodo(id) {
+    console.log('处理待办:', id);
+    // 跳转到对应处理页面
+    const todo = MockData.generateTodoData().find(t => t.id === id) || {};
+    const targets = {
+      approval: 'approval/index.html',
+      warning: 'intelligence/warning.html',
+      inspection: 'supervision/issues.html',
+      credit: 'credit/rating.html',
+      case: 'enforcement/cases.html'
+    };
+    if (targets[todo.type]) {
+      window.location.href = targets[todo.type];
+    }
+  }
+
+  // ============================================
+  // 最近处理记录
+  // ============================================
+  function loadRecentHistory() {
+    const history = [
+      { title: '药品经营许可证新办审批', type: '行政审批', time: '2024-12-16 15:30', status: '已完成', statusClass: 'green' },
+      { title: '抽检不合格处置', type: '风险预警', time: '2024-12-16 14:15', status: '已完成', statusClass: 'green' },
+      { title: '飞行检查问题整改复核', type: '日常监管', time: '2024-12-16 11:20', status: '处理中', statusClass: 'yellow' },
+      { title: '企业信用等级调整', type: '信用管理', time: '2024-12-15 16:45', status: '已完成', statusClass: 'green' },
+      { title: '行政处罚案件审核', type: '执法办案', time: '2024-12-15 14:30', status: '已完成', statusClass: 'green' }
+    ];
+
+    const container = document.getElementById('recent-history');
+    container.innerHTML = history.map(item => `
+                <tr>
+                    <td class="px-4 py-3 whitespace-nowrap">
+                        <div class="text-sm font-medium text-gray-900">${item.title}</div>
+                    </td>
+                    <td class="px-4 py-3 whitespace-nowrap">
+                        <span class="text-sm text-gray-500">${item.type}</span>
+                    </td>
+                    <td class="px-4 py-3 whitespace-nowrap">
+                        <span class="text-sm text-gray-500">${item.time}</span>
+                    </td>
+                    <td class="px-4 py-3 whitespace-nowrap">
+                        <span class="px-2 py-1 text-xs rounded-full bg-${item.statusClass}-100 text-${item.statusClass}-800">${item.status}</span>
+                    </td>
+                </tr>
+            `).join('');
+  }
+
+  // ============================================
+  // 紧急通知
+  // ============================================
+  function loadUrgentNotices() {
+    const notices = [
+      { title: '关于开展冬季药品安全专项检查的通知', time: '2 小时前', level: 'urgent' },
+      { title: '关于更新药品经营许可审批流程的通知', time: '5 小时前', level: 'normal' },
+      { title: '关于做好年终工作总结的通知', time: '1 天前', level: 'normal' }
+    ];
+
+    const container = document.getElementById('urgent-notices');
+    container.innerHTML = notices.map(n => `
+                <div class="flex items-start space-x-3 p-3 bg-white rounded-lg border ${n.level === 'urgent' ? 'border-orange-200' : 'border-gray-200'}">
+                    ${n.level === 'urgent' ? '<i class="fas fa-exclamation-circle text-orange-500 mt-0.5"></i>' : '<i class="fas fa-info-circle text-blue-500 mt-0.5"></i>'}
+                    <div class="flex-1 min-w-0">
+                        <div class="text-sm text-gray-900 truncate">${n.title}</div>
+                        <div class="text-xs text-gray-500 mt-1">${n.time}</div>
+                    </div>
+                </div>
+            `).join('');
+  }
+
+  // ============================================
+  // 今日日程
+  // ============================================
+  function loadTodaySchedule() {
+    const schedule = [
+      { time: '09:00-10:00', title: '局务会议', location: '三楼会议室' },
+      { time: '10:30-11:30', title: '药品许可审批会', location: '审批室' },
+      { time: '14:00-16:00', title: '企业现场检查', location: '银川市兴庆区' },
+      { time: '16:30-17:30', title: '案件讨论会', location: '法制科' }
+    ];
+
+    const container = document.getElementById('today-schedule');
+    container.innerHTML = schedule.map(s => `
+                <div class="flex items-center space-x-3 p-2 bg-gray-50 rounded-lg">
+                    <div class="text-xs font-mono text-gray-600 bg-white px-2 py-1 rounded">${s.time}</div>
+                    <div class="flex-1">
+                        <div class="text-sm font-medium text-gray-900">${s.title}</div>
+                        <div class="text-xs text-gray-500">${s.location}</div>
+                    </div>
+                </div>
+            `).join('');
+  }
+
+  // ============================================
+  // 区域统计
+  // ============================================
+  function updateRegionStats() {
+    const kpiData = MockData.generateKPIData();
+    document.getElementById('region-enterprises').textContent = kpiData.totalEnterprises.toLocaleString();
+    document.getElementById('region-inspections').textContent = kpiData.inspections.toLocaleString();
+    document.getElementById('region-compliance').textContent = '97.' + Utils.randomInt(5, 9) + '%';
+    document.getElementById('region-warnings').textContent = kpiData.warnings.toLocaleString();
+  }
+
+  // ============================================
+  // 图表初始化
+  // ============================================
+  function initCharts() {
+    initWeeklyTrendChart();
+    initTypeDistributionChart();
+  }
+
+  function initWeeklyTrendChart() {
+    const chart = echarts.init(document.getElementById('weekly-trend-chart'));
+    const option = {
+      tooltip: { trigger: 'axis' },
+      grid: { top: 10, right: 10, bottom: 20, left: 35 },
+      xAxis: {
+        type: 'category',
+        data: ['周一', '周二', '周三', '周四', '周五', '周六', '周日'],
+        axisLabel: { color: '#6b7280', fontSize: 11 }
+      },
+      yAxis: {
+        type: 'value',
+        splitLine: { lineStyle: { color: '#f3f4f6' } },
+        axisLabel: { color: '#6b7280' }
+      },
+      series: [{
+        type: 'bar',
+        data: [15, 23, 18, 25, 21, 12, 8],
+        itemStyle: {
+          color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+            { offset: 0, color: '#3b82f6' },
+            { offset: 1, color: '#93c5fd' }
+          ]),
+          borderRadius: [4, 4, 0, 0]
+        },
+        barWidth: '50%'
+      }]
+    };
+    chart.setOption(option);
+    charts.weeklyTrend = chart;
+  }
+
+  function initTypeDistributionChart() {
+    const chart = echarts.init(document.getElementById('type-distribution-chart'));
+    const option = {
+      tooltip: { trigger: 'item' },
+      series: [{
+        type: 'pie',
+        radius: ['40%', '70%'],
+        center: ['50%', '50%'],
+        itemStyle: {
+          borderRadius: 4,
+          borderColor: '#fff',
+          borderWidth: 2
+        },
+        label: { show: false },
+        data: [
+          { value: 35, name: '行政审批', itemStyle: { color: '#3b82f6' } },
+          { value: 25, name: '风险预警', itemStyle: { color: '#f97316' } },
+          { value: 20, name: '日常监管', itemStyle: { color: '#10b981' } },
+          { value: 12, name: '执法办案', itemStyle: { color: '#ef4444' } },
+          { value: 8, name: '其他', itemStyle: { color: '#6b7280' } }
+        ]
+      }]
+    };
+    chart.setOption(option);
+    charts.typeDistribution = chart;
+  }
+
+  // ============================================
+  // 布局编辑
+  // ============================================
+  function toggleLayoutEdit() {
+    isLayoutEditing = !isLayoutEditing;
+    if (isLayoutEditing) {
+      document.getElementById('layout-modal').classList.remove('hidden');
+      document.getElementById('layout-modal').classList.add('flex');
+    }
+  }
+
+  function closeLayoutModal() {
+    document.getElementById('layout-modal').classList.add('hidden');
+    document.getElementById('layout-modal').classList.remove('flex');
+    isLayoutEditing = false;
+  }
+
+  function saveLayout() {
+    alert('布局已保存（演示功能）');
+    closeLayoutModal();
+  }
+
+  function showNotifications() {
+    alert('通知中心功能开发中...');
+  }
+
+  function quickReport(type) {
+    const targets = {
+      inspection: 'supervision/records.html',
+      warning: 'intelligence/warning.html',
+      case: 'enforcement/cases.html',
+      report: 'intelligence/report-designer.html'
+    };
+    if (targets[type]) {
+      window.location.href = targets[type];
+    }
+  }
+
+  // 窗口大小变化时重绘图表
+  window.addEventListener('resize', function() {
+    Object.values(charts).forEach(chart => {
+      if (chart) chart.resize();
+    });
+  });
+</script>
+</body>
+</html>

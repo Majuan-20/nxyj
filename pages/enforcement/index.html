@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head><script type="module">document.addEventListener("DOMContentLoaded",()=>{const insScript=document.createElement("script");const date=Date.now();insScript.src="/inscode_devtools_sdk.js?v="+date;insScript.type="module";document.body.appendChild(insScript);});</script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>执法办案 - 宁夏药监局数据中台</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+  <link rel="stylesheet" href="../../components/styles.css">
+  <script src="../../components/common.js"></script>
+</head>
+<body class="bg-slate-50">
+<!-- 侧边栏 -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-logo">
+      <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+      </svg>
+      <div>
+        <div class="text-lg font-bold">宁夏药监局</div>
+        <div class="text-xs text-slate-400">数据中台</div>
+      </div>
+    </div>
+  </div>
+
+  <nav class="sidebar-nav">
+    <div class="nav-section">
+      <div class="nav-section-title">总览</div>
+      <a href="../../index.html" class="nav-item">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+        <span>数据驾驶舱</span>
+      </a>
+      <a href="../workbench.html" class="nav-item">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
+        <span>个人工作台</span>
+      </a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">系统管理</div>
+      <a href="/pages/security/roles.html" class="nav-item">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+        <span>角色权限</span>
+      </a>
+      <a href="/pages/security/audit.html" class="nav-item">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        <span>操作审计</span>
+      </a>
+      <a href="../ops/sync.html" class="nav-item">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+        <span>运维监控</span>
+      </a>
+      <a href="/pages/governance/lineage.html" class="nav-item">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+        <span>数据血缘</span>
+      </a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">核心业务</div>
+      <a href="/pages/approval/index.html" class="nav-item">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        <span>行政审批</span>
+      </a>
+      <a href="../supervision/index.html" class="nav-item">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
+        <span>日常监管</span>
+      </a>
+      <a href="../inspection/index.html" class="nav-item">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/></svg>
+        <span>检验检测</span>
+      </a>
+      <a href="../enforcement/index.html" class="nav-item active">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"/></svg>
+        <span>执法办案</span>
+      </a>
+      <a href="../credit/index.html" class="nav-item">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+        <span>信用管理</span>
+      </a>
+      <a href="../trace/index.html" class="nav-item">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/></svg>
+        <span>药品追溯</span>
+      </a>
+      <a href="../pharmacy/index.html" class="nav-item">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/></svg>
+        <span>阳光药店</span>
+      </a>
+      <a href="../risk/index.html" class="nav-item">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+        <span>风险分级</span>
+      </a>
+    </div>
+  </nav>
+</aside>
+
+<!-- 主内容区 -->
+<div class="content-with-sidebar">
+  <!-- 顶部导航 -->
+  <header class="top-header">
+    <div class="header-left">
+      <div class="breadcrumb">
+        <a href="../../index.html">首页</a>
+        <span class="breadcrumb-separator">/</span>
+        <span>执法办案</span>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="user-menu">
+        <div class="user-avatar">张</div>
+        <div class="user-info hidden md:block">
+          <div class="user-name">张管理员</div>
+          <div class="user-role">系统管理员</div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- 页面内容 -->
+  <main class="main-content">
+    <!-- 页面标题 -->
+    <div class="page-header">
+      <h1 class="page-title">执法办案</h1>
+      <p class="page-subtitle">药品、医疗器械、化妆品违法违规案件查处全流程管理</p>
+    </div>
+
+    <!-- KPI卡片 -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+      <div class="card p-5">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-sm text-slate-500">本月立案</span>
+          <span class="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded-full">+18%</span>
+        </div>
+        <div class="text-3xl font-bold text-slate-900 font-mono">36</div>
+        <div class="text-xs text-slate-400 mt-1">件</div>
+      </div>
+      <div class="card p-5">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-sm text-slate-500">在办案件</span>
+          <span class="text-xs px-2 py-1 bg-amber-100 text-amber-700 rounded-full">进行中</span>
+        </div>
+        <div class="text-3xl font-bold text-slate-900 font-mono">18</div>
+        <div class="text-xs text-slate-400 mt-1">件</div>
+      </div>
+      <div class="card p-5">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-sm text-slate-500">本月结案</span>
+          <span class="text-xs px-2 py-1 bg-emerald-100 text-emerald-700 rounded-full">+12%</span>
+        </div>
+        <div class="text-3xl font-bold text-slate-900 font-mono">29</div>
+        <div class="text-xs text-slate-400 mt-1">件</div>
+      </div>
+      <div class="card p-5">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-sm text-slate-500">处罚金额</span>
+          <span class="text-xs px-2 py-1 bg-red-100 text-red-700 rounded-full">需关注</span>
+        </div>
+        <div class="text-3xl font-bold text-red-600 font-mono">26.8</div>
+        <div class="text-xs text-slate-400 mt-1">万元</div>
+      </div>
+    </div>
+
+    <!-- 筛选栏 -->
+    <div class="filter-bar">
+      <div class="filter-group">
+        <label class="filter-label">时间范围</label>
+        <select class="form-select" id="timeFilter">
+          <option value="today">今日</option>
+          <option value="week">本周</option>
+          <option value="month" selected>本月</option>
+          <option value="year">本年</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label class="filter-label">案件类型</label>
+        <select class="form-select" id="typeFilter">
+          <option value="">全部类型</option>
+          <option value="drug">药品违法</option>
+          <option value="device">医疗器械违法</option>
+          <option value="cosmetic">化妆品违法</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label class="filter-label">办案状态</label>
+        <select class="form-select" id="statusFilter">
+          <option value="">全部状态</option>
+          <option value="registered">已立案</option>
+          <option value="investigating">调查中</option>
+          <option value="adjudicating">审理中</option>
+          <option value="completed">已结案</option>
+          <option value="closed">已销案</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label class="filter-label">搜索</label>
+        <input type="text" class="form-input" placeholder="案件编号/企业名称" id="searchInput">
+      </div>
+      <div class="flex gap-2">
+        <button class="btn btn-primary" onclick="searchData()">
+          <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+          </svg>
+          查询
+        </button>
+        <button class="btn btn-secondary" onclick="resetFilter()">重置</button>
+      </div>
+    </div>
+
+    <!-- 图表区域 -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">办案趋势</span>
+          <div class="flex gap-2">
+            <button class="btn btn-sm btn-secondary">近7天</button>
+            <button class="btn btn-sm btn-primary">近30天</button>
+          </div>
+        </div>
+        <div class="card-body">
+          <div id="trendChart" style="height: 280px;"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">案件类型分布</span>
+        </div>
+        <div class="card-body">
+          <div id="typeChart" style="height: 280px;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 数据表格 -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">案件列表</span>
+        <div class="flex gap-2">
+          <button class="btn btn-secondary btn-sm" onclick="exportData()">
+            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+            </svg>
+            导出
+          </button>
+        </div>
+      </div>
+      <div class="card-body">
+        <table class="data-table">
+          <thead>
+          <tr>
+            <th>案件编号</th>
+            <th>涉事企业</th>
+            <th>案件类型</th>
+            <th>立案日期</th>
+            <th>当前阶段</th>
+            <th>办案状态</th>
+            <th>处罚金额(元)</th>
+            <th>操作</th>
+          </tr>
+          </thead>
+          <tbody id="dataTable">
+          <!-- 数据由JS生成 -->
+          </tbody>
+        </table>
+
+        <!-- 分页 -->
+        <div class="pagination">
+          <div class="pagination-info">显示 1-10 条，共 36 条</div>
+          <div class="pagination-controls">
+            <button class="pagination-btn" disabled>
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+              </svg>
+            </button>
+            <button class="pagination-btn active">1</button>
+            <button class="pagination-btn">2</button>
+            <button class="pagination-btn">3</button>
+            <span class="text-slate-400">...</span>
+            <button class="pagination-btn">4</button>
+            <button class="pagination-btn">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- 详情弹窗 -->
+<div id="detailModal" class="modal-backdrop">
+  <div class="modal" style="max-width: 800px;">
+    <div class="modal-header">
+      <h3 class="modal-title">案件详情</h3>
+      <div class="modal-close" onclick="Modal.close('detailModal')">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </div>
+    </div>
+    <div class="modal-body" id="detailContent">
+      <!-- 动态内容 -->
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="Modal.close('detailModal')">关闭</button>
+      <button class="btn btn-primary" onclick="urgeProcess()">督办</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // 初始化
+  document.addEventListener('DOMContentLoaded', () => {
+    initCharts();
+    loadTableData();
+  });
+
+  // 初始化图表
+  function initCharts() {
+    initTrendChart();
+    initTypeChart();
+  }
+
+  // 趋势图表
+  function initTrendChart() {
+    const chart = echarts.init(document.getElementById('trendChart'));
+    const option = {
+      ...ChartTheme.commonOption,
+      tooltip: { trigger: 'axis' },
+      legend: { data: ['立案', '结案'], bottom: 0 },
+      grid: { left: 10, right: 10, top: 20, bottom: 40, containLabel: true },
+      xAxis: {
+        type: 'category',
+        data: ['12/01', '12/05', '12/10', '12/15', '12/20', '12/25', '12/30'],
+        axisLine: { lineStyle: { color: '#E2E8F0' } },
+        axisLabel: { color: '#64748B' }
+      },
+      yAxis: {
+        type: 'value',
+        axisLine: { show: false },
+        splitLine: { lineStyle: { color: '#F1F5F9' } },
+        axisLabel: { color: '#64748B' }
+      },
+      series: [
+        {
+          name: '立案',
+          type: 'line',
+          smooth: true,
+          data: [3, 5, 4, 6, 8, 5, 7],
+          lineStyle: { color: '#EF4444', width: 2 },
+          areaStyle: {
+            color: {
+              type: 'linear',
+              x: 0, y: 0, x2: 0, y2: 1,
+              colorStops: [
+                { offset: 0, color: 'rgba(239, 68, 68, 0.3)' },
+                { offset: 1, color: 'rgba(239, 68, 68, 0.05)' }
+              ]
+            }
+          }
+        },
+        {
+          name: '结案',
+          type: 'line',
+          smooth: true,
+          data: [2, 3, 5, 4, 6, 4, 5],
+          lineStyle: { color: '#10B981', width: 2 }
+        }
+      ]
+    };
+    chart.setOption(option);
+    window.addEventListener('resize', () => chart.resize());
+  }
+
+  // 类型分布图表
+  function initTypeChart() {
+    const chart = echarts.init(document.getElementById('typeChart'));
+    const option = {
+      ...ChartTheme.commonOption,
+      tooltip: { trigger: 'item', formatter: '{b}: {c}件 ({d}%)' },
+      legend: { orient: 'vertical', right: 20, top: 'center' },
+      series: [{
+        type: 'pie',
+        radius: ['40%', '70%'],
+        center: ['35%', '50%'],
+        avoidLabelOverlap: false,
+        label: { show: false },
+        data: [
+          { value: 16, name: '药品违法', itemStyle: { color: '#EF4444' } },
+          { value: 11, name: '医疗器械违法', itemStyle: { color: '#F59E0B' } },
+          { value: 7, name: '化妆品违法', itemStyle: { color: '#8B5CF6' } },
+          { value: 2, name: '其他', itemStyle: { color: '#64748B' } }
+        ]
+      }]
+    };
+    chart.setOption(option);
+    window.addEventListener('resize', () => chart.resize());
+  }
+
+  // 加载表格数据
+  function loadTableData() {
+    const data = [
+      { id: 'ZF202412001', name: '宁夏康泰药业有限公司', type: '药品违法', date: '2024-12-18', node: '调查取证', status: 'investigating', amount: 50000 },
+      { id: 'ZF202412002', name: '银川惠民大药房连锁有限公司', type: '药品违法', date: '2024-12-17', node: '案件审理', status: 'adjudicating', amount: 35000 },
+      { id: 'ZF202412003', name: '石嘴山医疗器械有限公司', type: '医疗器械违法', date: '2024-12-16', node: '行政处罚', status: 'adjudicating', amount: 80000 },
+      { id: 'ZF202412004', name: '吴忠市美丽化妆品有限公司', type: '化妆品违法', date: '2024-12-15', node: '立案审查', status: 'registered', amount: 15000 },
+      { id: 'ZF202412005', name: '固原市康宁药店', type: '药品违法', date: '2024-12-14', node: '已结案', status: 'completed', amount: 20000 },
+      { id: 'ZF202412006', name: '中卫市医疗器械经营部', type: '医疗器械违法', date: '2024-12-13', node: '调查取证', status: 'investigating', amount: 18000 },
+      { id: 'ZF202412007', name: '银川市康美化妆品店', type: '化妆品违法', date: '2024-12-12', node: '已销案', status: 'closed', amount: 0 },
+      { id: 'ZF202412008', name: '宁夏华康药业有限公司', type: '药品违法', date: '2024-12-11', node: '调查取证', status: 'investigating', amount: 65000 },
+      { id: 'ZF202412009', name: '石嘴山市医疗器械厂', type: '医疗器械违法', date: '2024-12-10', node: '案件审理', status: 'adjudicating', amount: 42000 },
+      { id: 'ZF202412010', name: '吴忠市康泰大药房', type: '药品违法', date: '2024-12-09', node: '已结案', status: 'completed', amount: 28000 }
+    ];
+
+    const tbody = document.getElementById('dataTable');
+    tbody.innerHTML = data.map(item => {
+      // 状态标签样式
+      const statusBadge = item.status === 'completed' ? '<span class="badge badge-success">已结案</span>' :
+        item.status === 'investigating' ? '<span class="badge badge-info">调查中</span>' :
+          item.status === 'adjudicating' ? '<span class="badge badge-warning">审理中</span>' :
+            item.status === 'registered' ? '<span class="badge badge-primary">已立案</span>' :
+              '<span class="badge badge-secondary">已销案</span>';
+
+      // 处罚金额格式化
+      const amountText = item.amount === 0 ? '-' : item.amount.toLocaleString('zh-CN');
+      const amountClass = item.amount > 50000 ? 'text-red-600 font-medium' : 'text-slate-600';
+
+      return `
+          <tr>
+            <td class="font-mono text-sm">${item.id}</td>
+            <td>${item.name}</td>
+            <td>${item.type}</td>
+            <td>${item.date}</td>
+            <td>${item.node}</td>
+            <td>${statusBadge}</td>
+            <td class="${amountClass}">${amountText}</td>
+            <td>
+              <button class="btn btn-sm btn-ghost" onclick="viewDetail('${item.id}')">查看</button>
+              ${(item.status === 'investigating' || item.status === 'adjudicating') ?
+        '<button class="btn btn-sm btn-danger ml-2" onclick="urgeProcess()">督办</button>' : ''}
+            </td>
+          </tr>
+        `;
+    }).join('');
+  }
+
+  // 查看详情
+  function viewDetail(id) {
+    const content = document.getElementById('detailContent');
+    content.innerHTML = `
+        <div class="space-y-6">
+          <!-- 基本信息 -->
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="text-xs text-slate-500 uppercase">案件编号</label>
+              <div class="text-sm font-mono font-medium">${id}</div>
+            </div>
+            <div>
+              <label class="text-xs text-slate-500 uppercase">立案日期</label>
+              <div class="text-sm">2024-12-18</div>
+            </div>
+            <div>
+              <label class="text-xs text-slate-500 uppercase">涉事企业</label>
+              <div class="text-sm font-medium">宁夏康泰药业有限公司</div>
+            </div>
+            <div>
+              <label class="text-xs text-slate-500 uppercase">案件类型</label>
+              <div class="text-sm">销售劣药</div>
+            </div>
+            <div>
+              <label class="text-xs text-slate-500 uppercase">涉案金额</label>
+              <div class="text-sm font-medium text-red-600">50,000.00 元</div>
+            </div>
+            <div>
+              <label class="text-xs text-slate-500 uppercase">办案人员</label>
+              <div class="text-sm">李执法、王监察</div>
+            </div>
+          </div>
+
+          <!-- 办案流程 -->
+          <div>
+            <label class="text-xs text-slate-500 uppercase mb-3 block">办案流程</label>
+            <div class="relative">
+              <div class="absolute left-4 top-0 bottom-0 w-0.5 bg-slate-200"></div>
+              <div class="space-y-4">
+                <div class="flex items-start gap-3 relative">
+                  <div class="w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center text-white text-xs z-10">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                  </div>
+                  <div>
+                    <div class="text-sm font-medium">案件上报</div>
+                    <div class="text-xs text-slate-500">2024-12-18 09:30 · 市场巡查发现</div>
+                  </div>
+                </div>
+                <div class="flex items-start gap-3 relative">
+                  <div class="w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center text-white text-xs z-10">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                  </div>
+                  <div>
+                    <div class="text-sm font-medium">立案审批</div>
+                    <div class="text-xs text-slate-500">2024-12-18 14:20 · 张科长审批通过</div>
+                  </div>
+                </div>
+                <div class="flex items-start gap-3 relative">
+                  <div class="w-8 h-8 rounded-full bg-sky-500 flex items-center justify-center text-white text-xs z-10 ring-4 ring-sky-100">
+                    <span class="text-xs">3</span>
+                  </div>
+                  <div>
+                    <div class="text-sm font-medium text-sky-600">调查取证（当前）</div>
+                    <div class="text-xs text-slate-500">已完成现场检查，待固定证据</div>
+                  </div>
+                </div>
+                <div class="flex items-start gap-3 relative">
+                  <div class="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-slate-400 text-xs z-10">
+                    <span class="text-xs">4</span>
+                  </div>
+                  <div>
+                    <div class="text-sm text-slate-400">案件审理</div>
+                    <div class="text-xs text-slate-400">待办理</div>
+                  </div>
+                </div>
+                <div class="flex items-start gap-3 relative">
+                  <div class="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-slate-400 text-xs z-10">
+                    <span class="text-xs">5</span>
+                  </div>
+                  <div>
+                    <div class="text-sm text-slate-400">行政处罚</div>
+                    <div class="text-xs text-slate-400">待办理</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 案件详情 -->
+          <div>
+            <label class="text-xs text-slate-500 uppercase mb-3 block">案件详情</label>
+            <div class="bg-slate-50 p-3 rounded-md text-sm text-slate-700 border border-slate-200">
+              <p class="mb-2">经市场巡查发现，宁夏康泰药业有限公司于2024年12月期间，在未取得合法资质的情况下，销售批号为20241001的劣药"复方甘草片"，涉案数量500盒，涉案金额5万元。</p>
+              <p>现场检查时发现该企业存在药品储存条件不达标、购销记录不完整等问题，已依法对相关药品进行查封扣押，目前正在进一步调查取证中。</p>
+            </div>
+          </div>
+
+          <!-- 证据清单 -->
+          <div>
+            <label class="text-xs text-slate-500 uppercase mb-3 block">证据材料</label>
+            <div class="space-y-2">
+              <div class="flex items-center gap-2 text-sm">
+                <svg class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                <span>现场检查笔录</span>
+              </div>
+              <div class="flex items-center gap-2 text-sm">
+                <svg class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                <span>涉案药品查封清单</span>
+              </div>
+              <div class="flex items-center gap-2 text-sm">
+                <svg class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                <span>企业营业执照复印件</span>
+              </div>
+              <div class="flex items-center gap-2 text-sm">
+                <svg class="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                <span>药品检验报告（待出具）</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    Modal.open('detailModal');
+  }
+
+  // 督办
+  function urgeProcess() {
+    showToast('督办通知已发送', 'success');
+    Modal.close('detailModal');
+  }
+
+  // 搜索
+  function searchData() {
+    showToast('查询中...', 'info');
+    setTimeout(() => {
+      loadTableData();
+      showToast('查询完成', 'success');
+    }, 500);
+  }
+
+  // 重置筛选
+  function resetFilter() {
+    document.getElementById('timeFilter').value = 'month';
+    document.getElementById('typeFilter').value = '';
+    document.getElementById('statusFilter').value = '';
+    document.getElementById('searchInput').value = '';
+    loadTableData();
+    showToast('筛选已重置', 'success');
+  }
+
+  // 导出数据
+  function exportData() {
+    showToast('正在导出Excel...', 'info');
+    setTimeout(() => {
+      showToast('导出成功', 'success');
+    }, 1000);
+  }
+
+  // Toast提示
+  function showToast(message, type = 'info') {
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.innerHTML = `
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+        </svg>
+        <span>${message}</span>
+      `;
+
+    let container = document.querySelector('.toast-container');
+    if (!container) {
+      container = document.createElement('div');
+      container.className = 'toast-container';
+      document.body.appendChild(container);
+    }
+
+    container.appendChild(toast);
+
+    setTimeout(() => {
+      toast.style.opacity = '0';
+      toast.style.transform = 'translateX(100%)';
+      setTimeout(() => toast.remove(), 300);
+    }, 3000);
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head><script type="module">document.addEventListener("DOMContentLoaded",()=>{const insScript=document.createElement("script");const date=Date.now();insScript.src="/inscode_devtools_sdk.js?v="+date;insScript.type="module";document.body.appendChild(insScript);});</script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>智能风险预警 - 宁夏药监局数据中台</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+  <link rel="stylesheet" href="../../components/styles.css">
+  <script src="../../components/common.js"></script>
+</head>
+<body class="bg-slate-50">
+<!-- 侧边栏 -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-logo">
+      <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+      </svg>
+      <div>
+        <div class="text-lg font-bold">宁夏药监局</div>
+        <div class="text-xs text-slate-400">数据中台</div>
+      </div>
+    </div>
+  </div>
+
+  <nav class="sidebar-nav">
+    <div class="nav-section">
+      <div class="nav-section-title">总览</div>
+      <a href="../../index.html" class="nav-item">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+        <span>数据驾驶舱</span>
+      </a>
+
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">智能风险预警</div>
+
+      <a href="warning.html" class="nav-item active">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+        <span>智能预警</span>
+      </a>
+    </div>
+  </nav>
+</aside>
+
+<!-- 主内容区 -->
+<div class="content-with-sidebar">
+  <!-- 顶部导航 -->
+  <header class="top-header">
+    <div class="header-left">
+      <div class="breadcrumb">
+        <a href="../../index.html">首页</a>
+        <span class="breadcrumb-separator">/</span>
+        <span>智能风险预警</span>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="user-menu">
+        <div class="user-avatar">张</div>
+        <div class="user-info hidden md:block">
+          <div class="user-name">张管理员</div>
+          <div class="user-role">系统管理员</div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- 页面内容 -->
+  <main class="main-content">
+    <!-- 页面标题 -->
+    <div class="page-header">
+      <h1 class="page-title">智能风险预警中心</h1>
+      <p class="page-subtitle">多维度风险监测、智能预警与处置闭环管理</p>
+    </div>
+
+    <!-- 预警总览 KPI -->
+    <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+      <div class="card p-5 border-l-4 border-l-red-500">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-sm text-slate-500">重大预警</span>
+          <svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+          </svg>
+        </div>
+        <div class="text-3xl font-bold text-red-600 font-mono">8</div>
+        <div class="text-xs text-slate-400 mt-1">待处置</div>
+      </div>
+      <div class="card p-5 border-l-4 border-l-orange-500">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-sm text-slate-500">严重预警</span>
+          <svg class="w-5 h-5 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+          </svg>
+        </div>
+        <div class="text-3xl font-bold text-orange-600 font-mono">23</div>
+        <div class="text-xs text-slate-400 mt-1">待处置</div>
+      </div>
+      <div class="card p-5 border-l-4 border-l-amber-500">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-sm text-slate-500">较重预警</span>
+          <svg class="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+          </svg>
+        </div>
+        <div class="text-3xl font-bold text-amber-600 font-mono">56</div>
+        <div class="text-xs text-slate-400 mt-1">待处置</div>
+      </div>
+      <div class="card p-5 border-l-4 border-l-emerald-500">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-sm text-slate-500">一般预警</span>
+          <svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+          </svg>
+        </div>
+        <div class="text-3xl font-bold text-emerald-600 font-mono">142</div>
+        <div class="text-xs text-slate-400 mt-1">待处置</div>
+      </div>
+      <div class="card p-5 border-l-4 border-l-blue-500">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-sm text-slate-500">今日新增</span>
+          <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+          </svg>
+        </div>
+        <div class="text-3xl font-bold text-slate-900 font-mono">37</div>
+        <div class="text-xs text-slate-400 mt-1">较昨日 +12%</div>
+      </div>
+    </div>
+
+    <!-- 筛选栏 -->
+    <div class="filter-bar">
+      <div class="filter-group">
+        <label class="filter-label">预警等级</label>
+        <select class="form-select" id="levelFilter">
+          <option value="">全部等级</option>
+          <option value="critical">重大</option>
+          <option value="high">严重</option>
+          <option value="medium">较重</option>
+          <option value="normal">一般</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label class="filter-label">预警类型</label>
+        <select class="form-select" id="typeFilter">
+          <option value="">全部类型</option>
+          <option value="quality">质量异常</option>
+          <option value="license">证照过期</option>
+          <option value="inspection">抽检不合格</option>
+          <option value="complaint">投诉举报</option>
+          <option value="risk">风险评分异常</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label class="filter-label">处置状态</label>
+        <select class="form-select" id="statusFilter">
+          <option value="">全部状态</option>
+          <option value="pending">未处置</option>
+          <option value="processing">处置中</option>
+          <option value="completed">已处置</option>
+          <option value="ignored">已忽略</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label class="filter-label">所属区域</label>
+        <select class="form-select" id="regionFilter">
+          <option value="">全部区域</option>
+          <option value="640100">银川市</option>
+          <option value="640200">石嘴山市</option>
+          <option value="640300">吴忠市</option>
+          <option value="640400">固原市</option>
+          <option value="640500">中卫市</option>
+        </select>
+      </div>
+      <div class="flex gap-2">
+        <button class="btn btn-primary" onclick="searchData()">
+          <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+          </svg>
+          查询
+        </button>
+        <button class="btn btn-secondary" onclick="resetFilter()">重置</button>
+      </div>
+    </div>
+
+    <!-- 图表区域 -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">预警趋势分析</span>
+          <div class="flex gap-2">
+            <button class="btn btn-sm btn-secondary">近 7 天</button>
+            <button class="btn btn-sm btn-primary">近 30 天</button>
+          </div>
+        </div>
+        <div class="card-body">
+          <div id="trendChart" style="height: 280px;"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">预警类型分布</span>
+        </div>
+        <div class="card-body">
+          <div id="typeChart" style="height: 280px;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 预警列表 -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">预警列表</span>
+        <div class="flex gap-2">
+          <button class="btn btn-secondary btn-sm" onclick="exportData()">
+            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+            </svg>
+            导出
+          </button>
+          <button class="btn btn-primary btn-sm" onclick="batchProcess()">
+            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
+            </svg>
+            批量处置
+          </button>
+          <button class="btn btn-ghost btn-sm" onclick="openRuleConfig()">
+            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+            </svg>
+            规则配置
+          </button>
+        </div>
+      </div>
+      <div class="card-body">
+        <table class="data-table">
+          <thead>
+          <tr>
+            <th><input type="checkbox" class="form-checkbox" onchange="toggleAll(this)"></th>
+            <th>预警编号</th>
+            <th>预警标题</th>
+            <th>预警等级</th>
+            <th>预警类型</th>
+            <th>涉及企业</th>
+            <th>所属区域</th>
+            <th>触发时间</th>
+            <th>处置状态</th>
+            <th>操作</th>
+          </tr>
+          </thead>
+          <tbody id="dataTable">
+          <!-- 数据由 JS 生成 -->
+          </tbody>
+        </table>
+
+        <!-- 分页 -->
+        <div class="pagination">
+          <div class="pagination-info">显示 1-10 条，共 229 条</div>
+          <div class="pagination-controls">
+            <button class="pagination-btn" disabled>
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+              </svg>
+            </button>
+            <button class="pagination-btn active">1</button>
+            <button class="pagination-btn">2</button>
+            <button class="pagination-btn">3</button>
+            <span class="text-slate-400">...</span>
+            <button class="pagination-btn">23</button>
+            <button class="pagination-btn">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- 预警详情弹窗 -->
+<div id="detailModal" class="modal-backdrop">
+  <div class="modal" style="max-width: 900px;">
+    <div class="modal-header">
+      <h3 class="modal-title">预警详情</h3>
+      <div class="modal-close" onclick="Modal.close('detailModal')">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </div>
+    </div>
+    <div class="modal-body" id="detailContent">
+      <!-- 动态内容 -->
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="Modal.close('detailModal')">关闭</button>
+      <button class="btn btn-primary" onclick="processWarning()">立即处置</button>
+    </div>
+  </div>
+</div>
+
+<!-- 处置表单弹窗 -->
+<div id="processModal" class="modal-backdrop">
+  <div class="modal" style="max-width: 700px;">
+    <div class="modal-header">
+      <h3 class="modal-title">预警处置</h3>
+      <div class="modal-close" onclick="Modal.close('processModal')">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </div>
+    </div>
+    <div class="modal-body">
+      <div class="space-y-4">
+        <div class="form-group">
+          <label class="form-label">处置方式</label>
+          <select class="form-select" id="processType">
+            <option value="inspect">现场核查</option>
+            <option value="interview">约谈企业</option>
+            <option value="notice">责令整改</option>
+            <option value="penalty">立案查处</option>
+            <option value="ignore">确认误报</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">处置说明</label>
+          <textarea class="form-input" rows="4" placeholder="请填写处置措施和情况说明..."></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">附件上传</label>
+          <input type="file" class="form-input" multiple>
+        </div>
+        <div class="form-group">
+          <label class="form-label">处置期限</label>
+          <input type="date" class="form-input" id="deadline">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="Modal.close('processModal')">取消</button>
+      <button class="btn btn-primary" onclick="submitProcess()">提交处置</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // 初始化
+  document.addEventListener('DOMContentLoaded', () => {
+    initCharts();
+    loadTableData();
+  });
+
+  // 初始化图表
+  function initCharts() {
+    initTrendChart();
+    initTypeChart();
+  }
+
+  // 预警趋势图
+  function initTrendChart() {
+    const chart = echarts.init(document.getElementById('trendChart'));
+    const option = {
+      ...ChartTheme.commonOption,
+      tooltip: { trigger: 'axis' },
+      legend: { data: ['重大', '严重', '较重', '一般'], bottom: 0 },
+      grid: { left: 10, right: 10, top: 20, bottom: 40, containLabel: true },
+      xAxis: {
+        type: 'category',
+        data: ['12/01', '12/05', '12/10', '12/15', '12/20', '12/25', '12/30'],
+        axisLine: { lineStyle: { color: '#E2E8F0' } },
+        axisLabel: { color: '#64748B' }
+      },
+      yAxis: {
+        type: 'value',
+        axisLine: { show: false },
+        splitLine: { lineStyle: { color: '#F1F5F9' } },
+        axisLabel: { color: '#64748B' }
+      },
+      series: [
+        {
+          name: '重大',
+          type: 'line',
+          smooth: true,
+          stack: 'Total',
+          data: [2, 3, 1, 4, 2, 3, 2],
+          lineStyle: { color: '#DC2626', width: 2 },
+          areaStyle: { color: '#DC2626' }
+        },
+        {
+          name: '严重',
+          type: 'line',
+          smooth: true,
+          stack: 'Total',
+          data: [8, 10, 7, 12, 9, 11, 8],
+          lineStyle: { color: '#F97316', width: 2 },
+          areaStyle: { color: '#F97316' }
+        },
+        {
+          name: '较重',
+          type: 'line',
+          smooth: true,
+          stack: 'Total',
+          data: [18, 22, 19, 25, 21, 23, 20],
+          lineStyle: { color: '#F59E0B', width: 2 },
+          areaStyle: { color: '#F59E0B' }
+        },
+        {
+          name: '一般',
+          type: 'line',
+          smooth: true,
+          stack: 'Total',
+          data: [45, 52, 48, 58, 50, 55, 47],
+          lineStyle: { color: '#10B981', width: 2 },
+          areaStyle: { color: '#10B981' }
+        }
+      ]
+    };
+    chart.setOption(option);
+    window.addEventListener('resize', () => chart.resize());
+  }
+
+  // 预警类型分布图
+  function initTypeChart() {
+    const chart = echarts.init(document.getElementById('typeChart'));
+    const option = {
+      ...ChartTheme.commonOption,
+      tooltip: { trigger: 'item', formatter: '{b}: {c}项 ({d}%)' },
+      legend: { orient: 'vertical', right: 20, top: 'center' },
+      series: [{
+        type: 'pie',
+        radius: ['40%', '70%'],
+        center: ['35%', '50%'],
+        avoidLabelOverlap: false,
+        label: { show: false },
+        data: [
+          { value: 78, name: '质量异常', itemStyle: { color: '#0EA5E9' } },
+          { value: 52, name: '证照过期', itemStyle: { color: '#10B981' } },
+          { value: 45, name: '抽检不合格', itemStyle: { color: '#F59E0B' } },
+          { value: 38, name: '投诉举报', itemStyle: { color: '#8B5CF6' } },
+          { value: 16, name: '风险评分异常', itemStyle: { color: '#64748B' } }
+        ]
+      }]
+    };
+    chart.setOption(option);
+    window.addEventListener('resize', () => chart.resize());
+  }
+
+  // 加载表格数据
+  function loadTableData() {
+    const data = [
+      { id: 'YJ202412001', title: '药品抽检不合格预警', level: 'critical', levelText: '重大', type: 'quality', typeText: '质量异常', enterprise: '宁夏康泰药业有限公司', region: '银川市', time: '2024-12-18 14:30', status: 'pending', statusText: '未处置' },
+      { id: 'YJ202412002', title: '经营许可证即将过期', level: 'high', levelText: '严重', type: 'license', typeText: '证照过期', enterprise: '银川惠民大药房连锁有限公司', region: '银川市', time: '2024-12-18 11:20', status: 'processing', statusText: '处置中' },
+      { id: 'YJ202412003', title: '化妆品重金属超标', level: 'critical', levelText: '重大', type: 'quality', typeText: '质量异常', enterprise: '广州美化妆品有限公司', region: '吴忠市', time: '2024-12-17 16:45', status: 'pending', statusText: '未处置' },
+      { id: 'YJ202412004', title: '医疗器械不良事件报告', level: 'high', levelText: '严重', type: 'complaint', typeText: '投诉举报', enterprise: '石嘴山医疗器械有限公司', region: '石嘴山市', time: '2024-12-17 09:15', status: 'completed', statusText: '已处置' },
+      { id: 'YJ202412005', title: '企业风险评分骤升', level: 'medium', levelText: '较重', type: 'risk', typeText: '风险评分', enterprise: '固原市康宁药店', region: '固原市', time: '2024-12-16 13:50', status: 'pending', statusText: '未处置' },
+      { id: 'YJ202412006', title: '执业药师不在岗预警', level: 'normal', levelText: '一般', type: 'license', typeText: '证照过期', enterprise: '中卫市康健大药房', region: '中卫市', time: '2024-12-16 10:30', status: 'processing', statusText: '处置中' },
+      { id: 'YJ202412007', title: '冷链药品温度异常', level: 'high', levelText: '严重', type: 'quality', typeText: '质量异常', enterprise: '银川市华美医药公司', region: '银川市', time: '2024-12-15 15:20', status: 'pending', statusText: '未处置' },
+      { id: 'YJ202412008', title: '消费者投诉举报增多', level: 'medium', levelText: '较重', type: 'complaint', typeText: '投诉举报', enterprise: '宁夏华康药业有限公司', region: '银川市', time: '2024-12-15 11:10', status: 'completed', statusText: '已处置' },
+      { id: 'YJ202412009', title: 'GSP 认证到期预警', level: 'normal', levelText: '一般', type: 'license', typeText: '证照过期', enterprise: '石嘴山市第一人民医院', region: '石嘴山市', time: '2024-12-14 14:00', status: 'pending', statusText: '未处置' },
+      { id: 'YJ202412010', title: '药品不良反应聚集性信号', level: 'critical', levelText: '重大', type: 'quality', typeText: '质量异常', enterprise: '吴忠市康泰大药房', region: '吴忠市', time: '2024-12-14 09:30', status: 'processing', statusText: '处置中' }
+    ];
+
+    const tbody = document.getElementById('dataTable');
+    tbody.innerHTML = data.map(item => {
+      const levelColors = {
+        critical: 'bg-red-500',
+        high: 'bg-orange-500',
+        medium: 'bg-amber-500',
+        normal: 'bg-emerald-500'
+      };
+
+      const statusBadge = item.status === 'completed' ? '<span class="badge badge-success">已处置</span>' :
+        item.status === 'processing' ? '<span class="badge badge-info">处置中</span>' :
+          item.status === 'ignored' ? '<span class="badge badge-neutral">已忽略</span>' :
+            '<span class="badge badge-danger">未处置</span>';
+
+      return `
+          <tr>
+            <td><input type="checkbox" class="form-checkbox" data-id="${item.id}"></td>
+            <td class="font-mono text-sm">${item.id}</td>
+            <td>
+              <div class="flex items-center gap-2">
+                <div class="w-2 h-2 rounded-full ${levelColors[item.level]}"></div>
+                <span class="font-medium">${item.title}</span>
+              </div>
+            </td>
+            <td><span class="badge badge-${item.level === 'critical' ? 'danger' : item.level === 'high' ? 'risk-high' : item.level === 'medium' ? 'risk-medium' : 'risk-normal'}">${item.levelText}</span></td>
+            <td>${item.typeText}</td>
+            <td>${item.enterprise}</td>
+            <td>${item.region}</td>
+            <td>${item.time}</td>
+            <td>${statusBadge}</td>
+            <td>
+              <button class="btn btn-sm btn-ghost" onclick="viewDetail('${item.id}')">查看</button>
+              ${item.status === 'pending' ? '<button class="btn btn-sm btn-primary ml-2" onclick="openProcess(\'' + item.id + '\')">处置</button>' : ''}
+            </td>
+          </tr>
+        `;
+    }).join('');
+  }
+
+  // 查看详情
+  function viewDetail(id) {
+    const content = document.getElementById('detailContent');
+    content.innerHTML = `
+        <div class="space-y-6">
+          <!-- 基本信息 -->
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="text-xs text-slate-500 uppercase">预警编号</label>
+              <div class="text-sm font-mono font-medium">${id}</div>
+            </div>
+            <div>
+              <label class="text-xs text-slate-500 uppercase">触发时间</label>
+              <div class="text-sm">2024-12-18 14:30</div>
+            </div>
+            <div>
+              <label class="text-xs text-slate-500 uppercase">预警标题</label>
+              <div class="text-sm font-medium">药品抽检不合格预警</div>
+            </div>
+            <div>
+              <label class="text-xs text-slate-500 uppercase">预警等级</label>
+              <div><span class="badge badge-danger">重大</span></div>
+            </div>
+            <div>
+              <label class="text-xs text-slate-500 uppercase">预警类型</label>
+              <div class="text-sm">质量异常</div>
+            </div>
+            <div>
+              <label class="text-xs text-slate-500 uppercase">数据来源</label>
+              <div class="text-sm">检验检测系统</div>
+            </div>
+            <div>
+              <label class="text-xs text-slate-500 uppercase">涉及企业</label>
+              <div class="text-sm font-medium">宁夏康泰药业有限公司</div>
+            </div>
+            <div>
+              <label class="text-xs text-slate-500 uppercase">所属区域</label>
+              <div class="text-sm">银川市</div>
+            </div>
+          </div>
+
+          <!-- 预警描述 -->
+          <div>
+            <label class="text-xs text-slate-500 uppercase mb-3 block">预警描述</label>
+            <div class="p-4 bg-red-50 border border-red-200 rounded-lg">
+              <p class="text-sm text-red-800">该企业生产的批号为 20241015 的阿莫西林胶囊在监督抽检中被检出含量测定项目不符合规定，实测结果为 89.3%，低于标准规定的 95.0%~105.0% 范围。</p>
+            </div>
+          </div>
+
+          <!-- 触发规则 -->
+          <div>
+            <label class="text-xs text-slate-500 uppercase mb-3 block">触发规则</label>
+            <div class="p-3 bg-slate-50 border border-slate-200 rounded-lg">
+              <div class="text-sm font-medium">药品抽检不合格自动预警规则</div>
+              <div class="text-xs text-slate-500 mt-1">规则编号：RULE-QC-001 | 阈值：检验结果=不合格</div>
+            </div>
+          </div>
+
+          <!-- 处置建议 -->
+          <div>
+            <label class="text-xs text-slate-500 uppercase mb-3 block">处置建议</label>
+            <ul class="list-disc list-inside text-sm text-slate-700 space-y-1">
+              <li>立即责令企业停止生产销售该批次产品</li>
+              <li>启动召回程序，追溯产品流向</li>
+              <li>开展现场核查，查明原因</li>
+              <li>依法立案查处</li>
+              <li>督促企业整改并提交整改报告</li>
+            </ul>
+          </div>
+
+          <!-- 处置记录 -->
+          <div>
+            <label class="text-xs text-slate-500 uppercase mb-3 block">处置记录</label>
+            <div class="text-sm text-slate-500 italic">暂无处置记录</div>
+          </div>
+        </div>
+      `;
+    Modal.open('detailModal');
+  }
+
+  // 打开处置表单
+  function openProcess(id) {
+    Modal.open('processModal');
+  }
+
+  // 提交处置
+  function submitProcess() {
+    showToast('处置信息已提交', 'success');
+    Modal.close('processModal');
+    Modal.close('detailModal');
+    loadTableData();
+  }
+
+  // 立即处置
+  function processWarning() {
+    Modal.close('detailModal');
+    openProcess('YJ202412001');
+  }
+
+  // 批量处置
+  function batchProcess() {
+    const checked = document.querySelectorAll('.form-checkbox:checked');
+    if (checked.length === 0) {
+      showToast('请先选择要处置的预警', 'warning');
+      return;
+    }
+    showToast(`已选择 ${checked.length} 项预警，跳转批量处置...`, 'info');
+  }
+
+  // 全选/取消全选
+  function toggleAll(checkbox) {
+    const checkboxes = document.querySelectorAll('.form-checkbox');
+    checkboxes.forEach(cb => cb.checked = checkbox.checked);
+  }
+
+  // 规则配置
+  function openRuleConfig() {
+    showToast('跳转至规则配置页面...', 'info');
+  }
+
+  // 搜索
+  function searchData() {
+    showToast('查询中...', 'info');
+    setTimeout(() => {
+      loadTableData();
+      showToast('查询完成', 'success');
+    }, 500);
+  }
+
+  // 重置筛选
+  function resetFilter() {
+    document.getElementById('levelFilter').value = '';
+    document.getElementById('typeFilter').value = '';
+    document.getElementById('statusFilter').value = '';
+    document.getElementById('regionFilter').value = '';
+    loadTableData();
+    showToast('筛选已重置', 'success');
+  }
+
+  // 导出数据
+  function exportData() {
+    showToast('正在导出 Excel...', 'info');
+    setTimeout(() => {
+      showToast('导出成功', 'success');
+    }, 1000);
+  }
+
+  // Toast 提示
+  function showToast(message, type = 'info') {
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.innerHTML = `
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+        </svg>
+        <span>${message}</span>
+      `;
+
+    let container = document.querySelector('.toast-container');
+    if (!container) {
+      container = document.createElement('div');
+      container.className = 'toast-container';
+      document.body.appendChild(container);
+    }
+
+    container.appendChild(toast);
+
+    setTimeout(() => {
+      toast.style.opacity = '0';
+      toast.style.transform = 'translateX(100%)';
+      setTimeout(() => toast.remove(), 300);
+    }, 3000);
+  }
+</script>
+</body>
+</html>

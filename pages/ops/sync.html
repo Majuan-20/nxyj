@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head><script type="module">document.addEventListener("DOMContentLoaded",()=>{const insScript=document.createElement("script");const date=Date.now();insScript.src="/inscode_devtools_sdk.js?v="+date;insScript.type="module";document.body.appendChild(insScript);});</script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>数据同步监控 - 宁夏药监局数据中台</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+  <link rel="stylesheet" href="../../components/styles.css">
+  <script src="../../components/common.js"></script>
+</head>
+<body class="bg-slate-50">
+<!-- 侧边栏 -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-logo">
+      <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+      </svg>
+      <div>
+        <div class="text-lg font-bold">宁夏药监局</div>
+        <div class="text-xs text-slate-400">数据中台</div>
+      </div>
+    </div>
+  </div>
+
+  <nav class="sidebar-nav">
+    <div class="nav-section">
+      <div class="nav-section-title">总览</div>
+      <a href="../../index.html" class="nav-item">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+        <span>数据驾驶舱</span>
+      </a>
+
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-section-title">系统管理</div>
+      <a href="../security/roles.html" class="nav-item">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+        <span>角色权限</span>
+      </a>
+      <a href="../security/audit.html" class="nav-item">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        <span>操作审计</span>
+      </a>
+      <a href="sync.html" class="nav-item active">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+        <span>运维监控</span>
+      </a>
+
+    </div>
+  </nav>
+</aside>
+
+<!-- 主内容区 -->
+<div class="content-with-sidebar">
+  <!-- 顶部导航 -->
+  <header class="top-header">
+    <div class="header-left">
+      <div class="breadcrumb">
+        <a href="../../index.html">首页</a>
+        <span class="breadcrumb-separator">/</span>
+        <span>系统管理</span>
+        <span class="breadcrumb-separator">/</span>
+        <span>数据同步监控</span>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="user-menu">
+        <div class="user-avatar">张</div>
+        <div class="user-info hidden md:block">
+          <div class="user-name">张管理员</div>
+          <div class="user-role">系统管理员</div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- 页面内容 -->
+  <main class="main-content">
+    <!-- 页面标题 -->
+    <div class="page-header">
+      <h1 class="page-title">数据同步监控</h1>
+      <p class="page-subtitle">实时监控各数据源同步状态、进度和成功率</p>
+    </div>
+
+    <!-- KPI 卡片 -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+      <div class="card p-5">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-sm text-slate-500">数据源总数</span>
+          <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7"/>
+          </svg>
+        </div>
+        <div class="text-3xl font-bold text-slate-900 font-mono">12</div>
+        <div class="text-xs text-slate-400 mt-1">个系统</div>
+      </div>
+      <div class="card p-5">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-sm text-slate-500">同步任务</span>
+          <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+          </svg>
+        </div>
+        <div class="text-3xl font-bold text-slate-900 font-mono">48</div>
+        <div class="text-xs text-slate-400 mt-1">个任务</div>
+      </div>
+      <div class="card p-5">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-sm text-slate-500">今日同步量</span>
+          <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+          </svg>
+        </div>
+        <div class="text-3xl font-bold text-slate-900 font-mono">2.8M</div>
+        <div class="text-xs text-slate-400 mt-1">条记录</div>
+      </div>
+      <div class="card p-5">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-sm text-slate-500">同步成功率</span>
+          <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+        </div>
+        <div class="text-3xl font-bold text-emerald-600 font-mono">99.2%</div>
+        <div class="text-xs text-slate-400 mt-1">近 7 天平均</div>
+      </div>
+    </div>
+
+    <!-- 同步状态概览 -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">数据源状态分布</span>
+        </div>
+        <div class="card-body">
+          <div id="sourceStatusChart" style="height: 240px;"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">同步趋势（近 7 天）</span>
+        </div>
+        <div class="card-body">
+          <div id="syncTrendChart" style="height: 240px;"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">同步耗时分布</span>
+        </div>
+        <div class="card-body">
+          <div id="syncTimeChart" style="height: 240px;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 同步任务列表 -->
+    <div class="card mb-6">
+      <div class="card-header">
+        <span class="card-title">同步任务列表</span>
+        <div class="flex gap-2">
+          <button class="btn btn-secondary btn-sm" onclick="refreshAll()">
+            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+            </svg>
+            刷新全部
+          </button>
+          <button class="btn btn-primary btn-sm" onclick="openSyncModal()">
+            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+            </svg>
+            手动同步
+          </button>
+        </div>
+      </div>
+      <div class="card-body">
+        <table class="data-table">
+          <thead>
+          <tr>
+            <th>任务名称</th>
+            <th>源系统</th>
+            <th>目标表</th>
+            <th>同步频率</th>
+            <th>上次同步时间</th>
+            <th>同步数据量</th>
+            <th>状态</th>
+            <th>操作</th>
+          </tr>
+          </thead>
+          <tbody id="taskTable">
+          <!-- 数据由 JS 生成 -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 同步历史记录 -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">同步历史记录</span>
+        <div class="flex gap-2">
+          <select class="form-select form-select-sm" id="historyTaskFilter">
+            <option value="">全部任务</option>
+            <option value="approval_sync">审批数据同步</option>
+            <option value="supervision_sync">监管数据同步</option>
+            <option value="inspection_sync">检验数据同步</option>
+          </select>
+          <button class="btn btn-secondary btn-sm" onclick="exportHistory()">
+            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+            </svg>
+            导出
+          </button>
+        </div>
+      </div>
+      <div class="card-body">
+        <table class="data-table">
+          <thead>
+          <tr>
+            <th>批次号</th>
+            <th>任务名称</th>
+            <th>开始时间</th>
+            <th>结束时间</th>
+            <th>耗时</th>
+            <th>同步条数</th>
+            <th>结果</th>
+            <th>详情</th>
+          </tr>
+          </thead>
+          <tbody id="historyTable">
+          <!-- 数据由 JS 生成 -->
+          </tbody>
+        </table>
+
+        <!-- 分页 -->
+        <div class="pagination">
+          <div class="pagination-info">显示 1-10 条，共 156 条</div>
+          <div class="pagination-controls">
+            <button class="pagination-btn" disabled>
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+              </svg>
+            </button>
+            <button class="pagination-btn active">1</button>
+            <button class="pagination-btn">2</button>
+            <button class="pagination-btn">3</button>
+            <button class="pagination-btn">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- 手动同步弹窗 -->
+<div id="syncModal" class="modal-backdrop">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="modal-title">手动触发同步</h3>
+      <div class="modal-close" onclick="Modal.close('syncModal')">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </div>
+    </div>
+    <div class="modal-body">
+      <div class="space-y-4">
+        <div class="form-group">
+          <label class="form-label">选择同步任务 *</label>
+          <select class="form-select" id="syncTaskSelect">
+            <option value="">请选择任务</option>
+            <option value="approval_sync">审批数据同步</option>
+            <option value="supervision_sync">监管数据同步</option>
+            <option value="inspection_sync">检验数据同步</option>
+            <option value="enforcement_sync">执法数据同步</option>
+            <option value="credit_sync">信用数据同步</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">同步模式</label>
+          <div class="space-y-2">
+            <div class="flex items-center gap-2">
+              <input type="radio" class="form-radio" name="syncMode" id="mode_increment" checked>
+              <label for="mode_increment" class="text-sm">增量同步（仅同步变更数据）</label>
+            </div>
+            <div class="flex items-center gap-2">
+              <input type="radio" class="form-radio" name="syncMode" id="mode_full">
+              <label for="mode_full" class="text-sm">全量同步（重新同步全部数据）</label>
+            </div>
+          </div>
+        </div>
+        <div class="bg-amber-50 border border-amber-200 rounded-lg p-4">
+          <div class="flex items-start gap-3">
+            <svg class="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+            </svg>
+            <div class="text-sm text-amber-800">
+              <p class="font-medium mb-1">注意事项</p>
+              <ul class="list-disc list-inside space-y-1 text-xs">
+                <li>全量同步可能影响系统性能，建议在非业务高峰期执行</li>
+                <li>同步过程中请勿关闭此窗口</li>
+                <li>同步完成后将自动更新统计数据</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="Modal.close('syncModal')">取消</button>
+      <button class="btn btn-primary" onclick="startSync()">开始同步</button>
+    </div>
+  </div>
+</div>
+
+<!-- 同步进度弹窗 -->
+<div id="progressModal" class="modal-backdrop">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="modal-title">同步进行中</h3>
+    </div>
+    <div class="modal-body">
+      <div class="space-y-4">
+        <div class="text-center">
+          <div class="spinner w-12 h-12 mx-auto mb-4"></div>
+          <p class="text-sm text-slate-600">正在同步数据，请稍候...</p>
+        </div>
+        <div>
+          <div class="flex justify-between text-xs text-slate-500 mb-2">
+            <span>进度</span>
+            <span id="progressPercent">0%</span>
+          </div>
+          <div class="w-full bg-slate-200 rounded-full h-3">
+            <div class="bg-blue-600 h-3 rounded-full transition-all duration-300" id="progressBar" style="width: 0%"></div>
+          </div>
+        </div>
+        <div class="grid grid-cols-3 gap-4 text-center">
+          <div>
+            <div class="text-xs text-slate-500">已同步</div>
+            <div class="text-lg font-mono font-medium" id="syncedCount">0</div>
+          </div>
+          <div>
+            <div class="text-xs text-slate-500">失败</div>
+            <div class="text-lg font-mono font-medium text-red-600" id="failedCount">0</div>
+          </div>
+          <div>
+            <div class="text-xs text-slate-500">耗时</div>
+            <div class="text-lg font-mono font-medium" id="elapsedTime">0s</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // 初始化
+  document.addEventListener('DOMContentLoaded', () => {
+    initCharts();
+    loadTaskTable();
+    loadHistoryTable();
+  });
+
+  // 初始化图表
+  function initCharts() {
+    initSourceStatusChart();
+    initSyncTrendChart();
+    initSyncTimeChart();
+  }
+
+  // 数据源状态分布图
+  function initSourceStatusChart() {
+    const chart = echarts.init(document.getElementById('sourceStatusChart'));
+    const option = {
+      ...ChartTheme.commonOption,
+      tooltip: { trigger: 'item', formatter: '{b}: {c}个 ({d}%)' },
+      series: [{
+        type: 'pie',
+        radius: ['45%', '70%'],
+        center: ['50%', '50%'],
+        avoidLabelOverlap: false,
+        label: { show: true, formatter: '{b}\n{c}' },
+        data: [
+          { value: 10, name: '正常', itemStyle: { color: '#10B981' } },
+          { value: 1, name: '异常', itemStyle: { color: '#EF4444' } },
+          { value: 1, name: '维护中', itemStyle: { color: '#F59E0B' } }
+        ]
+      }]
+    };
+    chart.setOption(option);
+    window.addEventListener('resize', () => chart.resize());
+  }
+
+  // 同步趋势图
+  function initSyncTrendChart() {
+    const chart = echarts.init(document.getElementById('syncTrendChart'));
+    const option = {
+      ...ChartTheme.commonOption,
+      tooltip: { trigger: 'axis' },
+      grid: { left: 10, right: 10, top: 20, bottom: 40, containLabel: true },
+      xAxis: {
+        type: 'category',
+        data: ['12/26', '12/27', '12/28', '12/29', '12/30', '12/31', '01/01'],
+        axisLine: { lineStyle: { color: '#E2E8F0' } },
+        axisLabel: { color: '#64748B' }
+      },
+      yAxis: {
+        type: 'value',
+        axisLine: { show: false },
+        splitLine: { lineStyle: { color: '#F1F5F9' } },
+        axisLabel: { color: '#64748B' }
+      },
+      series: [
+        {
+          name: '成功',
+          type: 'bar',
+          stack: 'total',
+          data: [420, 380, 450, 400, 480, 350, 420],
+          itemStyle: { color: '#10B981', borderRadius: [4, 4, 0, 0] }
+        },
+        {
+          name: '失败',
+          type: 'bar',
+          stack: 'total',
+          data: [8, 12, 5, 15, 8, 20, 10],
+          itemStyle: { color: '#EF4444', borderRadius: [4, 4, 0, 0] }
+        }
+      ]
+    };
+    chart.setOption(option);
+    window.addEventListener('resize', () => chart.resize());
+  }
+
+  // 同步耗时分布图
+  function initSyncTimeChart() {
+    const chart = echarts.init(document.getElementById('syncTimeChart'));
+    const option = {
+      ...ChartTheme.commonOption,
+      tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+      grid: { left: 10, right: 10, top: 20, bottom: 40, containLabel: true },
+      xAxis: {
+        type: 'category',
+        data: ['<1min', '1-5min', '5-10min', '10-30min', '>30min'],
+        axisLine: { lineStyle: { color: '#E2E8F0' } },
+        axisLabel: { color: '#64748B', fontSize: 11 }
+      },
+      yAxis: {
+        type: 'value',
+        axisLine: { show: false },
+        splitLine: { lineStyle: { color: '#F1F5F9' } },
+        axisLabel: { color: '#64748B' }
+      },
+      series: [{
+        type: 'bar',
+        data: [18, 22, 15, 8, 3],
+        itemStyle: {
+          color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+            { offset: 0, color: '#0EA5E9' },
+            { offset: 1, color: '#0284C7' }
+          ]),
+          borderRadius: [4, 4, 0, 0]
+        }
+      }]
+    };
+    chart.setOption(option);
+    window.addEventListener('resize', () => chart.resize());
+  }
+
+  // 加载任务列表
+  function loadTaskTable() {
+    const data = [
+      { name: '审批数据同步', source: '行政审批系统', target: 'ods_approval_license', freq: '每 30 分钟', lastTime: '2024-12-31 10:30:00', count: '12,456', status: 'success' },
+      { name: '监管数据同步', source: '日常监管系统', target: 'ods_supervision_record', freq: '每小时', lastTime: '2024-12-31 10:00:00', count: '8,234', status: 'success' },
+      { name: '检验数据同步', source: '检验检测系统', target: 'ods_inspection_result', freq: '每 2 小时', lastTime: '2024-12-31 09:00:00', count: '3,567', status: 'success' },
+      { name: '执法数据同步', source: '执法办案系统', target: 'ods_enforcement_case', freq: '每天 02:00', lastTime: '2024-12-31 02:00:00', count: '1,234', status: 'warning' },
+      { name: '信用数据同步', source: '信用管理系统', target: 'ods_credit_info', freq: '每天 03:00', lastTime: '2024-12-31 03:00:00', count: '2,890', status: 'success' },
+      { name: '企业基础库同步', source: '市场监管系统', target: 'ods_enterprise_base', freq: '每周日 01:00', lastTime: '2024-12-29 01:00:00', count: '28,456', status: 'error' },
+      { name: '人员信息同步', source: '人事管理系统', target: 'ods_staff_info', freq: '每天 04:00', lastTime: '2024-12-31 04:00:00', count: '456', status: 'success' },
+      { name: '药品目录同步', source: '国家药监平台', target: 'ods_drug_catalog', freq: '每周六 02:00', lastTime: '2024-12-28 02:00:00', count: '156,789', status: 'success' }
+    ];
+
+    const tbody = document.getElementById('taskTable');
+    tbody.innerHTML = data.map(item => {
+      const statusBadge = item.status === 'success' ? '<span class="badge badge-success">成功</span>' :
+        item.status === 'warning' ? '<span class="badge badge-warning">警告</span>' :
+          '<span class="badge badge-danger">失败</span>';
+
+      return `
+          <tr>
+            <td class="font-medium">${item.name}</td>
+            <td>${item.source}</td>
+            <td class="font-mono text-xs">${item.target}</td>
+            <td>${item.freq}</td>
+            <td>${item.lastTime}</td>
+            <td class="font-mono">${item.count}</td>
+            <td>${statusBadge}</td>
+            <td>
+              <button class="btn btn-sm btn-ghost" onclick="viewTaskDetail('${item.name}')">查看</button>
+              <button class="btn btn-sm btn-primary" onclick="runTask('${item.name}')">执行</button>
+            </td>
+          </tr>
+        `;
+    }).join('');
+  }
+
+  // 加载历史记录
+  function loadHistoryTable() {
+    const data = [
+      { batch: 'BATCH20241231103000', task: '审批数据同步', startTime: '2024-12-31 10:30:00', endTime: '2024-12-31 10:32:15', duration: '2m15s', count: '12,456', result: '成功' },
+      { batch: 'BATCH20241231100000', task: '监管数据同步', startTime: '2024-12-31 10:00:00', endTime: '2024-12-31 10:05:30', duration: '5m30s', count: '8,234', result: '成功' },
+      { batch: 'BATCH20241231090000', task: '检验数据同步', startTime: '2024-12-31 09:00:00', endTime: '2024-12-31 09:03:45', duration: '3m45s', count: '3,567', result: '成功' },
+      { batch: 'BATCH20241231020000', task: '执法数据同步', startTime: '2024-12-31 02:00:00', endTime: '2024-12-31 02:08:20', duration: '8m20s', count: '1,234', result: '部分成功' },
+      { batch: 'BATCH20241231030000', task: '信用数据同步', startTime: '2024-12-31 03:00:00', endTime: '2024-12-31 03:04:10', duration: '4m10s', count: '2,890', result: '成功' },
+      { batch: 'BATCH20241229010000', task: '企业基础库同步', startTime: '2024-12-29 01:00:00', endTime: '2024-12-29 01:45:30', duration: '45m30s', count: '28,456', result: '失败' },
+      { batch: 'BATCH20241231040000', task: '人员信息同步', startTime: '2024-12-31 04:00:00', endTime: '2024-12-31 04:01:20', duration: '1m20s', count: '456', result: '成功' },
+      { batch: 'BATCH20241228020000', task: '药品目录同步', startTime: '2024-12-28 02:00:00', endTime: '2024-12-28 02:35:45', duration: '35m45s', count: '156,789', result: '成功' },
+      { batch: 'BATCH20241230103000', task: '审批数据同步', startTime: '2024-12-30 10:30:00', endTime: '2024-12-30 10:31:50', duration: '1m50s', count: '11,234', result: '成功' },
+      { batch: 'BATCH20241230100000', task: '监管数据同步', startTime: '2024-12-30 10:00:00', endTime: '2024-12-30 10:06:15', duration: '6m15s', count: '7,890', result: '成功' }
+    ];
+
+    const tbody = document.getElementById('historyTable');
+    tbody.innerHTML = data.map(item => {
+      const resultClass = item.result === '成功' ? 'text-emerald-600' :
+        item.result === '部分成功' ? 'text-amber-600' : 'text-red-600';
+
+      return `
+          <tr>
+            <td class="font-mono text-xs">${item.batch}</td>
+            <td>${item.task}</td>
+            <td>${item.startTime}</td>
+            <td>${item.endTime}</td>
+            <td>${item.duration}</td>
+            <td class="font-mono">${item.count}</td>
+            <td class="${resultClass} font-medium">${item.result}</td>
+            <td>
+              <button class="btn btn-sm btn-ghost" onclick="viewHistoryDetail('${item.batch}')">详情</button>
+            </td>
+          </tr>
+        `;
+    }).join('');
+  }
+
+  // 打开同步弹窗
+  function openSyncModal() {
+    Modal.open('syncModal');
+  }
+
+  // 开始同步
+  function startSync() {
+    const task = document.getElementById('syncTaskSelect').value;
+    if (!task) {
+      showToast('请选择同步任务', 'warning');
+      return;
+    }
+
+    Modal.close('syncModal');
+    Modal.open('progressModal');
+
+    // 模拟同步进度
+    let progress = 0;
+    const interval = setInterval(() => {
+      progress += Math.random() * 15;
+      if (progress >= 100) {
+        progress = 100;
+        clearInterval(interval);
+        setTimeout(() => {
+          Modal.close('progressModal');
+          showToast('同步完成', 'success');
+          loadTaskTable();
+          loadHistoryTable();
+        }, 500);
+      }
+
+      document.getElementById('progressBar').style.width = progress + '%';
+      document.getElementById('progressPercent').textContent = Math.round(progress) + '%';
+      document.getElementById('syncedCount').textContent = Math.round(progress * 124.56).toLocaleString();
+      document.getElementById('elapsedTime').textContent = Math.round(progress / 2) + 's';
+    }, 500);
+  }
+
+  // 刷新全部
+  function refreshAll() {
+    showToast('正在刷新数据...', 'info');
+    setTimeout(() => {
+      loadTaskTable();
+      loadHistoryTable();
+      showToast('刷新完成', 'success');
+    }, 500);
+  }
+
+  // 查看任务详情
+  function viewTaskDetail(name) {
+    showToast('查看任务详情：' + name, 'info');
+  }
+
+  // 执行任务
+  function runTask(name) {
+    showToast('正在执行任务：' + name, 'info');
+    setTimeout(() => {
+      showToast('任务执行成功', 'success');
+    }, 1000);
+  }
+
+  // 查看历史详情
+  function viewHistoryDetail(batch) {
+    showToast('查看批次详情：' + batch, 'info');
+  }
+
+  // 导出历史
+  function exportHistory() {
+    showToast('正在导出历史记录...', 'info');
+    setTimeout(() => {
+      showToast('导出成功', 'success');
+    }, 1000);
+  }
+
+  // Toast 提示
+  function showToast(message, type = 'info') {
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.innerHTML = `
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+        </svg>
+        <span>${message}</span>
+      `;
+
+    let container = document.querySelector('.toast-container');
+    if (!container) {
+      container = document.createElement('div');
+      container.className = 'toast-container';
+      document.body.appendChild(container);
+    }
+
+    container.appendChild(toast);
+
+    setTimeout(() => {
+      toast.style.opacity = '0';
+      toast.style.transform = 'translateX(100%)';
+      setTimeout(() => toast.remove(), 300);
+    }, 3000);
+  }
+</script>
+</body>
+</html>

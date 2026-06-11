@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head><script type="module">document.addEventListener("DOMContentLoaded",()=>{const insScript=document.createElement("script");const date=Date.now();insScript.src="/inscode_devtools_sdk.js?v="+date;insScript.type="module";document.body.appendChild(insScript);});</script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>数据血缘图谱 - 宁夏药监局数据中台</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="../../components/styles.css">
+  <script src="../../components/common.js"></script>
+  <style>
+    .lineage-canvas {
+      background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--primary-200);
+      min-height: 600px;
+      position: relative;
+      overflow: auto;
+    }
+
+    .lineage-node {
+      position: absolute;
+      padding: var(--space-3) var(--space-4);
+      border-radius: var(--radius-lg);
+      background: white;
+      border: 2px solid var(--accent-500);
+      box-shadow: var(--shadow-md);
+      cursor: pointer;
+      transition: all var(--transition-normal);
+      min-width: 180px;
+      max-width: 250px;
+      z-index: 10;
+    }
+
+    .lineage-node:hover {
+      transform: scale(1.05);
+      box-shadow: var(--shadow-lg);
+      z-index: 20;
+    }
+
+    .lineage-node.selected {
+      border-color: var(--accent-700);
+      box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.2);
+    }
+
+    .lineage-node.datasource { border-color: #0EA5E9; }
+    .lineage-node.table { border-color: #10B981; }
+    .lineage-node.field { border-color: #F59E0B; }
+    .lineage-node.application { border-color: #8B5CF6; }
+    .lineage-node.report { border-color: #EF4444; }
+
+    .node-header {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      margin-bottom: var(--space-2);
+    }
+
+    .node-icon {
+      width: 24px;
+      height: 24px;
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+    }
+
+    .node-title {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--primary-900);
+    }
+
+    .node-desc {
+      font-size: 0.75rem;
+      color: var(--primary-500);
+    }
+
+    .svg-layer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 5;
+    }
+
+    .lineage-link {
+      stroke: #94A3B8;
+      stroke-width: 2;
+      fill: none;
+      marker-end: url(#arrowhead);
+    }
+
+    .lineage-link.highlighted {
+      stroke: var(--accent-600);
+      stroke-width: 3;
+      animation: flowAnimation 1.5s infinite;
+    }
+
+    @keyframes flowAnimation {
+      0% { stroke-dashoffset: 10; }
+      100% { stroke-dashoffset: 0; }
+    }
+
+    .toolbar {
+      position: fixed;
+      bottom: var(--space-6);
+      right: var(--space-6);
+      display: flex;
+      gap: var(--space-2);
+      z-index: 100;
+    }
+
+    .toolbar-btn {
+      width: 44px;
+      height: 44px;
+      border-radius: var(--radius-lg);
+      background: white;
+      border: 1px solid var(--primary-200);
+      box-shadow: var(--shadow-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+
+    .toolbar-btn:hover {
+      background: var(--accent-50);
+      border-color: var(--accent-500);
+    }
+  </style>
+</head>
+<body class="bg-slate-50">
+<!-- 侧边栏 -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-logo">
+      <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+      </svg>
+      <div>
+        <div class="text-lg font-bold">宁夏药监局</div>
+        <div class="text-xs text-slate-400">数据中台</div>
+      </div>
+    </div>
+  </div>
+
+  <nav class="sidebar-nav">
+    <div class="nav-section">
+      <div class="nav-section-title">总览</div>
+      <a href="../../index.html" class="nav-item">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+        <span>数据驾驶舱</span>
+      </a>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-section-title">数据治理</div>
+      <a href="./lineage.html" class="nav-item active">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"/></svg>
+        <span>数据血缘</span>
+      </a>
+      <a href="./datamap.html" class="nav-item">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0121 18.382V7.618a1 1 0 00-.553-.894L15 7m0 13V7"/></svg>
+        <span>数据地图</span>
+      </a>
+      <a href="./metadata.html" class="nav-item">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+        <span>元数据管理</span>
+      </a>
+      <a href="./quality.html" class="nav-item">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        <span>数据质量</span>
+      </a>
+    </div>
+  </nav>
+</aside>
+
+<!-- 主内容区 -->
+<div class="content-with-sidebar">
+  <!-- 顶部导航 -->
+  <header class="top-header">
+    <div class="header-left">
+      <div class="breadcrumb">
+        <a href="../../index.html">首页</a>
+        <span class="breadcrumb-separator">/</span>
+        <span>数据治理</span>
+        <span class="breadcrumb-separator">/</span>
+        <span>数据血缘图谱</span>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="user-menu">
+        <div class="user-avatar">张</div>
+        <div class="user-info hidden md:block">
+          <div class="user-name">张管理员</div>
+          <div class="user-role">系统管理员</div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- 页面内容 -->
+  <main class="main-content">
+    <!-- 页面标题 -->
+    <div class="page-header">
+      <h1 class="page-title">数据血缘图谱</h1>
+      <p class="page-subtitle">可视化展示数据从来源到应用的完整链路与依赖关系</p>
+    </div>
+
+    <!-- 筛选工具栏 -->
+    <div class="filter-bar">
+      <div class="filter-group">
+        <label class="filter-label">节点类型</label>
+        <select class="form-select" id="nodeTypeFilter" onchange="filterNodes()">
+          <option value="">全部类型</option>
+          <option value="datasource">数据源</option>
+          <option value="table">数据表</option>
+          <option value="field">字段</option>
+          <option value="application">应用系统</option>
+          <option value="report">报表</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label class="filter-label">业务系统</label>
+        <select class="form-select" id="systemFilter" onchange="filterNodes()">
+          <option value="">全部系统</option>
+          <option value="approval">行政审批系统</option>
+          <option value="supervision">日常监管系统</option>
+          <option value="inspection">检验检测系统</option>
+          <option value="enforcement">执法办案系统</option>
+          <option value="credit">信用管理系统</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label class="filter-label">搜索节点</label>
+        <input type="text" class="form-input" placeholder="输入节点名称..." id="searchInput" onkeyup="searchNode()">
+      </div>
+      <div class="flex gap-2">
+        <button class="btn btn-primary" onclick="resetView()">
+          <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+          </svg>
+          重置视图
+        </button>
+        <button class="btn btn-secondary" onclick="exportLineage()">
+          <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+          </svg>
+          导出图谱
+        </button>
+      </div>
+    </div>
+
+    <!-- 图例说明 -->
+    <div class="card mb-4">
+      <div class="card-body py-3">
+        <div class="flex items-center gap-6 text-sm">
+          <span class="text-slate-500">图例:</span>
+          <div class="flex items-center gap-2">
+            <div class="w-4 h-4 rounded bg-blue-500 border-2 border-blue-600"></div>
+            <span>数据源</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <div class="w-4 h-4 rounded bg-emerald-500 border-2 border-emerald-600"></div>
+            <span>数据表</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <div class="w-4 h-4 rounded bg-amber-500 border-2 border-amber-600"></div>
+            <span>字段</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <div class="w-4 h-4 rounded bg-purple-500 border-2 border-purple-600"></div>
+            <span>应用系统</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <div class="w-4 h-4 rounded bg-red-500 border-2 border-red-600"></div>
+            <span>报表</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 血缘画布 -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">数据血缘关系图</span>
+        <div class="flex items-center gap-2 text-sm text-slate-500">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          <span>点击节点查看详情，双击节点高亮上下游链路</span>
+        </div>
+      </div>
+      <div class="card-body p-0">
+        <div class="lineage-canvas" id="lineageCanvas">
+          <svg class="svg-layer" id="svgLayer">
+            <defs>
+              <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                <polygon points="0 0, 10 3.5, 0 7" fill="#94A3B8"/>
+              </marker>
+            </defs>
+            <!-- 连线由 JS 生成 -->
+          </svg>
+          <!-- 节点由 JS 生成 -->
+        </div>
+      </div>
+    </div>
+
+    <!-- 节点详情面板 -->
+    <div id="nodeDetailPanel" class="card mt-6 hidden">
+      <div class="card-header">
+        <span class="card-title">节点详情</span>
+        <button class="modal-close" onclick="closeDetailPanel()">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+      <div class="card-body" id="nodeDetailContent">
+        <!-- 动态内容 -->
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- 工具栏 -->
+<div class="toolbar">
+  <div class="toolbar-btn" onclick="zoomIn()" title="放大">
+    <svg class="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+    </svg>
+  </div>
+  <div class="toolbar-btn" onclick="zoomOut()" title="缩小">
+    <svg class="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/>
+    </svg>
+  </div>
+  <div class="toolbar-btn" onclick="resetZoom()" title="重置缩放">
+    <svg class="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 4h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/>
+    </svg>
+  </div>
+  <div class="toolbar-btn" onclick="toggleFullscreen()" title="全屏">
+    <svg class="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 4h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/>
+    </svg>
+  </div>
+</div>
+
+<script>
+  // 节点数据
+  const nodes = [
+    { id: 'ds1', type: 'datasource', name: 'MySQL-审批库', system: 'approval', x: 100, y: 300, desc: '192.168.1.100:3306' },
+    { id: 'ds2', type: 'datasource', name: 'MySQL-监管库', system: 'supervision', x: 100, y: 450, desc: '192.168.1.101:3306' },
+    { id: 'ds3', type: 'datasource', name: 'Oracle-检验库', system: 'inspection', x: 100, y: 150, desc: '192.168.1.102:1521' },
+
+    { id: 't1', type: 'table', name: '许可申请表', system: 'approval', x: 350, y: 250, desc: 'approval.license_apply' },
+    { id: 't2', type: 'table', name: '企业信息表', system: 'approval', x: 350, y: 350, desc: 'approval.enterprise' },
+    { id: 't3', type: 'table', name: '检查记录表', system: 'supervision', x: 350, y: 450, desc: 'supervision.inspection_record' },
+    { id: 't4', type: 'table', name: '检验结果表', system: 'inspection', x: 350, y: 150, desc: 'inspection.test_result' },
+
+    { id: 'f1', type: 'field', name: '企业名称', system: 'approval', x: 600, y: 200, desc: 'VARCHAR(200)' },
+    { id: 'f2', type: 'field', name: '统一社会信用代码', system: 'approval', x: 600, y: 280, desc: 'VARCHAR(18)' },
+    { id: 'f3', type: 'field', name: '许可证号', system: 'approval', x: 600, y: 360, desc: 'VARCHAR(50)' },
+    { id: 'f4', type: 'field', name: '检查结果', system: 'supervision', x: 600, y: 440, desc: 'VARCHAR(20)' },
+    { id: 'f5', type: 'field', name: '检验结论', system: 'inspection', x: 600, y: 120, desc: 'VARCHAR(20)' },
+
+    { id: 'a1', type: 'application', name: '数据中台', system: 'platform', x: 850, y: 300, desc: '数据汇聚与处理' },
+
+    { id: 'r1', type: 'report', name: '监管驾驶舱', system: 'platform', x: 1100, y: 250, desc: '实时可视化大屏' },
+    { id: 'r2', type: 'report', name: '审批统计报表', system: 'approval', x: 1100, y: 350, desc: '月度/年度统计' },
+    { id: 'r3', type: 'report', name: '风险分析报告', system: 'platform', x: 1100, y: 450, desc: 'AI 风险预警' }
+  ];
+
+  // 连线数据
+  const links = [
+    { source: 'ds1', target: 't1' },
+    { source: 'ds1', target: 't2' },
+    { source: 'ds2', target: 't3' },
+    { source: 'ds3', target: 't4' },
+    { source: 't1', target: 'f1' },
+    { source: 't1', target: 'f2' },
+    { source: 't2', target: 'f2' },
+    { source: 't2', target: 'f3' },
+    { source: 't3', target: 'f4' },
+    { source: 't4', target: 'f5' },
+    { source: 'f1', target: 'a1' },
+    { source: 'f2', target: 'a1' },
+    { source: 'f3', target: 'a1' },
+    { source: 'f4', target: 'a1' },
+    { source: 'f5', target: 'a1' },
+    { source: 'a1', target: 'r1' },
+    { source: 'a1', target: 'r2' },
+    { source: 'a1', target: 'r3' }
+  ];
+
+  let currentZoom = 1;
+  let selectedNode = null;
+
+  // 初始化
+  document.addEventListener('DOMContentLoaded', () => {
+    renderLineage();
+  });
+
+  // 渲染血缘图
+  function renderLineage() {
+    const canvas = document.getElementById('lineageCanvas');
+    const svgLayer = document.getElementById('svgLayer');
+
+    // 清空现有内容（保留 defs）
+    const defs = svgLayer.querySelector('defs');
+    svgLayer.innerHTML = '';
+    svgLayer.appendChild(defs);
+
+    // 绘制连线
+    links.forEach(link => {
+      const sourceNode = nodes.find(n => n.id === link.source);
+      const targetNode = nodes.find(n => n.id === link.target);
+
+      if (sourceNode && targetNode) {
+        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        const startX = sourceNode.x + 200;
+        const startY = sourceNode.y + 30;
+        const endX = targetNode.x;
+        const endY = targetNode.y + 30;
+
+        const d = `M ${startX} ${startY} C ${(startX + endX) / 2} ${startY}, ${(startX + endX) / 2} ${endY}, ${endX} ${endY}`;
+
+        path.setAttribute('d', d);
+        path.setAttribute('class', 'lineage-link');
+        path.setAttribute('stroke-dasharray', '5,5');
+        svgLayer.appendChild(path);
+      }
+    });
+
+    // 绘制节点
+    nodes.forEach(node => {
+      const nodeEl = document.createElement('div');
+      nodeEl.className = `lineage-node ${node.type}`;
+      nodeEl.style.left = node.x + 'px';
+      nodeEl.style.top = node.y + 'px';
+      nodeEl.dataset.id = node.id;
+      nodeEl.onclick = () => selectNode(node);
+      nodeEl.ondblclick = () => highlightPath(node);
+
+      const iconColors = {
+        datasource: '#0EA5E9',
+        table: '#10B981',
+        field: '#F59E0B',
+        application: '#8B5CF6',
+        report: '#EF4444'
+      };
+
+      const icons = {
+        datasource: `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"/></svg>`,
+        table: `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>`,
+        field: `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>`,
+        application: `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>`,
+        report: `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>`
+      };
+
+      nodeEl.innerHTML = `
+          <div class="node-header">
+            <div class="node-icon" style="background-color: ${iconColors[node.type]}">
+              ${icons[node.type]}
+            </div>
+            <span class="node-title">${node.name}</span>
+          </div>
+          <div class="node-desc">${node.desc}</div>
+        `;
+
+      canvas.appendChild(nodeEl);
+    });
+  }
+
+  // 选择节点
+  function selectNode(node) {
+    // 清除之前的选中状态
+    document.querySelectorAll('.lineage-node').forEach(el => el.classList.remove('selected'));
+
+    // 选中新节点
+    const nodeEl = document.querySelector(`.lineage-node[data-id="${node.id}"]`);
+    if (nodeEl) {
+      nodeEl.classList.add('selected');
+    }
+
+    selectedNode = node;
+    showNodeDetail(node);
+  }
+
+  // 显示节点详情
+  function showNodeDetail(node) {
+    const panel = document.getElementById('nodeDetailPanel');
+    const content = document.getElementById('nodeDetailContent');
+
+    const typeNames = {
+      datasource: '数据源',
+      table: '数据表',
+      field: '字段',
+      application: '应用系统',
+      report: '报表'
+    };
+
+    // 获取上游和下游节点
+    const upstream = links.filter(l => l.target === node.id).map(l => nodes.find(n => n.id === l.source)).filter(Boolean);
+    const downstream = links.filter(l => l.source === node.id).map(l => nodes.find(n => n.id === l.target)).filter(Boolean);
+
+    content.innerHTML = `
+        <div class="space-y-4">
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="text-xs text-slate-500 uppercase">节点名称</label>
+              <div class="text-sm font-medium">${node.name}</div>
+            </div>
+            <div>
+              <label class="text-xs text-slate-500 uppercase">节点类型</label>
+              <div class="text-sm">${typeNames[node.type]}</div>
+            </div>
+            <div>
+              <label class="text-xs text-slate-500 uppercase">所属系统</label>
+              <div class="text-sm">${node.system}</div>
+            </div>
+            <div>
+              <label class="text-xs text-slate-500 uppercase">描述信息</label>
+              <div class="text-sm">${node.desc}</div>
+            </div>
+          </div>
+
+          <div>
+            <label class="text-xs text-slate-500 uppercase mb-2 block">上游节点 (${upstream.length})</label>
+            ${upstream.length > 0 ? `
+              <div class="flex flex-wrap gap-2">
+                ${upstream.map(n => `<span class="badge badge-info">${n.name}</span>`).join('')}
+              </div>
+            ` : '<div class="text-sm text-slate-400 italic">无上游节点</div>'}
+          </div>
+
+          <div>
+            <label class="text-xs text-slate-500 uppercase mb-2 block">下游节点 (${downstream.length})</label>
+            ${downstream.length > 0 ? `
+              <div class="flex flex-wrap gap-2">
+                ${downstream.map(n => `<span class="badge badge-success">${n.name}</span>`).join('')}
+              </div>
+            ` : '<div class="text-sm text-slate-400 italic">无下游节点</div>'}
+          </div>
+
+          <div class="flex gap-2 pt-4">
+            <button class="btn btn-primary btn-sm" onclick="viewMetadata('${node.id}')">
+              <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+              </svg>
+              查看元数据
+            </button>
+            <button class="btn btn-secondary btn-sm" onclick="viewImpact('${node.id}')">
+              <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+              </svg>
+              影响分析
+            </button>
+          </div>
+        </div>
+      `;
+
+    panel.classList.remove('hidden');
+  }
+
+  // 关闭详情面板
+  function closeDetailPanel() {
+    document.getElementById('nodeDetailPanel').classList.add('hidden');
+    document.querySelectorAll('.lineage-node').forEach(el => el.classList.remove('selected'));
+    selectedNode = null;
+  }
+
+  // 高亮路径
+  function highlightPath(node) {
+    // 清除之前的高亮
+    document.querySelectorAll('.lineage-link').forEach(link => link.classList.remove('highlighted'));
+
+    // 查找相关连线并高亮
+    const relatedLinks = [];
+
+    // 查找上游链路
+    function findUpstream(nodeId) {
+      const upstreamLinks = links.filter(l => l.target === nodeId);
+      upstreamLinks.forEach(link => {
+        relatedLinks.push(link);
+        findUpstream(link.source);
+      });
+    }
+
+    // 查找下游链路
+    function findDownstream(nodeId) {
+      const downstreamLinks = links.filter(l => l.source === nodeId);
+      downstreamLinks.forEach(link => {
+        relatedLinks.push(link);
+        findDownstream(link.target);
+      });
+    }
+
+    findUpstream(node.id);
+    findDownstream(node.id);
+
+    // 应用高亮样式
+    relatedLinks.forEach(link => {
+      const pathElement = Array.from(document.querySelectorAll('.lineage-link')).find((el, index) => {
+        const linkIndex = links.findIndex(l => l.source === link.source && l.target === link.target);
+        return linkIndex === index;
+      });
+      if (pathElement) {
+        pathElement.classList.add('highlighted');
+        pathElement.setAttribute('stroke-dasharray', '');
+      }
+    });
+
+    showToast(`已高亮 ${relatedLinks.length} 条关联链路`, 'info');
+  }
+
+  // 筛选节点
+  function filterNodes() {
+    const typeFilter = document.getElementById('nodeTypeFilter').value;
+    const systemFilter = document.getElementById('systemFilter').value;
+
+    nodes.forEach(node => {
+      const nodeEl = document.querySelector(`.lineage-node[data-id="${node.id}"]`);
+      if (!nodeEl) return;
+
+      const matchType = !typeFilter || node.type === typeFilter;
+      const matchSystem = !systemFilter || node.system === systemFilter;
+
+      if (matchType && matchSystem) {
+        nodeEl.style.display = 'block';
+      } else {
+        nodeEl.style.display = 'none';
+      }
+    });
+  }
+
+  // 搜索节点
+  function searchNode() {
+    const keyword = document.getElementById('searchInput').value.toLowerCase();
+
+    nodes.forEach(node => {
+      const nodeEl = document.querySelector(`.lineage-node[data-id="${node.id}"]`);
+      if (!nodeEl) return;
+
+      if (node.name.toLowerCase().includes(keyword) || node.desc.toLowerCase().includes(keyword)) {
+        nodeEl.style.display = 'block';
+        nodeEl.style.opacity = '1';
+      } else {
+        nodeEl.style.opacity = '0.3';
+      }
+    });
+  }
+
+  // 重置视图
+  function resetView() {
+    document.getElementById('nodeTypeFilter').value = '';
+    document.getElementById('systemFilter').value = '';
+    document.getElementById('searchInput').value = '';
+    renderLineage();
+    closeDetailPanel();
+    showToast('视图已重置', 'success');
+  }
+
+  // 缩放功能
+  function zoomIn() {
+    currentZoom = Math.min(currentZoom + 0.1, 2);
+    applyZoom();
+  }
+
+  function zoomOut() {
+    currentZoom = Math.max(currentZoom - 0.1, 0.5);
+    applyZoom();
+  }
+
+  function resetZoom() {
+    currentZoom = 1;
+    applyZoom();
+  }
+
+  function applyZoom() {
+    const canvas = document.getElementById('lineageCanvas');
+    canvas.style.transform = `scale(${currentZoom})`;
+    canvas.style.transformOrigin = 'top left';
+  }
+
+  // 全屏切换
+  function toggleFullscreen() {
+    const canvas = document.getElementById('lineageCanvas');
+    if (!document.fullscreenElement) {
+      canvas.requestFullscreen().catch(err => {
+        console.log('无法进入全屏:', err);
+      });
+    } else {
+      document.exitFullscreen();
+    }
+  }
+
+  // 导出图谱
+  function exportLineage() {
+    showToast('正在导出图谱图片...', 'info');
+    setTimeout(() => {
+      showToast('导出成功', 'success');
+    }, 1000);
+  }
+
+  // 查看元数据
+  function viewMetadata(nodeId) {
+    showToast('跳转至元数据详情页...', 'info');
+  }
+
+  // 影响分析
+  function viewImpact(nodeId) {
+    showToast('生成影响分析报告...', 'info');
+  }
+
+  // Toast 提示
+  function showToast(message, type = 'info') {
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.innerHTML = `
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+        </svg>
+        <span>${message}</span>
+      `;
+
+    let container = document.querySelector('.toast-container');
+    if (!container) {
+      container = document.createElement('div');
+      container.className = 'toast-container';
+      document.body.appendChild(container);
+    }
+
+    container.appendChild(toast);
+
+    setTimeout(() => {
+      toast.style.opacity = '0';
+      toast.style.transform = 'translateX(100%)';
+      setTimeout(() => toast.remove(), 300);
+    }, 3000);
+  }
+</script>
+</body>
+</html>

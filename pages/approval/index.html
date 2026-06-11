@@ -1,0 +1,2331 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>行政审批 - 宁夏药监局数据中台</title>
+  <!-- 引入ECharts -->
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+  <!-- 引入TailwindCSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- 引入图标库 -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+  <style type="text/tailwindcss">
+    @layer utilities {
+      .content-auto {
+        content-visibility: auto;
+      }
+      .card-shadow {
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+      }
+      .hover-scale {
+        transition: transform 0.2s ease;
+      }
+      .hover-scale:hover {
+        transform: translateY(-2px);
+      }
+      .gradient-blue {
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+      }
+      .gradient-green {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      }
+      .gradient-amber {
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+      }
+      .gradient-red {
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+      }
+      .skeleton {
+        background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+        background-size: 200% 100%;
+        animation: skeleton-loading 1.5s infinite;
+      }
+      @keyframes skeleton-loading {
+        0% { background-position: 200% 0; }
+        100% { background-position: -200% 0; }
+      }
+      .progress-bar {
+        height: 8px;
+        border-radius: 4px;
+        overflow: hidden;
+        background-color: #f1f5f9;
+      }
+      .progress-value {
+        height: 100%;
+        border-radius: 4px;
+        transition: width 1s ease-in-out;
+      }
+      .modal-backdrop {
+        backdrop-filter: blur(4px);
+      }
+      .slide-in {
+        animation: slideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+      }
+      @keyframes slideIn {
+        from { transform: translateY(20px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+      }
+      .fade-in {
+        animation: fadeIn 0.3s ease forwards;
+      }
+      @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+      .toast-success {
+        background: rgba(16, 185, 129, 0.95);
+      }
+      .toast-warning {
+        background: rgba(245, 158, 11, 0.95);
+      }
+      .toast-error {
+        background: rgba(239, 68, 68, 0.95);
+      }
+      .toast-info {
+        background: rgba(59, 130, 246, 0.95);
+      }
+    }
+  </style>
+
+  <style>
+    /* 基础样式优化 */
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      scroll-behavior: smooth;
+    }
+    .sidebar {
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      z-index: 100;
+    }
+    /* 滚动条优化 */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #f8fafc;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+    /* 图表提示框自定义 */
+    .echarts-tooltip {
+      border-radius: 8px !important;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1) !important;
+      padding: 12px !important;
+      border: none !important;
+    }
+    /* 数字滚动动画 */
+    @keyframes countUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .count-animate {
+      animation: countUp 0.8s ease-out forwards;
+    }
+    /* 暗黑模式样式 */
+    .dark {
+      --bg-primary: #0f172a;
+      --bg-secondary: #1e293b;
+      --text-primary: #f8fafc;
+      --text-secondary: #94a3b8;
+      --border-color: #334155;
+    }
+    .dark body {
+      background-color: var(--bg-primary);
+      color: var(--text-primary);
+    }
+    .dark .bg-white {
+      background-color: var(--bg-secondary);
+    }
+    .dark .text-slate-800 {
+      color: var(--text-primary);
+    }
+    .dark .text-slate-500 {
+      color: var(--text-secondary);
+    }
+    .dark .border-slate-200 {
+      border-color: var(--border-color);
+    }
+    .dark .bg-slate-50 {
+      background-color: var(--bg-secondary);
+    }
+    .dark .skeleton {
+      background: linear-gradient(90deg, #1e293b 25%, #273449 50%, #1e293b 75%);
+    }
+    /* 表单验证样式 */
+    .form-input.error {
+      border-color: #ef4444 !important;
+    }
+    .form-input.success {
+      border-color: #10b981 !important;
+    }
+    .error-message {
+      color: #ef4444;
+      font-size: 11px;
+      margin-top: 4px;
+      display: none;
+    }
+    .form-input.error + .error-message {
+      display: block;
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800">
+<!-- 加载遮罩 -->
+<div id="loading-mask" class="fixed inset-0 bg-white z-50 flex flex-col items-center justify-center">
+  <div class="w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mb-4"></div>
+  <p class="text-slate-600">数据加载中...</p>
+</div>
+
+<!-- 侧边栏 -->
+<aside class="sidebar fixed top-0 left-0 bottom-0 w-64 bg-white border-r border-slate-200">
+  <!-- 侧边栏头部 -->
+  <div class="p-5 border-b border-slate-200 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-lg gradient-blue flex items-center justify-center text-white">
+        <i class="bi bi-shield-lock text-xl"></i>
+      </div>
+      <div>
+        <div class="font-bold text-lg">宁夏药监局</div>
+        <div class="text-xs text-slate-500">数据中台 V2.0</div>
+      </div>
+    </div>
+    <button id="theme-toggle" class="w-8 h-8 rounded-full hover:bg-slate-100 flex items-center justify-center text-slate-600">
+      <i class="bi bi-moon-stars"></i>
+    </button>
+  </div>
+
+  <!-- 侧边栏菜单 -->
+  <nav class="p-4">
+    <!-- 用户信息 -->
+    <div class="mb-8 p-3 bg-blue-50 rounded-lg flex items-center gap-3">
+      <img src="https://picsum.photos/id/1005/40/40" alt="用户头像" class="w-10 h-10 rounded-full object-cover border-2 border-white">
+      <div>
+        <div class="font-medium text-sm">审批管理员</div>
+        <div class="text-xs text-slate-500">在线 · 今日待办：8件</div>
+      </div>
+    </div>
+
+    <!-- 快捷操作 -->
+    <div class="mb-8">
+      <div class="text-xs font-semibold text-slate-400 px-2 py-2 uppercase tracking-wider mb-2">快捷操作</div>
+      <div class="grid grid-cols-2 gap-2">
+        <button id="quick-add" class="hover-scale p-3 bg-blue-50 text-blue-700 rounded-lg text-sm flex flex-col items-center justify-center">
+          <i class="bi bi-plus-circle text-lg mb-1"></i>
+          <span>新增审批</span>
+        </button>
+        <button id="quick-batch" class="hover-scale p-3 bg-emerald-50 text-emerald-700 rounded-lg text-sm flex flex-col items-center justify-center">
+          <i class="bi bi-check-circle text-lg mb-1"></i>
+          <span>批量办结</span>
+        </button>
+        <button id="quick-remind" class="hover-scale p-3 bg-amber-50 text-amber-700 rounded-lg text-sm flex flex-col items-center justify-center">
+          <i class="bi bi-bell text-lg mb-1"></i>
+          <span>待办提醒</span>
+        </button>
+        <button id="quick-export" class="hover-scale p-3 bg-slate-50 text-slate-700 rounded-lg text-sm flex flex-col items-center justify-center">
+          <i class="bi bi-download text-lg mb-1"></i>
+          <span>导出报表</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- 菜单分组 - 总览 -->
+    <div class="mb-6">
+      <div class="text-xs font-semibold text-slate-400 px-2 py-2 uppercase tracking-wider">总览</div>
+      <a href="#" class="flex items-center gap-3 px-3 py-3 rounded-lg text-slate-600 hover:bg-slate-100 transition-colors">
+        <i class="bi bi-speedometer2 w-5 text-center text-slate-500"></i>
+        <span>数据驾驶舱</span>
+        <span class="ml-auto w-6 h-6 flex items-center justify-center bg-blue-100 text-blue-700 rounded-full text-xs">9+</span>
+      </a>
+      <a href="#" class="flex items-center gap-3 px-3 py-3 rounded-lg text-slate-600 hover:bg-slate-100 transition-colors">
+        <i class="bi bi-table w-5 text-center text-slate-500"></i>
+        <span>个人工作台</span>
+      </a>
+    </div>
+
+    <!-- 菜单分组 - 系统管理 -->
+    <div class="mb-6">
+      <div class="text-xs font-semibold text-slate-400 px-2 py-2 uppercase tracking-wider">系统管理</div>
+      <a href="#" class="flex items-center gap-3 px-3 py-3 rounded-lg text-slate-600 hover:bg-slate-100 transition-colors">
+        <i class="bi bi-shield-check w-5 text-center text-slate-500"></i>
+        <span>角色权限</span>
+      </a>
+      <a href="#" class="flex items-center gap-3 px-3 py-3 rounded-lg text-slate-600 hover:bg-slate-100 transition-colors">
+        <i class="bi bi-file-text w-5 text-center text-slate-500"></i>
+        <span>操作审计</span>
+      </a>
+    </div>
+
+    <!-- 菜单分组 - 核心业务 -->
+    <div>
+      <div class="text-xs font-semibold text-slate-400 px-2 py-2 uppercase tracking-wider">核心业务</div>
+      <a href="#" class="flex items-center gap-3 px-3 py-3 rounded-lg bg-blue-50 text-blue-700 font-medium border-l-4 border-blue-500">
+        <i class="bi bi-check2-circle w-5 text-center text-blue-600"></i>
+        <span>行政审批</span>
+      </a>
+      <a href="#" class="flex items-center gap-3 px-3 py-3 rounded-lg text-slate-600 hover:bg-slate-100 transition-colors">
+        <i class="bi bi-eye w-5 text-center text-slate-500"></i>
+        <span>日常监管</span>
+      </a>
+      <a href="#" class="flex items-center gap-3 px-3 py-3 rounded-lg text-slate-600 hover:bg-slate-100 transition-colors">
+        <i class="bi bi-flask w-5 text-center text-slate-500"></i>
+        <span>检验检测</span>
+      </a>
+      <a href="#" class="flex items-center gap-3 px-3 py-3 rounded-lg text-slate-600 hover:bg-slate-100 transition-colors">
+        <i class="bi bi-gavel w-5 text-center text-slate-500"></i>
+        <span>执法办案</span>
+      </a>
+    </div>
+  </nav>
+
+  <!-- 侧边栏底部 -->
+  <div class="absolute bottom-0 left-0 right-0 p-4 border-t border-slate-200">
+    <div class="flex items-center justify-between text-xs text-slate-500">
+      <span>版本：v2.1.8</span>
+      <button class="hover:text-slate-700 transition-colors">
+        <i class="bi bi-question-circle"></i> 帮助
+      </button>
+    </div>
+  </div>
+</aside>
+
+<!-- 主内容区 -->
+<div class="ml-64 min-h-screen p-6 transition-all duration-300">
+  <!-- 页面头部 -->
+  <div class="mb-8">
+    <div class="flex flex-wrap justify-between items-center mb-4 gap-4">
+      <div>
+        <h1 class="text-[clamp(1.75rem,3vw,2.75rem)] font-bold text-slate-900">行政审批管理</h1>
+        <div class="flex items-center gap-3 mt-2 text-sm text-slate-500">
+          <span>更新时间：2024-12-20 15:30</span>
+          <span class="w-1 h-1 rounded-full bg-slate-400"></span>
+          <span>数据来源：审批业务系统</span>
+          <span class="w-1 h-1 rounded-full bg-slate-400"></span>
+          <span class="text-emerald-600 flex items-center">
+              <i class="bi bi-check-circle mr-1"></i> 数据已同步
+            </span>
+        </div>
+      </div>
+      <div class="flex gap-3">
+        <div class="relative">
+          <input id="global-search" type="text" placeholder="全局搜索..." class="pl-10 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-500 w-64">
+          <i class="bi bi-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+        </div>
+        <button class="px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm flex items-center gap-2 hover:bg-slate-50 transition-colors hover-scale">
+          <i class="bi bi-calendar-range"></i>
+          <span>2024年12月</span>
+        </button>
+        <button id="btn-add-approval" class="px-4 py-2 gradient-blue text-white rounded-lg text-sm flex items-center gap-2 hover:opacity-90 transition-all hover-scale">
+          <i class="bi bi-plus"></i>
+          <span>新增审批</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- 数据概览看板 -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <!-- 本月受理 -->
+      <div class="card-shadow hover-scale bg-white p-5 rounded-xl">
+        <div class="flex justify-between items-start mb-4">
+          <div>
+            <p class="text-sm text-slate-500 font-medium">本月受理总数</p>
+            <h3 class="text-4xl font-bold mt-1 font-mono count-animate" id="count1">156</h3>
+            <p class="text-xs text-emerald-600 mt-2 flex items-center">
+              <i class="bi bi-arrow-up mr-1"></i> 12.8% 环比增长
+              <span class="ml-2 text-slate-400">上月：138</span>
+            </p>
+          </div>
+          <div class="w-14 h-14 rounded-full gradient-blue/10 flex items-center justify-center text-blue-600">
+            <i class="bi bi-file-earmark-text text-2xl"></i>
+          </div>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-value gradient-blue" style="width: 78%"></div>
+        </div>
+        <div class="flex justify-between mt-2 text-xs">
+          <span class="text-slate-400">年度目标：2000件</span>
+          <span class="font-medium">完成率：78%</span>
+        </div>
+      </div>
+
+      <!-- 在办事项 -->
+      <div class="card-shadow hover-scale bg-white p-5 rounded-xl">
+        <div class="flex justify-between items-start mb-4">
+          <div>
+            <p class="text-sm text-slate-500 font-medium">当前在办事项</p>
+            <h3 class="text-4xl font-bold mt-1 font-mono count-animate" id="count2">42</h3>
+            <p class="text-xs text-amber-600 mt-2 flex items-center">
+              <i class="bi bi-hourglass-split mr-1"></i> 平均办理时长：5.8天
+              <span class="ml-2 text-slate-400">标准：7天</span>
+            </p>
+          </div>
+          <div class="w-14 h-14 rounded-full gradient-amber/10 flex items-center justify-center text-amber-600">
+            <i class="bi bi-clock text-2xl"></i>
+          </div>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-value gradient-amber" style="width: 42%"></div>
+        </div>
+        <div class="flex justify-between mt-2 text-xs">
+          <span class="text-slate-400">超时风险：5件</span>
+          <span class="font-medium text-red-600">11.9% 风险率</span>
+        </div>
+      </div>
+
+      <!-- 本月办结 -->
+      <div class="card-shadow hover-scale bg-white p-5 rounded-xl">
+        <div class="flex justify-between items-start mb-4">
+          <div>
+            <p class="text-sm text-slate-500 font-medium">本月办结数量</p>
+            <h3 class="text-4xl font-bold mt-1 font-mono count-animate" id="count3">128</h3>
+            <p class="text-xs text-emerald-600 mt-2 flex items-center">
+              <i class="bi bi-arrow-up mr-1"></i> 8.4% 环比增长
+              <span class="ml-2 text-slate-400">上月：118</span>
+            </p>
+          </div>
+          <div class="w-14 h-14 rounded-full gradient-green/10 flex items-center justify-center text-emerald-600">
+            <i class="bi bi-check-circle text-2xl"></i>
+          </div>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-value gradient-green" style="width: 85%"></div>
+        </div>
+        <div class="flex justify-between mt-2 text-xs">
+          <span class="text-slate-400">按时办结：121件</span>
+          <span class="font-medium">办结率：82.1%</span>
+        </div>
+      </div>
+
+      <!-- 超期预警 -->
+      <div class="card-shadow hover-scale bg-white p-5 rounded-xl">
+        <div class="flex justify-between items-start mb-4">
+          <div>
+            <p class="text-sm text-slate-500 font-medium">超期预警事项</p>
+            <h3 class="text-4xl font-bold mt-1 font-mono text-red-600 count-animate" id="count4">5</h3>
+            <p class="text-xs text-red-600 mt-2 flex items-center">
+              <i class="bi bi-exclamation-triangle mr-1"></i> 需紧急处理
+              <span class="ml-2 text-slate-400">最长超期：3天</span>
+            </p>
+          </div>
+          <div class="w-14 h-14 rounded-full gradient-red/10 flex items-center justify-center text-red-600">
+            <i class="bi bi-exclamation-circle text-2xl"></i>
+          </div>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-value gradient-red" style="width: 25%"></div>
+        </div>
+        <div class="flex justify-between mt-2 text-xs">
+          <button id="btn-remind-overdue" class="text-red-600 hover:text-red-700 flex items-center">
+            <i class="bi bi-bell-ring mr-1"></i> 一键提醒
+          </button>
+          <span class="font-medium">风险等级：中</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 筛选工具栏 -->
+  <div class="card-shadow bg-white p-5 rounded-xl mb-8">
+    <form id="filter-form" class="flex flex-wrap gap-4 items-center">
+      <div class="flex items-center gap-3">
+        <label class="text-sm text-slate-600 font-medium w-20">时间范围：</label>
+        <select id="filter-time" class="px-4 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-500 bg-white">
+          <option>近7天</option>
+          <option selected>本月</option>
+          <option>本季度</option>
+          <option>本年</option>
+          <option>自定义</option>
+        </select>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <label class="text-sm text-slate-600 font-medium w-20">审批类型：</label>
+        <select id="filter-type" class="px-4 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-500 bg-white">
+          <option selected>全部类型</option>
+          <option>药品许可</option>
+          <option>医疗器械</option>
+          <option>化妆品</option>
+        </select>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <label class="text-sm text-slate-600 font-medium w-20">办理状态：</label>
+        <select id="filter-status" class="px-4 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-500 bg-white">
+          <option selected>全部状态</option>
+          <option>待受理</option>
+          <option>办理中</option>
+          <option>已办结</option>
+          <option>已驳回</option>
+        </select>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <label class="text-sm text-slate-600 font-medium w-20">办理部门：</label>
+        <select id="filter-dept" class="px-4 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-500 bg-white">
+          <option selected>全部部门</option>
+          <option>药品监管科</option>
+          <option>医疗器械科</option>
+          <option>化妆品科</option>
+        </select>
+      </div>
+
+      <div class="flex-grow flex items-center gap-3">
+        <input id="filter-keyword" type="text" placeholder="搜索企业名称/申请编号/统一信用代码" class="flex-grow px-4 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-500">
+        <button type="submit" class="px-5 py-2.5 gradient-blue text-white rounded-lg text-sm hover:opacity-90 transition-all hover-scale flex items-center">
+          <i class="bi bi-search mr-2"></i> 查询
+        </button>
+        <button type="reset" class="px-5 py-2.5 bg-slate-100 text-slate-700 rounded-lg text-sm hover:bg-slate-200 transition-colors hover-scale flex items-center">
+          <i class="bi bi-arrow-counterclockwise mr-2"></i> 重置
+        </button>
+      </div>
+    </form>
+
+    <!-- 高级筛选 -->
+    <div class="mt-4 pt-4 border-t border-slate-100">
+      <button id="advanced-filter-toggle" class="text-blue-600 text-sm flex items-center hover:text-blue-700 transition-colors">
+        <i class="bi bi-funnel mr-2"></i> 高级筛选
+        <i class="bi bi-chevron-down ml-1 text-xs"></i>
+      </button>
+      <!-- 高级筛选内容 -->
+      <div id="advanced-filter-content" class="mt-4 hidden fade-in">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div class="flex flex-col gap-2">
+            <label class="text-sm text-slate-600 font-medium">办理时长</label>
+            <div class="flex gap-2">
+              <input type="number" placeholder="最小天数" class="flex-1 px-3 py-2 border border-slate-200 rounded-lg text-sm">
+              <span class="flex items-center text-slate-400">至</span>
+              <input type="number" placeholder="最大天数" class="flex-1 px-3 py-2 border border-slate-200 rounded-lg text-sm">
+            </div>
+          </div>
+          <div class="flex flex-col gap-2">
+            <label class="text-sm text-slate-600 font-medium">审批人员</label>
+            <select class="px-3 py-2 border border-slate-200 rounded-lg text-sm">
+              <option>全部人员</option>
+              <option>张三</option>
+              <option>李四</option>
+              <option>王五</option>
+            </select>
+          </div>
+          <div class="flex flex-col gap-2">
+            <label class="text-sm text-slate-600 font-medium">风险等级</label>
+            <div class="flex gap-3">
+              <label class="flex items-center gap-2 text-sm">
+                <input type="checkbox" class="rounded border-slate-300 text-blue-600 focus:ring-blue-500">
+                <span>低风险</span>
+              </label>
+              <label class="flex items-center gap-2 text-sm">
+                <input type="checkbox" class="rounded border-slate-300 text-amber-600 focus:ring-amber-500">
+                <span>中风险</span>
+              </label>
+              <label class="flex items-center gap-2 text-sm">
+                <input type="checkbox" class="rounded border-slate-300 text-red-600 focus:ring-red-500">
+                <span>高风险</span>
+              </label>
+            </div>
+          </div>
+        </div>
+        <div class="mt-4 flex justify-end gap-3">
+          <button class="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg text-sm hover:bg-slate-200 transition-colors">
+            取消
+          </button>
+          <button class="px-4 py-2 gradient-blue text-white rounded-lg text-sm hover:opacity-90 transition-all">
+            应用筛选
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 图表区域 -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+    <!-- 审批趋势图 -->
+    <div class="card-shadow hover-scale bg-white p-6 rounded-xl relative overflow-hidden">
+      <!-- 卡片头部 -->
+      <div class="flex justify-between items-center mb-6">
+        <h3 class="font-semibold text-xl text-slate-800">审批趋势分析</h3>
+        <div class="flex gap-2">
+          <button class="chart-period-btn px-3 py-1.5 text-xs bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors" data-period="7">近7天</button>
+          <button class="chart-period-btn px-3 py-1.5 text-xs gradient-blue text-white rounded-lg" data-period="30">近30天</button>
+          <button class="chart-period-btn px-3 py-1.5 text-xs bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors" data-period="90">近90天</button>
+        </div>
+      </div>
+
+      <!-- 图表容器 -->
+      <div id="trendChart" style="width:100%;height:380px;"></div>
+
+      <!-- 图表说明 -->
+      <div class="mt-4 text-xs text-slate-500 flex flex-wrap gap-4">
+        <div class="flex items-center gap-2">
+          <span class="w-3 h-3 rounded-full bg-blue-500"></span>
+          <span>受理数量</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="w-3 h-3 rounded-full bg-emerald-500"></span>
+          <span>办结数量</span>
+        </div>
+        <div class="ml-auto">
+          <button id="export-trend-chart" class="text-blue-600 hover:text-blue-700 flex items-center">
+            <i class="bi bi-download mr-1"></i> 导出图表
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 审批类型分布图 -->
+    <div class="card-shadow hover-scale bg-white p-6 rounded-xl relative overflow-hidden">
+      <!-- 卡片头部 -->
+      <div class="flex justify-between items-center mb-6">
+        <h3 class="font-semibold text-xl text-slate-800">审批类型分布</h3>
+        <div class="flex gap-3">
+          <div class="relative group">
+            <button id="chart-type-toggle" class="px-3 py-1.5 text-xs bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors flex items-center">
+              <i class="bi bi-pie-chart mr-1"></i> 饼图
+            </button>
+            <div id="chart-type-dropdown" class="absolute right-0 mt-2 w-36 bg-white rounded-lg shadow-lg border border-slate-200 hidden group-hover:block z-10">
+              <button class="chart-type-btn w-full text-left px-3 py-2 text-sm hover:bg-slate-50" data-type="pie">
+                <i class="bi bi-pie-chart mr-2"></i> 饼图
+              </button>
+              <button class="chart-type-btn w-full text-left px-3 py-2 text-sm hover:bg-slate-50" data-type="bar">
+                <i class="bi bi-bar-chart mr-2"></i> 柱状图
+              </button>
+              <button class="chart-type-btn w-full text-left px-3 py-2 text-sm hover:bg-slate-50" data-type="ring">
+                <i class="bi bi-bar-chart-steps mr-2"></i> 环形图
+              </button>
+            </div>
+          </div>
+          <button id="export-type-chart" class="px-3 py-1.5 text-xs bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors flex items-center">
+            <i class="bi bi-download mr-1"></i> 导出图表
+          </button>
+        </div>
+      </div>
+
+      <!-- 图表容器 -->
+      <div id="typeChart" style="width:100%;height:380px;"></div>
+
+      <!-- 数据洞察 -->
+      <div class="mt-4 p-3 bg-blue-50 rounded-lg text-sm">
+        <div class="flex items-center gap-2 text-blue-700 mb-1">
+          <i class="bi bi-lightbulb"></i>
+          <span class="font-medium">数据洞察</span>
+        </div>
+        <p class="text-slate-600 text-xs">药品许可占比最高（42.5%），主要集中在药品零售企业经营许可；医疗器械审批增长最快，环比增长18.2%。</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 审批进度可视化 -->
+  <div class="card-shadow bg-white p-6 rounded-xl mb-8">
+    <h3 class="font-semibold text-xl text-slate-800 mb-6">审批流程进度</h3>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <!-- 待受理 -->
+      <div class="border border-slate-200 rounded-lg p-4">
+        <div class="flex justify-between items-center mb-4">
+          <h4 class="font-medium text-slate-700">待受理</h4>
+          <span class="w-8 h-8 flex items-center justify-center bg-amber-100 text-amber-700 rounded-full text-sm font-medium">18</span>
+        </div>
+        <div class="space-y-3">
+          <div class="flex items-center justify-between text-sm">
+            <span class="text-slate-600">材料提交</span>
+            <span class="text-slate-400">100%</span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-value bg-slate-400" style="width: 100%"></div>
+          </div>
+          <div class="flex items-center justify-between text-sm mt-2">
+            <span class="text-slate-600">形式审查</span>
+            <span class="text-amber-600">0%</span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-value bg-amber-500" style="width: 0%"></div>
+          </div>
+          <button id="btn-start-review" class="w-full mt-4 py-2 text-sm border border-amber-200 text-amber-700 rounded-lg hover:bg-amber-50 transition-colors">
+            开始受理
+          </button>
+        </div>
+      </div>
+
+      <!-- 审查中 -->
+      <div class="border border-slate-200 rounded-lg p-4">
+        <div class="flex justify-between items-center mb-4">
+          <h4 class="font-medium text-slate-700">审查中</h4>
+          <span class="w-8 h-8 flex items-center justify-center bg-sky-100 text-sky-700 rounded-full text-sm font-medium">24</span>
+        </div>
+        <div class="space-y-3">
+          <div class="flex items-center justify-between text-sm">
+            <span class="text-slate-600">形式审查</span>
+            <span class="text-slate-400">100%</span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-value bg-slate-400" style="width: 100%"></div>
+          </div>
+          <div class="flex items-center justify-between text-sm mt-2">
+            <span class="text-slate-600">实质审查</span>
+            <span class="text-sky-600">65%</span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-value bg-sky-500" style="width: 65%"></div>
+          </div>
+          <div class="flex items-center justify-between text-sm mt-2">
+            <span class="text-slate-600">现场核查</span>
+            <span class="text-slate-400">30%</span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-value bg-slate-400" style="width: 30%"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 待审批 -->
+      <div class="border border-slate-200 rounded-lg p-4">
+        <div class="flex justify-between items-center mb-4">
+          <h4 class="font-medium text-slate-700">待审批</h4>
+          <span class="w-8 h-8 flex items-center justify-center bg-purple-100 text-purple-700 rounded-full text-sm font-medium">12</span>
+        </div>
+        <div class="space-y-3">
+          <div class="flex items-center justify-between text-sm">
+            <span class="text-slate-600">审查完成</span>
+            <span class="text-slate-400">100%</span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-value bg-slate-400" style="width: 100%"></div>
+          </div>
+          <div class="flex items-center justify-between text-sm mt-2">
+            <span class="text-slate-600">领导审批</span>
+            <span class="text-purple-600">40%</span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-value bg-purple-500" style="width: 40%"></div>
+          </div>
+          <div class="flex items-center justify-between text-sm mt-2">
+            <span class="text-slate-600">制证发证</span>
+            <span class="text-slate-400">0%</span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-value bg-slate-400" style="width: 0%"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 数据表格 -->
+  <div class="card-shadow bg-white rounded-xl overflow-hidden">
+    <!-- 表格头部 -->
+    <div class="p-6 border-b border-slate-200 flex justify-between items-center">
+      <h3 class="font-semibold text-xl text-slate-800">审批事项列表</h3>
+      <div class="flex gap-3">
+        <div class="relative">
+          <select id="table-sort" class="pr-8 pl-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-500 appearance-none bg-white">
+            <option selected>默认排序</option>
+            <option>按申请时间降序</option>
+            <option>按办理进度升序</option>
+            <option>按剩余时间升序</option>
+          </select>
+          <i class="bi bi-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"></i>
+        </div>
+        <button id="btn-export-table" class="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg text-sm hover:bg-slate-200 transition-colors flex items-center hover-scale">
+          <i class="bi bi-download mr-2"></i>
+          <span>导出数据</span>
+        </button>
+        <button id="btn-print-table" class="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg text-sm hover:bg-slate-200 transition-colors flex items-center hover-scale">
+          <i class="bi bi-printer mr-2"></i>
+          <span>打印</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- 表格内容 -->
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead>
+        <tr class="bg-slate-50 text-slate-600">
+          <th class="px-6 py-4 text-left font-medium">
+            <input id="select-all" type="checkbox" class="rounded border-slate-300 text-blue-600 focus:ring-blue-500">
+          </th>
+          <th class="px-6 py-4 text-left font-medium">申请编号</th>
+          <th class="px-6 py-4 text-left font-medium">企业名称</th>
+          <th class="px-6 py-4 text-left font-medium">审批类型</th>
+          <th class="px-6 py-4 text-left font-medium">申请日期</th>
+          <th class="px-6 py-4 text-left font-medium">当前节点</th>
+          <th class="px-6 py-4 text-left font-medium">办理状态</th>
+          <th class="px-6 py-4 text-left font-medium">进度</th>
+          <th class="px-6 py-4 text-left font-medium">剩余天数</th>
+          <th class="px-6 py-4 text-left font-medium">操作</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr class="border-b border-slate-100 hover:bg-slate-50 transition-colors">
+          <td class="px-6 py-5">
+            <input class="row-checkbox" type="checkbox" data-id="SP202412001" class="rounded border-slate-300 text-blue-600 focus:ring-blue-500">
+          </td>
+          <td class="px-6 py-5 font-mono text-slate-700">SP202412001</td>
+          <td class="px-6 py-5">
+            <div class="flex items-center gap-2">
+              <img src="https://picsum.photos/id/1040/32/32" alt="企业logo" class="w-8 h-8 rounded object-cover">
+              <span class="font-medium">宁夏康泰药业有限公司</span>
+            </div>
+          </td>
+          <td class="px-6 py-5">
+            <span class="px-2 py-1 bg-blue-50 text-blue-700 rounded text-xs">药品经营许可</span>
+          </td>
+          <td class="px-6 py-5 text-slate-600">2024-12-18</td>
+          <td class="px-6 py-5 text-slate-700">材料审核</td>
+          <td class="px-6 py-5">
+            <span class="px-2 py-1 bg-sky-100 text-sky-700 rounded-full text-xs">办理中</span>
+          </td>
+          <td class="px-6 py-5">
+            <div class="w-24 progress-bar">
+              <div class="progress-value bg-sky-500" style="width: 35%"></div>
+            </div>
+            <span class="text-xs text-slate-500 mt-1">35%</span>
+          </td>
+          <td class="px-6 py-5 text-amber-600 font-medium">8天</td>
+          <td class="px-6 py-5">
+            <div class="flex gap-2">
+              <button class="view-detail text-blue-600 hover:text-blue-800 transition-colors" data-id="SP202412001">
+                <i class="bi bi-eye"></i>
+              </button>
+              <button class="process-task text-amber-600 hover:text-amber-800 transition-colors" data-id="SP202412001">
+                <i class="bi bi-hourglass-half"></i>
+              </button>
+              <button class="send-message text-slate-500 hover:text-slate-700 transition-colors" data-id="SP202412001">
+                <i class="bi bi-chat-dots"></i>
+              </button>
+            </div>
+          </td>
+        </tr>
+        <tr class="border-b border-slate-100 hover:bg-slate-50 transition-colors">
+          <td class="px-6 py-5">
+            <input class="row-checkbox" type="checkbox" data-id="SP202412002" class="rounded border-slate-300 text-blue-600 focus:ring-blue-500">
+          </td>
+          <td class="px-6 py-5 font-mono text-slate-700">SP202412002</td>
+          <td class="px-6 py-5">
+            <div class="flex items-center gap-2">
+              <img src="https://picsum.photos/id/1041/32/32" alt="企业logo" class="w-8 h-8 rounded object-cover">
+              <span class="font-medium">银川惠民大药房连锁有限公司</span>
+            </div>
+          </td>
+          <td class="px-6 py-5">
+            <span class="px-2 py-1 bg-blue-50 text-blue-700 rounded text-xs">药品经营许可</span>
+          </td>
+          <td class="px-6 py-5 text-slate-600">2024-12-17</td>
+          <td class="px-6 py-5 text-slate-700">现场核查</td>
+          <td class="px-6 py-5">
+            <span class="px-2 py-1 bg-sky-100 text-sky-700 rounded-full text-xs">办理中</span>
+          </td>
+          <td class="px-6 py-5">
+            <div class="w-24 progress-bar">
+              <div class="progress-value bg-sky-500" style="width: 65%"></div>
+            </div>
+            <span class="text-xs text-slate-500 mt-1">65%</span>
+          </td>
+          <td class="px-6 py-5 text-red-600 font-medium">-2天</td>
+          <td class="px-6 py-5">
+            <div class="flex gap-2">
+              <button class="view-detail text-blue-600 hover:text-blue-800 transition-colors" data-id="SP202412002">
+                <i class="bi bi-eye"></i>
+              </button>
+              <button class="urgent-handle text-red-600 hover:text-red-800 transition-colors" data-id="SP202412002">
+                <i class="bi bi-alarm-fill"></i>
+              </button>
+              <button class="send-message text-slate-500 hover:text-slate-700 transition-colors" data-id="SP202412002">
+                <i class="bi bi-chat-dots"></i>
+              </button>
+            </div>
+          </td>
+        </tr>
+        <tr class="border-b border-slate-100 hover:bg-slate-50 transition-colors">
+          <td class="px-6 py-5">
+            <input class="row-checkbox" type="checkbox" data-id="SP202412003" class="rounded border-slate-300 text-blue-600 focus:ring-blue-500">
+          </td>
+          <td class="px-6 py-5 font-mono text-slate-700">SP202412003</td>
+          <td class="px-6 py-5">
+            <div class="flex items-center gap-2">
+              <img src="https://picsum.photos/id/1042/32/32" alt="企业logo" class="w-8 h-8 rounded object-cover">
+              <span class="font-medium">石嘴山医疗器械有限公司</span>
+            </div>
+          </td>
+          <td class="px-6 py-5">
+            <span class="px-2 py-1 bg-emerald-50 text-emerald-700 rounded text-xs">医疗器械许可</span>
+          </td>
+          <td class="px-6 py-5 text-slate-600">2024-12-16</td>
+          <td class="px-6 py-5 text-slate-700">技术审评</td>
+          <td class="px-6 py-5">
+            <span class="px-2 py-1 bg-sky-100 text-sky-700 rounded-full text-xs">办理中</span>
+          </td>
+          <td class="px-6 py-5">
+            <div class="w-24 progress-bar">
+              <div class="progress-value bg-sky-500" style="width: 50%"></div>
+            </div>
+            <span class="text-xs text-slate-500 mt-1">50%</span>
+          </td>
+          <td class="px-6 py-5 text-slate-700 font-medium">5天</td>
+          <td class="px-6 py-5">
+            <div class="flex gap-2">
+              <button class="view-detail text-blue-600 hover:text-blue-800 transition-colors" data-id="SP202412003">
+                <i class="bi bi-eye"></i>
+              </button>
+              <button class="process-task text-amber-600 hover:text-amber-800 transition-colors" data-id="SP202412003">
+                <i class="bi bi-hourglass-half"></i>
+              </button>
+              <button class="send-message text-slate-500 hover:text-slate-700 transition-colors" data-id="SP202412003">
+                <i class="bi bi-chat-dots"></i>
+              </button>
+            </div>
+          </td>
+        </tr>
+        <tr class="border-b border-slate-100 hover:bg-slate-50 transition-colors">
+          <td class="px-6 py-5">
+            <input class="row-checkbox" type="checkbox" data-id="SP202412004" class="rounded border-slate-300 text-blue-600 focus:ring-blue-500">
+          </td>
+          <td class="px-6 py-5 font-mono text-slate-700">SP202412004</td>
+          <td class="px-6 py-5">
+            <div class="flex items-center gap-2">
+              <img src="https://picsum.photos/id/1043/32/32" alt="企业logo" class="w-8 h-8 rounded object-cover">
+              <span class="font-medium">吴忠市美丽化妆品有限公司</span>
+            </div>
+          </td>
+          <td class="px-6 py-5">
+            <span class="px-2 py-1 bg-amber-50 text-amber-700 rounded text-xs">化妆品许可</span>
+          </td>
+          <td class="px-6 py-5 text-slate-600">2024-12-15</td>
+          <td class="px-6 py-5 text-slate-700">审批决定</td>
+          <td class="px-6 py-5">
+            <span class="px-2 py-1 bg-emerald-100 text-emerald-700 rounded-full text-xs">已办结</span>
+          </td>
+          <td class="px-6 py-5">
+            <div class="w-24 progress-bar">
+              <div class="progress-value bg-emerald-500" style="width: 100%"></div>
+            </div>
+            <span class="text-xs text-slate-500 mt-1">100%</span>
+          </td>
+          <td class="px-6 py-5 text-slate-400">-</td>
+          <td class="px-6 py-5">
+            <div class="flex gap-2">
+              <button class="view-detail text-blue-600 hover:text-blue-800 transition-colors" data-id="SP202412004">
+                <i class="bi bi-eye"></i>
+              </button>
+              <button class="export-certificate text-slate-500 hover:text-slate-700 transition-colors" data-id="SP202412004">
+                <i class="bi bi-download"></i>
+              </button>
+              <button class="print-certificate text-slate-500 hover:text-slate-700 transition-colors" data-id="SP202412004">
+                <i class="bi bi-printer"></i>
+              </button>
+            </div>
+          </td>
+        </tr>
+        <tr class="border-b border-slate-100 hover:bg-slate-50 transition-colors">
+          <td class="px-6 py-5">
+            <input class="row-checkbox" type="checkbox" data-id="SP202412005" class="rounded border-slate-300 text-blue-600 focus:ring-blue-500">
+          </td>
+          <td class="px-6 py-5 font-mono text-slate-700">SP202412005</td>
+          <td class="px-6 py-5">
+            <div class="flex items-center gap-2">
+              <img src="https://picsum.photos/id/1044/32/32" alt="企业logo" class="w-8 h-8 rounded object-cover">
+              <span class="font-medium">固原市康宁药店</span>
+            </div>
+          </td>
+          <td class="px-6 py-5">
+            <span class="px-2 py-1 bg-blue-50 text-blue-700 rounded text-xs">药品经营许可</span>
+          </td>
+          <td class="px-6 py-5 text-slate-600">2024-12-14</td>
+          <td class="px-6 py-5 text-slate-700">材料审核</td>
+          <td class="px-6 py-5">
+            <span class="px-2 py-1 bg-red-100 text-red-700 rounded-full text-xs">已驳回</span>
+          </td>
+          <td class="px-6 py-5">
+            <div class="w-24 progress-bar">
+              <div class="progress-value bg-red-500" style="width: 20%"></div>
+            </div>
+            <span class="text-xs text-slate-500 mt-1">20%</span>
+          </td>
+          <td class="px-6 py-5 text-slate-400">-</td>
+          <td class="px-6 py-5">
+            <div class="flex gap-2">
+              <button class="view-detail text-blue-600 hover:text-blue-800 transition-colors" data-id="SP202412005">
+                <i class="bi bi-eye"></i>
+              </button>
+              <button class="reapply-task text-purple-600 hover:text-purple-800 transition-colors" data-id="SP202412005">
+                <i class="bi bi-arrow-repeat"></i>
+              </button>
+              <button class="send-message text-slate-500 hover:text-slate-700 transition-colors" data-id="SP202412005">
+                <i class="bi bi-chat-dots"></i>
+              </button>
+            </div>
+          </td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- 分页 -->
+    <div class="p-6 flex flex-wrap justify-between items-center border-t border-slate-200 gap-4">
+      <div class="text-sm text-slate-500">显示 1-5 条，共 156 条</div>
+      <div class="flex gap-1">
+        <button class="w-10 h-10 flex items-center justify-center rounded-lg border border-slate-200 text-slate-400 disabled:opacity-50 hover:bg-slate-50 transition-colors" disabled>
+          <i class="bi bi-chevron-left"></i>
+        </button>
+        <button class="page-btn w-10 h-10 flex items-center justify-center rounded-lg gradient-blue text-white hover:opacity-90 transition-colors" data-page="1">1</button>
+        <button class="page-btn w-10 h-10 flex items-center justify-center rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors" data-page="2">2</button>
+        <button class="page-btn w-10 h-10 flex items-center justify-center rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors" data-page="3">3</button>
+        <button class="w-10 h-10 flex items-center justify-center rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors">...</button>
+        <button class="page-btn w-10 h-10 flex items-center justify-center rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors" data-page="32">32</button>
+        <button class="w-10 h-10 flex items-center justify-center rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors">
+          <i class="bi bi-chevron-right"></i>
+        </button>
+      </div>
+      <div class="flex items-center gap-3">
+        <span class="text-sm text-slate-500">跳至：</span>
+        <input id="jump-page" type="number" min="1" max="32" value="1" class="w-16 h-10 px-3 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-500">
+        <span class="text-sm text-slate-500">页</span>
+        <button id="btn-jump-page" class="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg text-sm hover:bg-slate-200 transition-colors">
+          确定
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 新增审批弹窗 -->
+<div id="add-approval-modal" class="fixed inset-0 bg-black/50 modal-backdrop z-50 flex items-center justify-center hidden fade-in">
+  <div class="bg-white rounded-xl w-full max-w-2xl max-h-[90vh] overflow-auto slide-in">
+    <!-- 弹窗头部 -->
+    <div class="p-6 border-b border-slate-200 flex justify-between items-center sticky top-0 bg-white z-10">
+      <h3 class="font-semibold text-xl text-slate-800">新增行政审批事项</h3>
+      <button id="close-add-modal" class="w-8 h-8 rounded-full hover:bg-slate-100 flex items-center justify-center text-slate-500">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+
+    <!-- 弹窗表单 -->
+    <form id="add-approval-form" class="p-6 space-y-5">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <!-- 左侧表单 -->
+        <div class="space-y-5">
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-2">审批类型 <span class="text-red-500">*</span></label>
+            <select id="approval-type" class="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-500 form-input">
+              <option value="">请选择审批类型</option>
+              <option value="drug">药品经营许可</option>
+              <option value="medical">医疗器械许可</option>
+              <option value="cosmetic">化妆品许可</option>
+              <option value="other">其他许可</option>
+            </select>
+            <div class="error-message">请选择审批类型</div>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-2">企业名称 <span class="text-red-500">*</span></label>
+            <input id="company-name" type="text" placeholder="请输入企业全称" class="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-500 form-input">
+            <div class="error-message">请输入企业名称</div>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-2">统一社会信用代码 <span class="text-red-500">*</span></label>
+            <input id="credit-code" type="text" placeholder="请输入18位统一社会信用代码" class="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-500 form-input">
+            <div class="error-message">请输入有效的统一社会信用代码</div>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-2">法定代表人</label>
+            <input type="text" placeholder="请输入法定代表人姓名" class="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-500">
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-2">联系电话 <span class="text-red-500">*</span></label>
+            <input id="contact-phone" type="tel" placeholder="请输入联系电话" class="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-500 form-input">
+            <div class="error-message">请输入有效的联系电话</div>
+          </div>
+        </div>
+
+        <!-- 右侧表单 -->
+        <div class="space-y-5">
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-2">申请事项 <span class="text-red-500">*</span></label>
+            <textarea id="apply-content" rows="3" placeholder="请详细描述申请事项内容" class="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-500 form-input"></textarea>
+            <div class="error-message">请输入申请事项内容</div>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-2">办理部门</label>
+            <select class="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-500">
+              <option>药品监管科</option>
+              <option>医疗器械科</option>
+              <option>化妆品科</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-2">预计办理时长</label>
+            <div class="flex items-center gap-2">
+              <input type="number" min="1" value="7" class="flex-1 px-4 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-500">
+              <span class="text-slate-500">天</span>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-2">附件上传</label>
+            <div class="border-2 border-dashed border-slate-200 rounded-lg p-6 text-center hover:border-blue-500 transition-colors cursor-pointer">
+              <input type="file" multiple class="hidden" id="file-upload">
+              <label for="file-upload" class="cursor-pointer">
+                <div class="text-blue-600 mb-2">
+                  <i class="bi bi-cloud-upload text-3xl"></i>
+                </div>
+                <p class="text-sm text-slate-600 mb-1">点击上传附件或拖拽文件至此处</p>
+                <p class="text-xs text-slate-400">支持PDF、Word、Excel、图片等格式，单个文件不超过10MB</p>
+              </label>
+            </div>
+            <div id="file-list" class="mt-2 hidden">
+              <div class="flex items-center justify-between p-2 bg-slate-50 rounded-lg mb-1">
+                <div class="flex items-center gap-2">
+                  <i class="bi bi-file-pdf text-red-500"></i>
+                  <span class="text-sm">申请表.pdf</span>
+                </div>
+                <button type="button" class="text-slate-400 hover:text-red-500">
+                  <i class="bi bi-x"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 表单底部 -->
+      <div class="flex justify-end gap-3 pt-4 border-t border-slate-100">
+        <button type="button" id="cancel-add-form" class="px-6 py-2.5 bg-slate-100 text-slate-700 rounded-lg text-sm hover:bg-slate-200 transition-colors">
+          取消
+        </button>
+        <button type="submit" class="px-6 py-2.5 gradient-blue text-white rounded-lg text-sm hover:opacity-90 transition-all">
+          提交申请
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- 详情查看弹窗 -->
+<div id="detail-modal" class="fixed inset-0 bg-black/50 modal-backdrop z-50 flex items-center justify-center hidden fade-in">
+  <div class="bg-white rounded-xl w-full max-w-4xl max-h-[90vh] overflow-auto slide-in">
+    <!-- 弹窗头部 -->
+    <div class="p-6 border-b border-slate-200 flex justify-between items-center sticky top-0 bg-white z-10">
+      <h3 class="font-semibold text-xl text-slate-800" id="detail-title">审批事项详情</h3>
+      <div class="flex gap-2">
+        <button class="px-3 py-1.5 text-sm bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors">
+          <i class="bi bi-printer mr-1"></i> 打印
+        </button>
+        <button id="close-detail-modal" class="w-8 h-8 rounded-full hover:bg-slate-100 flex items-center justify-center text-slate-500">
+          <i class="bi bi-x-lg"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- 详情内容 -->
+    <div class="p-6 space-y-6" id="detail-content">
+      <!-- 基本信息 -->
+      <div class="border border-slate-200 rounded-lg p-5">
+        <h4 class="font-medium text-slate-800 mb-4 flex items-center">
+          <i class="bi bi-card-text text-blue-600 mr-2"></i>
+          基本信息
+        </h4>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="flex items-center gap-2">
+            <span class="text-sm text-slate-500 w-24">申请编号：</span>
+            <span class="text-sm font-medium" id="detail-code">SP202412001</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="text-sm text-slate-500 w-24">审批类型：</span>
+            <span class="text-sm font-medium" id="detail-type">药品经营许可</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="text-sm text-slate-500 w-24">企业名称：</span>
+            <span class="text-sm font-medium" id="detail-company">宁夏康泰药业有限公司</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="text-sm text-slate-500 w-24">申请日期：</span>
+            <span class="text-sm font-medium" id="detail-date">2024-12-18</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="text-sm text-slate-500 w-24">统一信用代码：</span>
+            <span class="text-sm font-medium" id="detail-credit">91640000MA774X7X7X</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="text-sm text-slate-500 w-24">办理状态：</span>
+            <span class="text-sm font-medium">
+                <span id="detail-status" class="px-2 py-1 bg-sky-100 text-sky-700 rounded-full text-xs">办理中</span>
+              </span>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="text-sm text-slate-500 w-24">法定代表人：</span>
+            <span class="text-sm font-medium" id="detail-legal">张三</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="text-sm text-slate-500 w-24">剩余办理时间：</span>
+            <span class="text-sm font-medium text-amber-600" id="detail-time">8天</span>
+          </div>
+          <div class="flex items-center gap-2 md:col-span-2">
+            <span class="text-sm text-slate-500 w-24">联系电话：</span>
+            <span class="text-sm font-medium" id="detail-phone">13800138000</span>
+          </div>
+          <div class="flex items-start gap-2 md:col-span-2">
+            <span class="text-sm text-slate-500 w-24 pt-1">申请事项：</span>
+            <span class="text-sm font-medium" id="detail-content">申请药品零售企业经营许可证，经营范围包括处方药、非处方药、中药饮片等。</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 办理进度 -->
+      <div class="border border-slate-200 rounded-lg p-5">
+        <h4 class="font-medium text-slate-800 mb-4 flex items-center">
+          <i class="bi bi-timeline text-blue-600 mr-2"></i>
+          办理进度
+        </h4>
+        <div class="relative pl-8 pb-8 border-l-2 border-slate-200 ml-4">
+          <!-- 步骤1 -->
+          <div class="absolute left-[-9px] top-0 w-4 h-4 rounded-full bg-emerald-500 border-2 border-white"></div>
+          <div class="mb-6">
+            <div class="flex items-center gap-2 mb-1">
+              <h5 class="font-medium text-sm">材料提交</h5>
+              <span class="text-xs text-slate-500">2024-12-18 09:30</span>
+            </div>
+            <p class="text-sm text-slate-600">企业提交申请材料，系统接收成功。</p>
+            <div class="mt-1 text-xs text-slate-500">操作人：系统自动</div>
+          </div>
+
+          <!-- 步骤2 -->
+          <div class="absolute left-[-9px] top-[110px] w-4 h-4 rounded-full bg-slate-300 border-2 border-white"></div>
+          <div class="mb-6">
+            <div class="flex items-center gap-2 mb-1">
+              <h5 class="font-medium text-sm">形式审查</h5>
+              <span class="text-xs text-slate-500">待处理</span>
+            </div>
+            <p class="text-sm text-slate-400">等待审查人员进行形式审查。</p>
+          </div>
+
+          <!-- 步骤3 -->
+          <div class="absolute left-[-9px] top-[190px] w-4 h-4 rounded-full bg-slate-200 border-2 border-white"></div>
+          <div class="mb-6">
+            <div class="flex items-center gap-2 mb-1">
+              <h5 class="font-medium text-sm">实质审查</h5>
+              <span class="text-xs text-slate-500">未开始</span>
+            </div>
+            <p class="text-sm text-slate-400">等待形式审查完成后进行实质审查。</p>
+          </div>
+
+          <!-- 步骤4 -->
+          <div class="absolute left-[-9px] top-[270px] w-4 h-4 rounded-full bg-slate-200 border-2 border-white"></div>
+          <div>
+            <div class="flex items-center gap-2 mb-1">
+              <h5 class="font-medium text-sm">审批决定</h5>
+              <span class="text-xs text-slate-500">未开始</span>
+            </div>
+            <p class="text-sm text-slate-400">等待审查完成后进行审批决定。</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 附件列表 -->
+      <div class="border border-slate-200 rounded-lg p-5">
+        <h4 class="font-medium text-slate-800 mb-4 flex items-center">
+          <i class="bi bi-paperclip text-blue-600 mr-2"></i>
+          附件列表
+        </h4>
+        <div class="space-y-2">
+          <div class="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+            <div class="flex items-center gap-3">
+              <i class="bi bi-file-pdf text-red-500 text-xl"></i>
+              <div>
+                <p class="text-sm font-medium">药品经营许可证申请表.pdf</p>
+                <p class="text-xs text-slate-500">2.4MB · 2024-12-18 上传</p>
+              </div>
+            </div>
+            <div class="flex gap-2">
+              <button class="text-blue-600 hover:text-blue-800 transition-colors">
+                <i class="bi bi-download"></i>
+              </button>
+              <button class="text-slate-500 hover:text-slate-700 transition-colors">
+                <i class="bi bi-eye"></i>
+              </button>
+            </div>
+          </div>
+          <div class="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+            <div class="flex items-center gap-3">
+              <i class="bi bi-file-image text-green-500 text-xl"></i>
+              <div>
+                <p class="text-sm font-medium">企业营业执照副本.jpg</p>
+                <p class="text-xs text-slate-500">1.8MB · 2024-12-18 上传</p>
+              </div>
+            </div>
+            <div class="flex gap-2">
+              <button class="text-blue-600 hover:text-blue-800 transition-colors">
+                <i class="bi bi-download"></i>
+              </button>
+              <button class="text-slate-500 hover:text-slate-700 transition-colors">
+                <i class="bi bi-eye"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 操作记录 -->
+      <div class="border border-slate-200 rounded-lg p-5">
+        <h4 class="font-medium text-slate-800 mb-4 flex items-center">
+          <i class="bi bi-journal-text text-blue-600 mr-2"></i>
+          操作记录
+        </h4>
+        <div class="space-y-3 max-h-60 overflow-y-auto pr-2">
+          <div class="flex gap-3">
+            <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 flex-shrink-0">
+              <i class="bi bi-person"></i>
+            </div>
+            <div class="flex-1">
+              <div class="flex justify-between items-center mb-1">
+                <h5 class="text-sm font-medium">系统管理员</h5>
+                <span class="text-xs text-slate-500">2024-12-18 09:30</span>
+              </div>
+              <p class="text-sm text-slate-600">创建审批事项，申请编号：SP202412001</p>
+            </div>
+          </div>
+          <div class="flex gap-3">
+            <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 flex-shrink-0">
+              <i class="bi bi-person"></i>
+            </div>
+            <div class="flex-1">
+              <div class="flex justify-between items-center mb-1">
+                <h5 class="text-sm font-medium">企业用户</h5>
+                <span class="text-xs text-slate-500">2024-12-18 09:35</span>
+              </div>
+              <p class="text-sm text-slate-600">上传申请材料，包括申请表和营业执照副本。</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 操作按钮 -->
+      <div class="flex justify-end gap-3 pt-4 border-t border-slate-100">
+        <button class="px-5 py-2 text-sm border border-slate-200 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors">
+          <i class="bi bi-chat-dots mr-2"></i> 发送消息
+        </button>
+        <button class="px-5 py-2 text-sm border border-amber-200 text-amber-700 rounded-lg hover:bg-amber-50 transition-colors">
+          <i class="bi bi-hourglass-half mr-2"></i> 处理任务
+        </button>
+        <button class="px-5 py-2 text-sm gradient-blue text-white rounded-lg hover:opacity-90 transition-colors">
+          <i class="bi bi-check-circle mr-2"></i> 完成审批
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 消息提示组件 -->
+<div id="toast-container" class="fixed top-6 right-6 z-50 flex flex-col gap-3"></div>
+
+<script>
+  // 页面加载完成后执行
+  window.addEventListener('DOMContentLoaded', function() {
+    // 隐藏加载遮罩
+    setTimeout(() => {
+      const loadingMask = document.getElementById('loading-mask');
+      loadingMask.classList.add('opacity-0');
+      loadingMask.style.transition = 'opacity 0.5s ease';
+      setTimeout(() => {
+        loadingMask.style.display = 'none';
+      }, 500);
+
+      // 数字滚动动画
+      animateNumbers();
+    }, 800);
+
+    // 初始化图表
+    let trendChart = initTrendChart();
+    let typeChart = initTypeChart();
+
+    // 暗黑模式切换
+    document.getElementById('theme-toggle').addEventListener('click', function() {
+      document.documentElement.classList.toggle('dark');
+      const icon = this.querySelector('i');
+      if (document.documentElement.classList.contains('dark')) {
+        icon.classList.remove('bi-moon-stars');
+        icon.classList.add('bi-sun');
+      } else {
+        icon.classList.remove('bi-sun');
+        icon.classList.add('bi-moon-stars');
+      }
+      // 重新渲染图表以适配暗黑模式
+      trendChart.resize();
+      typeChart.resize();
+    });
+
+    // ==================== 核心交互逻辑 ====================
+
+    // 1. 筛选表单提交处理
+    document.getElementById('filter-form').addEventListener('submit', function(e) {
+      e.preventDefault();
+
+      // 获取筛选条件
+      const filters = {
+        time: document.getElementById('filter-time').value,
+        type: document.getElementById('filter-type').value,
+        status: document.getElementById('filter-status').value,
+        dept: document.getElementById('filter-dept').value,
+        keyword: document.getElementById('filter-keyword').value.trim()
+      };
+
+      // 显示加载提示
+      showToast('info', '正在筛选数据，请稍候...');
+
+      // 模拟筛选请求
+      setTimeout(() => {
+        showToast('success', `筛选完成！共找到符合条件的审批事项 28 条`);
+      }, 800);
+    });
+
+    // 2. 高级筛选切换
+    document.getElementById('advanced-filter-toggle').addEventListener('click', function() {
+      const content = document.getElementById('advanced-filter-content');
+      const icon = this.querySelector('.bi-chevron-down');
+
+      if (content.classList.contains('hidden')) {
+        content.classList.remove('hidden');
+        icon.classList.remove('bi-chevron-down');
+        icon.classList.add('bi-chevron-up');
+      } else {
+        content.classList.add('hidden');
+        icon.classList.remove('bi-chevron-up');
+        icon.classList.add('bi-chevron-down');
+      }
+    });
+
+    // 3. 图表周期切换
+    document.querySelectorAll('.chart-period-btn').forEach(btn => {
+      btn.addEventListener('click', function() {
+        // 移除所有按钮的激活状态
+        document.querySelectorAll('.chart-period-btn').forEach(b => {
+          b.classList.remove('gradient-blue', 'text-white');
+          b.classList.add('bg-slate-100', 'text-slate-700');
+        });
+
+        // 设置当前按钮为激活状态
+        this.classList.remove('bg-slate-100', 'text-slate-700');
+        this.classList.add('gradient-blue', 'text-white');
+
+        // 获取周期类型
+        const period = this.dataset.period;
+
+        // 显示加载提示
+        showToast('info', `正在加载近${period}天数据...`);
+
+        // 模拟数据加载
+        setTimeout(() => {
+          // 更新图表数据
+          updateTrendChart(trendChart, period);
+          showToast('success', `已切换至近${period}天数据视图`);
+        }, 600);
+      });
+    });
+
+    // 4. 图表类型切换
+    document.querySelectorAll('.chart-type-btn').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const type = this.dataset.type;
+        const typeText = this.textContent.trim().replace(/^.*?\s/, '');
+
+        // 更新按钮文本
+        document.getElementById('chart-type-toggle').innerHTML = `<i class="bi bi-${type === 'pie' ? 'pie-chart' : type === 'bar' ? 'bar-chart' : 'bar-chart-steps'} mr-1"></i> ${typeText}`;
+
+        // 隐藏下拉菜单
+        document.getElementById('chart-type-dropdown').classList.add('hidden');
+
+        // 显示加载提示
+        showToast('info', `正在切换为${typeText}视图...`);
+
+        // 模拟数据加载
+        setTimeout(() => {
+          // 更新图表类型
+          updateTypeChart(typeChart, type);
+          showToast('success', `已切换至${typeText}视图`);
+        }, 600);
+      });
+    });
+
+    // 5. 全选/取消全选
+    document.getElementById('select-all').addEventListener('change', function() {
+      const isChecked = this.checked;
+      document.querySelectorAll('.row-checkbox').forEach(checkbox => {
+        checkbox.checked = isChecked;
+      });
+
+      // 显示提示
+      if (isChecked) {
+        showToast('info', '已选中当前页所有审批事项');
+      } else {
+        showToast('info', '已取消全选');
+      }
+    });
+
+    // 6. 分页处理
+    document.querySelectorAll('.page-btn').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const page = this.dataset.page;
+
+        // 移除所有页码的激活状态
+        document.querySelectorAll('.page-btn').forEach(b => {
+          b.classList.remove('gradient-blue', 'text-white');
+          b.classList.add('border', 'border-slate-200', 'hover:bg-slate-50');
+        });
+
+        // 设置当前页码为激活状态
+        this.classList.remove('border', 'border-slate-200', 'hover:bg-slate-50');
+        this.classList.add('gradient-blue', 'text-white');
+
+        // 显示加载提示
+        showToast('info', `正在加载第${page}页数据...`);
+
+        // 模拟分页请求
+        setTimeout(() => {
+          showToast('success', `已切换至第${page}页`);
+        }, 600);
+      });
+    });
+
+    // 7. 跳转页码
+    document.getElementById('btn-jump-page').addEventListener('click', function() {
+      const pageInput = document.getElementById('jump-page');
+      const page = parseInt(pageInput.value);
+
+      // 验证页码
+      if (isNaN(page) || page < 1 || page > 32) {
+        showToast('error', '请输入有效的页码（1-32）');
+        pageInput.focus();
+        return;
+      }
+
+      // 显示加载提示
+      showToast('info', `正在跳转到第${page}页...`);
+
+      // 模拟跳转
+      setTimeout(() => {
+        // 更新页码按钮状态
+        document.querySelectorAll('.page-btn').forEach(btn => {
+          if (btn.dataset.page == page) {
+            btn.click();
+          }
+        });
+      }, 600);
+    });
+
+    // 8. 新增审批弹窗
+    const addModal = document.getElementById('add-approval-modal');
+    document.getElementById('btn-add-approval').addEventListener('click', () => openModal(addModal));
+    document.getElementById('quick-add').addEventListener('click', () => openModal(addModal));
+    document.getElementById('close-add-modal').addEventListener('click', () => closeModal(addModal));
+    document.getElementById('cancel-add-form').addEventListener('click', () => closeModal(addModal));
+
+    // 9. 新增审批表单提交
+    document.getElementById('add-approval-form').addEventListener('submit', function(e) {
+      e.preventDefault();
+
+      // 表单验证
+      let isValid = true;
+
+      // 验证审批类型
+      const approvalType = document.getElementById('approval-type');
+      if (!approvalType.value) {
+        approvalType.classList.add('error');
+        isValid = false;
+      } else {
+        approvalType.classList.remove('error');
+        approvalType.classList.add('success');
+      }
+
+      // 验证企业名称
+      const companyName = document.getElementById('company-name');
+      if (!companyName.value.trim()) {
+        companyName.classList.add('error');
+        isValid = false;
+      } else {
+        companyName.classList.remove('error');
+        companyName.classList.add('success');
+      }
+
+      // 验证统一信用代码
+      const creditCode = document.getElementById('credit-code');
+      const creditCodeValue = creditCode.value.trim();
+      if (!creditCodeValue || creditCodeValue.length !== 18) {
+        creditCode.classList.add('error');
+        isValid = false;
+      } else {
+        creditCode.classList.remove('error');
+        creditCode.classList.add('success');
+      }
+
+      // 验证联系电话
+      const contactPhone = document.getElementById('contact-phone');
+      const phoneValue = contactPhone.value.trim();
+      const phoneRegex = /^1[3-9]\d{9}$/;
+      if (!phoneValue || !phoneRegex.test(phoneValue)) {
+        contactPhone.classList.add('error');
+        isValid = false;
+      } else {
+        contactPhone.classList.remove('error');
+        contactPhone.classList.add('success');
+      }
+
+      // 验证申请内容
+      const applyContent = document.getElementById('apply-content');
+      if (!applyContent.value.trim()) {
+        applyContent.classList.add('error');
+        isValid = false;
+      } else {
+        applyContent.classList.remove('error');
+        applyContent.classList.add('success');
+      }
+
+      // 验证不通过
+      if (!isValid) {
+        showToast('error', '请完善必填字段后提交');
+        return;
+      }
+
+      // 验证通过，提交表单
+      showToast('info', '正在提交审批申请，请稍候...');
+
+      // 模拟提交请求
+      setTimeout(() => {
+        // 关闭弹窗
+        closeModal(addModal);
+
+        // 重置表单
+        this.reset();
+        document.querySelectorAll('.form-input').forEach(input => {
+          input.classList.remove('error', 'success');
+        });
+
+        // 显示成功提示
+        showToast('success', '审批申请提交成功！申请编号：SP202412006');
+
+        // 更新统计数字
+        updateCounter('count1', 1);
+      }, 1500);
+    });
+
+    // 10. 查看详情弹窗
+    const detailModal = document.getElementById('detail-modal');
+    document.querySelectorAll('.view-detail').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const id = this.dataset.id;
+
+        // 更新详情内容
+        document.getElementById('detail-code').textContent = id;
+
+        // 根据ID设置不同的详情内容
+        if (id === 'SP202412002') {
+          document.getElementById('detail-company').textContent = '银川惠民大药房连锁有限公司';
+          document.getElementById('detail-status').className = 'px-2 py-1 bg-sky-100 text-sky-700 rounded-full text-xs';
+          document.getElementById('detail-status').textContent = '办理中';
+          document.getElementById('detail-time').textContent = '-2天';
+          document.getElementById('detail-time').className = 'text-sm font-medium text-red-600';
+        } else if (id === 'SP202412004') {
+          document.getElementById('detail-company').textContent = '吴忠市美丽化妆品有限公司';
+          document.getElementById('detail-status').className = 'px-2 py-1 bg-emerald-100 text-emerald-700 rounded-full text-xs';
+          document.getElementById('detail-status').textContent = '已办结';
+          document.getElementById('detail-time').textContent = '-';
+          document.getElementById('detail-time').className = 'text-sm font-medium text-slate-400';
+        } else {
+          document.getElementById('detail-company').textContent = '宁夏康泰药业有限公司';
+          document.getElementById('detail-status').className = 'px-2 py-1 bg-sky-100 text-sky-700 rounded-full text-xs';
+          document.getElementById('detail-status').textContent = '办理中';
+          document.getElementById('detail-time').textContent = '8天';
+          document.getElementById('detail-time').className = 'text-sm font-medium text-amber-600';
+        }
+
+        // 打开弹窗
+        openModal(detailModal);
+      });
+    });
+    document.getElementById('close-detail-modal').addEventListener('click', () => closeModal(detailModal));
+
+    // 11. 全局搜索
+    document.getElementById('global-search').addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        const keyword = this.value.trim();
+        if (!keyword) {
+          showToast('warning', '请输入搜索关键词');
+          return;
+        }
+
+        showToast('info', `正在搜索：${keyword}...`);
+
+        // 模拟搜索
+        setTimeout(() => {
+          showToast('success', `找到与"${keyword}"相关的审批事项 8 条`);
+        }, 800);
+      }
+    });
+
+    // 12. 导出功能
+    document.getElementById('export-trend-chart').addEventListener('click', () => {
+      showToast('info', '正在导出审批趋势图表...');
+      setTimeout(() => showToast('success', '图表导出成功，已保存为PNG格式'), 1000);
+    });
+
+    document.getElementById('export-type-chart').addEventListener('click', () => {
+      showToast('info', '正在导出审批类型图表...');
+      setTimeout(() => showToast('success', '图表导出成功，已保存为PNG格式'), 1000);
+    });
+
+    document.getElementById('btn-export-table').addEventListener('click', () => {
+      showToast('info', '正在导出审批数据表格...');
+      setTimeout(() => showToast('success', '数据导出成功，已保存为Excel格式'), 1500);
+    });
+
+    // 13. 打印功能
+    document.getElementById('btn-print-table').addEventListener('click', () => {
+      showToast('info', '正在准备打印内容...');
+      setTimeout(() => {
+        showToast('success', '打印预览已打开');
+        // 模拟打印
+        window.print();
+      }, 800);
+    });
+
+    // 14. 一键提醒
+    document.getElementById('btn-remind-overdue').addEventListener('click', () => {
+      showToast('info', '正在发送提醒通知...');
+      setTimeout(() => showToast('success', '已向5个超期事项的办理人员发送提醒'), 1000);
+    });
+
+    // 15. 开始受理
+    document.getElementById('btn-start-review').addEventListener('click', () => {
+      showToast('info', '正在开始受理待办事项...');
+      setTimeout(() => {
+        showToast('success', '已开始受理18个待办事项，状态已更新为"办理中"');
+        // 更新统计数字
+        updateCounter('count2', 18);
+        updateCounter('count1', -18);
+      }, 1200);
+    });
+
+    // 16. 批量办结
+    document.getElementById('quick-batch').addEventListener('click', () => {
+      // 检查是否有选中项
+      const checkedItems = document.querySelectorAll('.row-checkbox:checked');
+      if (checkedItems.length === 0) {
+        showToast('warning', '请先选择需要办结的审批事项');
+        return;
+      }
+
+      showToast('info', `正在批量办结${checkedItems.length}个审批事项...`);
+      setTimeout(() => {
+        showToast('success', `已成功办结${checkedItems.length}个审批事项`);
+        // 更新统计数字
+        updateCounter('count3', checkedItems.length);
+        updateCounter('count2', -checkedItems.length);
+
+        // 取消选中
+        document.getElementById('select-all').checked = false;
+        checkedItems.forEach(item => {
+          item.checked = false;
+        });
+      }, 1500);
+    });
+
+    // 17. 待办提醒
+    document.getElementById('quick-remind').addEventListener('click', () => {
+      showToast('info', '正在发送待办提醒...');
+      setTimeout(() => showToast('success', '已向所有待办事项的办理人员发送提醒通知'), 1000);
+    });
+
+    // 18. 导出报表
+    document.getElementById('quick-export').addEventListener('click', () => {
+      showToast('info', '正在生成审批报表...');
+      setTimeout(() => showToast('success', '审批报表导出成功，包含本月所有审批数据'), 1500);
+    });
+
+    // 19. 表格排序
+    document.getElementById('table-sort').addEventListener('change', function() {
+      const sortType = this.options[this.selectedIndex].text;
+      showToast('info', `正在按${sortType}排序...`);
+      setTimeout(() => showToast('success', `已按${sortType}重新排序审批事项`), 800);
+    });
+
+    // 20. 紧急处理
+    document.querySelectorAll('.urgent-handle').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const id = this.dataset.id;
+        showToast('warning', `正在紧急处理超期事项 ${id}...`);
+        setTimeout(() => showToast('success', `事项 ${id} 已标记为紧急处理，已通知相关审批人员`), 1000);
+      });
+    });
+
+    // 21. 重新申请
+    document.querySelectorAll('.reapply-task').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const id = this.dataset.id;
+        showToast('info', `正在处理 ${id} 重新申请...`);
+        setTimeout(() => {
+          showToast('success', `已为 ${id} 创建重新申请流程，状态已更新为"待受理"`);
+          updateCounter('count1', 1);
+        }, 1000);
+      });
+    });
+
+    // 22. 发送消息
+    document.querySelectorAll('.send-message').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const id = this.dataset.id;
+        showToast('info', `正在打开与 ${id} 相关的消息窗口...`);
+        setTimeout(() => showToast('success', `消息窗口已打开，可向企业发送通知`), 800);
+      });
+    });
+
+    // 23. 处理任务
+    document.querySelectorAll('.process-task').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const id = this.dataset.id;
+        showToast('info', `正在处理 ${id} 审批任务...`);
+        setTimeout(() => showToast('success', `任务 ${id} 已进入处理队列，预计5分钟内分配至审批人员`), 1000);
+      });
+    });
+  });
+
+  // ==================== 工具函数 ====================
+
+  // 数字滚动动画
+  function animateNumbers() {
+    const counters = ['count1', 'count2', 'count3', 'count4'];
+    const targets = [156, 42, 128, 5];
+
+    counters.forEach((id, index) => {
+      const element = document.getElementById(id);
+      let count = 0;
+      const target = targets[index];
+      const duration = 1500; // 动画时长
+      const step = target / (duration / 16); // 每16ms的步长
+
+      const timer = setInterval(() => {
+        count += step;
+        if (count >= target) {
+          count = target;
+          clearInterval(timer);
+        }
+        element.textContent = Math.floor(count);
+      }, 16);
+    });
+  }
+
+  // 更新计数器数值
+  function updateCounter(id, delta) {
+    const element = document.getElementById(id);
+    const current = parseInt(element.textContent);
+    const target = current + delta;
+
+    let count = current;
+    const step = delta / 30; // 分30步完成动画
+
+    const timer = setInterval(() => {
+      count += step;
+      if ((delta > 0 && count >= target) || (delta < 0 && count <= target)) {
+        count = target;
+        clearInterval(timer);
+      }
+      element.textContent = Math.floor(count);
+    }, 16);
+  }
+
+  // 打开弹窗
+  function openModal(modal) {
+    modal.classList.remove('hidden');
+    // 防止背景滚动
+    document.body.style.overflow = 'hidden';
+  }
+
+  // 关闭弹窗
+  function closeModal(modal) {
+    modal.classList.add('hidden');
+    // 恢复背景滚动
+    document.body.style.overflow = '';
+  }
+
+  // 显示消息提示
+  function showToast(type, message) {
+    const container = document.getElementById('toast-container');
+
+    // 创建toast元素
+    const toast = document.createElement('div');
+    toast.className = `flex items-center gap-3 px-4 py-3 rounded-lg text-white shadow-lg ${type === 'success' ? 'toast-success' : type === 'warning' ? 'toast-warning' : type === 'error' ? 'toast-error' : 'toast-info'}`;
+
+    // 设置图标
+    let icon = '';
+    switch(type) {
+      case 'success': icon = 'bi-check-circle'; break;
+      case 'warning': icon = 'bi-exclamation-triangle'; break;
+      case 'error': icon = 'bi-x-circle'; break;
+      case 'info': icon = 'bi-info-circle'; break;
+    }
+
+    // 设置内容
+    toast.innerHTML = `
+        <i class="bi ${icon} text-xl"></i>
+        <span class="text-sm">${message}</span>
+        <button class="ml-auto text-white/80 hover:text-white">
+          <i class="bi bi-x-lg"></i>
+        </button>
+      `;
+
+    // 添加到容器
+    container.appendChild(toast);
+
+    // 自动关闭
+    const timeout = setTimeout(() => {
+      closeToast(toast);
+    }, 3000);
+
+    // 点击关闭按钮
+    toast.querySelector('button').addEventListener('click', () => {
+      clearTimeout(timeout);
+      closeToast(toast);
+    });
+
+    // 鼠标悬停时暂停自动关闭
+    toast.addEventListener('mouseenter', () => clearTimeout(timeout));
+    toast.addEventListener('mouseleave', () => {
+      timeout = setTimeout(() => {
+        closeToast(toast);
+      }, 3000);
+    });
+  }
+
+  // 关闭消息提示
+  function closeToast(toast) {
+    toast.style.opacity = '0';
+    toast.style.transform = 'translateX(20px)';
+    toast.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+
+    setTimeout(() => {
+      toast.remove();
+    }, 300);
+  }
+
+  // 审批趋势图
+  function initTrendChart() {
+    const chartDom = document.getElementById('trendChart');
+    const myChart = echarts.init(chartDom);
+
+    // 定义渐变
+    const line1Gradient = new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+      { offset: 0, color: 'rgba(59, 130, 246, 0.8)' },
+      { offset: 1, color: 'rgba(59, 130, 246, 0.1)' }
+    ]);
+
+    const line2Gradient = new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+      { offset: 0, color: 'rgba(16, 185, 129, 0.8)' },
+      { offset: 1, color: 'rgba(16, 185, 129, 0.1)' }
+    ]);
+
+    const option = {
+      backgroundColor: 'transparent',
+      tooltip: {
+        trigger: 'axis',
+        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+        borderColor: '#e2e8f0',
+        borderWidth: 1,
+        padding: 12,
+        textStyle: {
+          color: '#1e293b',
+          fontSize: 12
+        },
+        axisPointer: {
+          type: 'shadow',
+          shadowStyle: {
+            color: 'rgba(0, 0, 0, 0.05)'
+          }
+        },
+        formatter: function(params) {
+          let res = `<div class="font-medium mb-1">${params[0].axisValue}</div>`;
+          params.forEach(item => {
+            res += `<div class="flex items-center gap-2 mt-1">
+                <span style="width:8px;height:8px;border-radius:50%;background:${item.color};display:inline-block;"></span>
+                <span>${item.seriesName}：${item.value} 件</span>
+              </div>`;
+          });
+          return res;
+        }
+      },
+      legend: {
+        show: false
+      },
+      grid: {
+        left: '10',
+        right: '10',
+        top: '20',
+        bottom: '40',
+        containLabel: true
+      },
+      xAxis: {
+        type: 'category',
+        data: ['1日', '5日', '10日', '15日', '20日', '25日', '30日'],
+        axisLine: {
+          lineStyle: {
+            color: '#e2e8f0'
+          }
+        },
+        axisLabel: {
+          color: '#64748b',
+          fontSize: 11
+        },
+        axisTick: {
+          alignWithLabel: true,
+          lineStyle: {
+            color: '#f1f5f9'
+          }
+        },
+        splitLine: {
+          show: false
+        }
+      },
+      yAxis: {
+        type: 'value',
+        axisLine: {
+          show: false
+        },
+        splitLine: {
+          lineStyle: {
+            color: '#f1f5f9',
+            type: 'dashed'
+          }
+        },
+        axisLabel: {
+          color: '#64748b',
+          fontSize: 11,
+          formatter: '{value}'
+        },
+        min: 0,
+        axisTick: {
+          show: false
+        }
+      },
+      series: [
+        {
+          name: '受理数量',
+          type: 'line',
+          smooth: true,
+          data: [12, 18, 15, 22, 28, 20, 25],
+          lineStyle: {
+            color: '#3b82f6',
+            width: 3,
+            shadowColor: 'rgba(59, 130, 246, 0.3)',
+            shadowBlur: 8,
+            shadowOffsetY: 4
+          },
+          areaStyle: {
+            color: line1Gradient
+          },
+          symbol: 'circle',
+          symbolSize: 6,
+          itemStyle: {
+            color: '#3b82f6',
+            borderColor: '#ffffff',
+            borderWidth: 2
+          },
+          emphasis: {
+            symbolSize: 10,
+            itemStyle: {
+              shadowColor: 'rgba(59, 130, 246, 0.5)',
+              shadowBlur: 10
+            }
+          },
+          animationDuration: 1500,
+          animationEasing: 'cubicOut'
+        },
+        {
+          name: '办结数量',
+          type: 'line',
+          smooth: true,
+          data: [8, 12, 14, 18, 22, 18, 20],
+          lineStyle: {
+            color: '#10b981',
+            width: 3,
+            shadowColor: 'rgba(16, 185, 129, 0.3)',
+            shadowBlur: 8,
+            shadowOffsetY: 4
+          },
+          areaStyle: {
+            color: line2Gradient
+          },
+          symbol: 'circle',
+          symbolSize: 6,
+          itemStyle: {
+            color: '#10b981',
+            borderColor: '#ffffff',
+            borderWidth: 2
+          },
+          emphasis: {
+            symbolSize: 10,
+            itemStyle: {
+              shadowColor: 'rgba(16, 185, 129, 0.5)',
+              shadowBlur: 10
+            }
+          },
+          animationDuration: 1500,
+          animationEasing: 'cubicOut',
+          animationDelay: 300
+        }
+      ]
+    };
+
+    myChart.setOption(option);
+    window.addEventListener('resize', function() {
+      myChart.resize();
+    });
+
+    return myChart;
+  }
+
+  // 更新趋势图数据
+  function updateTrendChart(chart, period) {
+    let xData, data1, data2;
+
+    switch(period) {
+      case '7':
+        xData = ['12/15', '12/16', '12/17', '12/18', '12/19', '12/20', '12/21'];
+        data1 = [18, 22, 19, 25, 21, 28, 24];
+        data2 = [15, 18, 16, 20, 19, 22, 21];
+        break;
+      case '90':
+        xData = ['10月', '10月中', '10月末', '11月', '11月中', '11月末', '12月'];
+        data1 = [120, 135, 142, 138, 145, 150, 156];
+        data2 = [105, 118, 122, 115, 120, 118, 128];
+        break;
+      default: // 30天
+        xData = ['1日', '5日', '10日', '15日', '20日', '25日', '30日'];
+        data1 = [12, 18, 15, 22, 28, 20, 25];
+        data2 = [8, 12, 14, 18, 22, 18, 20];
+    }
+
+    chart.setOption({
+      xAxis: {
+        data: xData
+      },
+      series: [
+        { data: data1 },
+        { data: data2 }
+      ]
+    });
+  }
+
+  // 审批类型分布图
+  function initTypeChart() {
+    const chartDom = document.getElementById('typeChart');
+    const myChart = echarts.init(chartDom);
+
+    const option = {
+      backgroundColor: 'transparent',
+      tooltip: {
+        trigger: 'item',
+        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+        borderColor: '#e2e8f0',
+        borderWidth: 1,
+        padding: 12,
+        textStyle: {
+          color: '#1e293b',
+          fontSize: 12
+        },
+        formatter: `<div class="font-medium mb-1">{b}</div>
+            <div class="flex justify-between items-center mt-1">
+              <span>数量：</span>
+              <span class="font-medium">{c} 件</span>
+            </div>
+            <div class="flex justify-between items-center mt-1">
+              <span>占比：</span>
+              <span class="font-medium">{d}%</span>
+            </div>`
+      },
+      legend: {
+        orient: 'vertical',
+        right: 20,
+        top: 'center',
+        textStyle: {
+          color: '#64748b',
+          fontSize: 12,
+          padding: [0, 0, 8, 0]
+        },
+        itemGap: 12,
+        itemWidth: 14,
+        itemHeight: 14
+      },
+      series: [
+        {
+          type: 'pie',
+          radius: ['40%', '70%'],
+          center: ['35%', '50%'],
+          avoidLabelOverlap: false,
+          label: {
+            show: true,
+            position: 'outside',
+            formatter: '{b}: {c}件',
+            fontSize: 11,
+            color: '#475569',
+            fontWeight: 500,
+            lineHeight: 1.5
+          },
+          labelLine: {
+            show: true,
+            length: 15,
+            length2: 10,
+            lineStyle: {
+              color: '#cbd5e1',
+              width: 1
+            }
+          },
+          emphasis: {
+            itemStyle: {
+              shadowBlur: 10,
+              shadowOffsetX: 0,
+              shadowColor: 'rgba(0, 0, 0, 0.1)'
+            }
+          },
+          data: [
+            {
+              value: 68,
+              name: '药品许可',
+              itemStyle: {
+                color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                  { offset: 0, color: '#3b82f6' },
+                  { offset: 1, color: '#60a5fa' }
+                ])
+              }
+            },
+            {
+              value: 45,
+              name: '医疗器械',
+              itemStyle: {
+                color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                  { offset: 0, color: '#10b981' },
+                  { offset: 1, color: '#34d399' }
+                ])
+              }
+            },
+            {
+              value: 32,
+              name: '化妆品',
+              itemStyle: {
+                color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                  { offset: 0, color: '#f59e0b' },
+                  { offset: 1, color: '#fbbf24' }
+                ])
+              }
+            },
+            {
+              value: 11,
+              name: '其他',
+              itemStyle: {
+                color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                  { offset: 0, color: '#8b5cf6' },
+                  { offset: 1, color: '#a78bfa' }
+                ])
+              }
+            }
+          ],
+          animationType: 'scale',
+          animationEasing: 'cubicOut',
+          animationDuration: 1500
+        }
+      ]
+    };
+
+    myChart.setOption(option);
+    window.addEventListener('resize', function() {
+      myChart.resize();
+    });
+
+    return myChart;
+  }
+
+  // 更新类型图表类型
+  function updateTypeChart(chart, type) {
+    const data = [
+      { value: 68, name: '药品许可' },
+      { value: 45, name: '医疗器械' },
+      { value: 32, name: '化妆品' },
+      { value: 11, name: '其他' }
+    ];
+
+    let seriesOption = {};
+
+    if (type === 'pie') {
+      seriesOption = {
+        type: 'pie',
+        radius: ['40%', '70%'],
+        center: ['35%', '50%'],
+        label: {
+          show: true,
+          position: 'outside',
+          formatter: '{b}: {c}件'
+        },
+        labelLine: {
+          show: true
+        }
+      };
+    } else if (type === 'bar') {
+      seriesOption = {
+        type: 'bar',
+        barWidth: '40%',
+        label: {
+          show: true,
+          position: 'top',
+          formatter: '{c}件'
+        }
+      };
+
+      // 更新x轴
+      chart.setOption({
+        xAxis: {
+          type: 'category',
+          data: ['药品许可', '医疗器械', '化妆品', '其他'],
+          show: true
+        },
+        yAxis: {
+          type: 'value',
+          show: true
+        },
+        legend: {
+          show: false
+        }
+      });
+    } else if (type === 'ring') {
+      seriesOption = {
+        type: 'pie',
+        radius: ['40%', '70%'],
+        center: ['35%', '50%'],
+        label: {
+          show: true,
+          position: 'outside',
+          formatter: '{b}: {c}件'
+        },
+        labelLine: {
+          show: true
+        }
+      };
+    }
+
+    // 应用新配置
+    chart.setOption({
+      series: [{
+        ...seriesOption,
+        data: data
+      }]
+    });
+  }
+</script>
+</body>
+</html>
