@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <style type="text/tailwindcss">
+    @layer utilities {
+      .card-shadow {box-shadow: 0 4px 20px rgba(0,0,0,0.05);}
+      .hover-scale {transition: transform 0.2s ease;}
+      .hover-scale:hover {transform: translateY(-2px);}
+      .gradient-teal {background: linear-gradient(135deg,#0d9488,#0891b2);}
+      .gradient-green {background: linear-gradient(135deg,#10b981,#059669);}
+      .gradient-amber {background: linear-gradient(135deg,#f59e0b,#d97706);}
+      .gradient-red {background: linear-gradient(135deg,#ef4444,#dc2626);}
+      .gradient-blue {background: linear-gradient(135deg,#3b82f6,#2563eb);}
+      .progress-bar {height:8px;border-radius:4px;background:#f1f5f9;overflow:hidden;}
+      .progress-value {height:100%;border-radius:4px;transition:width 1s;}
+      .fade-in {animation:fadeIn 0.3s forwards;}
+      .rotate-180 {transform:rotate(180deg);transition:0.2s;}
+      /* 追溯状态标签 */
+      .trace-normal {color:#059669;background:rgba(5,150,105,0.1);}
+      .trace-break {color:#dc2626;background:rgba(220,38,38,0.1);}
+      .trace-expire {color:#f59e0b;background:rgba(245,158,11,0.1);}
+      /* 药品品类标签 */
+      .cat-inj {color:#ef4444;background:rgba(239,68,68,0.1);}
+      .cat-oral {color:#0d9488;background:rgba(13,148,136,0.1);}
+      .cat-herb {color:#f97316;background:rgba(249,115,22,0.1);}
+      .cat-device {color:#3b82f6;background:rgba(59,130,246,0.1);}
+    }
+  </style>
+  <style>
+    body {font-family:system-ui,-apple-system,sans-serif;scroll-behavior:smooth;}
+    .sidebar {z-index:100;transition:all 0.3s cubic-bezier(0.4,0,0.2,1);}
+    ::-webkit-scrollbar {width:8px;height:8px;}
+    ::-webkit-scrollbar-track {background:#f8fafc;border-radius:4px;}
+    ::-webkit-scrollbar-thumb {background:#cbd5e1;border-radius:4px;}
+    .echarts-tooltip {border-radius:8px!important;box-shadow:0 10px 25px rgba(0,0,0,0.1)!important;padding:12px!important;border:none!important;}
+    @keyframes countUp {from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+    .count-animate {animation:countUp 0.8s ease-out;}
+    @keyframes fadeIn {from{opacity:0}to{opacity:1}}
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800">
+<!-- 加载遮罩 -->
+<div id="loading-mask" class="fixed inset-0 bg-white z-50 flex flex-col items-center justify-center">
+  <div class="w-16 h-16 border-4 border-teal-200 border-t-teal-600 rounded-full animate-spin mb-4"></div>
+  <p class="text-slate-600">药品追溯数据加载中...</p>
+</div>
+
+<!-- 侧边导航栏 -->
+<aside class="sidebar fixed top-0 left-0 bottom-0 w-64 bg-white border-r border-slate-200">
+  <div class="p-5 border-b border-slate-200 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-lg gradient-blue flex items-center justify-center text-white">
+        <i class="bi bi-shield-lock text-xl"></i>
+      </div>
+      <div>
+        <div class="font-bold text-lg">宁夏药监局</div>
+        <div class="text-xs text-slate-500">数据中台 V2.0</div>
+      </div>
+    </div>
+    <button id="theme-toggle" class="w-8 h-8 rounded-full hover:bg-slate-100 flex items-center justify-center text-slate-600">
+      <i class="bi bi-moon-stars"></i>
+    </button>
+  </div>
+  <nav class="p-4">
+    <div class="mb-8 p-3 bg-teal-50 rounded-lg flex items-center gap-3">
+      <img src="https://picsum.photos/id/1005/40/40" alt="头像" class="w-10 h-10 rounded-full border-2 border-white">
+      <div>
+        <div class="font-medium text-sm">药品追溯监管员</div>
+        <div class="text-xs text-slate-500">断链预警批次：47条</div>
+      </div>
+    </div>
+    <div class="mb-8">
+      <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">快捷操作</div>
+      <div class="grid grid-cols-2 gap-2">
+        <button id="quick-scan" class="hover-scale p-3 bg-teal-50 text-teal-700 rounded-lg text-sm flex flex-col items-center">
+          <i class="bi bi-qr-code-scan text-lg mb-1"></i><span>扫码追溯</span>
+        </button>
+        <button id="quick-break" class="hover-scale p-3 bg-red-50 text-red-700 rounded-lg text-sm flex flex-col items-center">
+          <i class="bi bi-exclamation-triangle text-lg mb-1"></i><span>断链台账</span>
+        </button>
+        <button id="quick-import" class="hover-scale p-3 bg-blue-50 text-blue-700 rounded-lg text-sm flex flex-col items-center">
+          <i class="bi bi-file-excel text-lg mb-1"></i><span>数据导入</span>
+        </button>
+        <button id="quick-stat" class="hover-scale p-3 bg-slate-50 text-slate-700 rounded-lg text-sm flex flex-col items-center">
+          <i class="bi bi-bar-chart text-lg mb-1"></i><span>追溯报表</span>
+        </button>
+      </div>
+    </div>
+    <div class="mb-6">
+      <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">总览</div>
+      <a href="#" class="flex items-center gap-3 px-3 py-3 rounded-lg text-slate-600 hover:bg-slate-100">
+        <i class="bi bi-table w-5 text-center"></i><span>个人工作台</span>
+      </a>
+      <a href="#" class="flex items-center gap-3 px-3 py-3 rounded-lg text-slate-600 hover:bg-slate-100">
+        <i class="bi bi-speedometer2 w-5 text-center"></i><span>数据驾驶舱</span>
+        <span class="ml-auto w-6 h-6 rounded-full bg-blue-100 text-blue-700 text-xs flex items-center justify-center">9+</span>
+      </a>
+    </div>
+    <div class="mb-6">
+      <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">系统管理</div>
+      <a href="#" class="flex items-center gap-3 px-3 py-3 rounded-lg text-slate-600 hover:bg-slate-100">
+        <i class="bi bi-shield-check w-5 text-center"></i><span>角色权限</span>
+      </a>
+      <a href="#" class="flex items-center gap-3 px-3 py-3 rounded-lg text-slate-600 hover:bg-slate-100">
+        <i class="bi bi-file-text w-5 text-center"></i><span>操作审计</span>
+      </a>
+    </div>
+    <div>
+      <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">核心业务</div>
+      <a href="#" class="flex items-center gap-3 px-3 py-3 rounded-lg text-slate-600 hover:bg-slate-100">
+        <i class="bi bi-check2-circle w-5 text-center"></i><span>行政审批</span>
+      </a>
+      <a href="#" class="flex items-center gap-3 px-3 py-3 rounded-lg text-slate-600 hover:bg-slate-100">
+        <i class="bi bi-eye w-5 text-center"></i><span>日常监管</span>
+      </a>
+      <a href="#" class="flex items-center gap-3 px-3 py-3 rounded-lg text-slate-600 hover:bg-slate-100">
+        <i class="bi bi-flask w-5 text-center"></i><span>检验检测</span>
+      </a>
+      <a href="#" class="flex items-center gap-3 px-3 py-3 rounded-lg text-slate-600 hover:bg-slate-100">
+        <i class="bi bi-gavel w-5 text-center"></i><span>执法办案</span>
+      </a>
+      <a href="#" class="flex items-center gap-3 px-3 py-3 rounded-lg text-slate-600 hover:bg-slate-100">
+        <i class="bi bi-shop w-5 text-center"></i><span>阳光药店</span>
+      </a>
+      <a href="#" class="flex items-center gap-3 px-3 py-3 rounded-lg text-slate-600 hover:bg-slate-100">
+        <i class="bi bi-bar-chart-fill w-5 text-center"></i><span>风险分级管控</span>
+      </a>
+      <a href="#" class="flex items-center gap-3 px-3 py-3 rounded-lg bg-teal-50 text-teal-700 border-l-4 border-teal-500 font-medium">
+        <i class="bi bi-upc-scan w-5 text-center text-teal-600"></i><span>药品追溯</span>
+      </a>
+    </div>
+  </nav>
+  <div class="absolute bottom-0 left-0 right-0 p-4 border-t border-slate-200 flex justify-between text-xs text-slate-500">
+    <span>版本：v2.1.8</span>
+    <button class="hover:text-slate-700"><i class="bi bi-question-circle"></i> 帮助</button>
+  </div>
+</aside>
+
+<!-- 主内容区 -->
+<div class="ml-64 min-h-screen p-6">
+  <!-- 页面头部 -->
+  <div class="mb-8">
+    <div class="flex flex-wrap justify-between items-center gap-4 mb-4">
+      <div>
+        <h1 class="text-2xl md:text-3xl font-bold text-slate-900">药品追溯管理</h1>
+        <div class="flex flex-wrap items-center gap-3 mt-2 text-sm text-slate-500">
+          <span>更新时间：2026-06-22 16:20</span>
+          <span class="w-1 h-1 bg-slate-400 rounded-full"></span>
+          <span>数据源：药品电子追溯码平台</span>
+          <span class="w-1 h-1 bg-slate-400 rounded-full"></span>
+          <span class="text-emerald-600 flex items-center"><i class="bi bi-check-circle mr-1"></i>每日同步生产流通数据</span>
+        </div>
+      </div>
+      <div class="flex flex-wrap gap-3">
+        <div class="relative">
+          <input id="search-input" placeholder="追溯码/药品名称/生产企业/药店" class="pl-10 pr-4 py-2 border border-slate-200 rounded-lg text-sm w-72 focus:ring-2 focus:ring-teal-200">
+          <i class="bi bi-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+        </div>
+        <button class="px-4 py-2 border border-slate-200 rounded-lg text-sm hover-scale flex items-center gap-2 bg-white">
+          <i class="bi bi-calendar-range"></i>2026年06月
+        </button>
+        <button id="scan-btn" class="px-4 py-2 gradient-teal text-white rounded-lg text-sm hover-scale flex items-center gap-2">
+          <i class="bi bi-qr-code-scan"></i>扫码追溯查询
+        </button>
+      </div>
+    </div>
+    <!-- 追溯统计卡片 -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="card-shadow hover-scale bg-white p-5 rounded-xl">
+        <div class="flex justify-between items-start mb-4">
+          <div>
+            <p class="text-sm text-slate-500">在册追溯批次总数</p>
+            <h3 class="text-4xl font-mono font-bold count-animate mt-1">186.3万</h3>
+            <p class="text-xs text-emerald-600 mt-2 flex items-center"><i class="bi bi-arrow-up mr-1"></i>今日新增2.4万</p>
+          </div>
+          <div class="w-14 h-14 rounded-full bg-teal-50 flex items-center justify-center text-teal-600">
+            <i class="bi bi-upc-scan text-2xl"></i>
+          </div>
+        </div>
+        <div class="progress-bar"><div class="progress-value gradient-teal" style="width:100%"></div></div>
+        <div class="flex justify-between mt-2 text-xs text-slate-500">
+          <span>生产端62万</span><span>零售端124万</span>
+        </div>
+      </div>
+      <div class="card-shadow hover-scale bg-white p-5 rounded-xl">
+        <div class="flex justify-between items-start mb-4">
+          <div>
+            <p class="text-sm text-slate-500">正常完整追溯批次</p>
+            <h3 class="text-4xl font-mono font-bold count-animate mt-1 text-emerald-600">182.1万</h3>
+            <p class="text-xs text-emerald-600 mt-2 flex items-center"><i class="bi bi-check-circle mr-1"></i>链条完整率97.7%</p>
+          </div>
+          <div class="w-14 h-14 rounded-full bg-green-50 flex items-center justify-center text-green-600">
+            <i class="bi bi-shield-check text-2xl"></i>
+          </div>
+        </div>
+        <div class="progress-bar"><div class="progress-value gradient-green" style="width:97.7%"></div></div>
+        <div class="flex justify-between mt-2 text-xs text-slate-500">
+          <span>全链路可查</span><span>覆盖率达标</span>
+        </div>
+      </div>
+      <div class="card-shadow hover-scale bg-white p-5 rounded-xl">
+        <div class="flex justify-between items-start mb-4">
+          <div>
+            <p class="text-sm text-slate-500">追溯断链预警批次</p>
+            <h3 class="text-4xl font-mono font-bold count-animate mt-1 text-red-600">4263</h3>
+            <p class="text-xs text-red-600 mt-2 flex items-center"><i class="bi bi-exclamation-triangle mr-1"></i>待核查47条</p>
+          </div>
+          <div class="w-14 h-14 rounded-full bg-red-50 flex items-center justify-center text-red-600">
+            <i class="bi bi-x-octagon text-2xl"></i>
+          </div>
+        </div>
+        <div class="progress-bar"><div class="progress-value gradient-red" style="width:2.3%"></div></div>
+        <div class="flex justify-between mt-2 text-xs text-slate-500">
+          <button id="break-btn" class="text-red-600"><i class="bi bi-list-check mr-1"></i>断链台账</button>
+          <span>风险占比2.3%</span>
+        </div>
+      </div>
+      <div class="card-shadow hover-scale bg-white p-5 rounded-xl">
+        <div class="flex justify-between items-start mb-4">
+          <div>
+            <p class="text-sm text-slate-500">近效期药品批次</p>
+            <h3 class="text-4xl font-mono font-bold count-animate mt-1 text-amber-600">12847</h3>
+            <p class="text-xs text-amber-600 mt-2 flex items-center"><i class="bi bi-clock mr-1"></i>30天内到期</p>
+          </div>
+          <div class="w-14 h-14 rounded-full bg-amber-50 flex items-center justify-center text-amber-600">
+            <i class="bi bi-alarm text-2xl"></i>
+          </div>
+        </div>
+        <div class="progress-bar"><div class="progress-value gradient-amber" style="width:6.9%"></div></div>
+        <div class="flex justify-between mt-2 text-xs text-slate-500">
+          <span>门店重点管控</span><span>每月排查</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 筛选面板 -->
+  <div class="card-shadow bg-white p-5 rounded-xl mb-8">
+    <form id="filter-form" class="flex flex-wrap gap-4 items-center">
+      <div class="flex items-center gap-3">
+        <label class="w-20 text-sm font-medium text-slate-600">药品品类</label>
+        <select class="px-4 py-2.5 border rounded-lg text-sm">
+          <option selected>全部</option><option>注射剂</option><option>口服制剂</option><option>中药材</option><option>医疗器械</option>
+        </select>
+      </div>
+      <div class="flex items-center gap-3">
+        <label class="w-20 text-sm font-medium text-slate-600">追溯状态</label>
+        <select class="px-4 py-2.5 border rounded-lg text-sm">
+          <option selected>全部</option><option>链条完整</option><option>追溯断链</option><option>近效期</option>
+        </select>
+      </div>
+      <div class="flex items-center gap-3">
+        <label class="w-20 text-sm font-medium text-slate-600">流通环节</label>
+        <select class="px-4 py-2.5 border rounded-lg text-sm">
+          <option selected>全部</option><option>生产企业</option><option>批发公司</option><option>零售药店</option>
+        </select>
+      </div>
+      <div class="flex items-center gap-3">
+        <label class="w-20 text-sm font-medium text-slate-600">所属辖区</label>
+        <select class="px-4 py-2.5 border rounded-lg text-sm">
+          <option selected>全部</option><option>银川</option><option>石嘴山</option><option>吴忠</option><option>固原</option><option>中卫</option>
+        </select>
+      </div>
+      <div class="flex items-center gap-3">
+        <label class="w-20 text-sm font-medium text-slate-600">效期区间</label>
+        <select class="px-4 py-2.5 border rounded-lg text-sm">
+          <option selected>全部</option><option>30天内到期</option><option>31-90天</option><option>90天以上</option>
+        </select>
+      </div>
+      <div class="flex-grow flex items-center gap-3">
+        <input placeholder="追溯码/药品名/企业/药店检索" class="flex-grow px-4 py-2.5 border rounded-lg text-sm">
+        <button type="submit" class="px-5 py-2.5 gradient-teal text-white rounded-lg hover-scale">查询</button>
+        <button type="reset" class="px-5 py-2.5 bg-slate-100 rounded-lg hover-scale">重置</button>
+      </div>
+    </form>
+    <div class="mt-4 pt-4 border-t">
+      <button id="adv-filter-toggle" class="text-teal-600 text-sm flex items-center">
+        <i class="bi bi-funnel mr-2"></i>高级筛选<i class="bi bi-chevron-down ml-1"></i>
+      </button>
+      <div id="adv-filter-panel" class="hidden mt-4 fade-in">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label class="text-sm font-medium block mb-2">生产厂家</label>
+            <input placeholder="企业名称模糊查询" class="w-full px-3 py-2 border rounded text-sm">
+          </div>
+          <div>
+            <label class="text-sm font-medium block mb-2">追溯日期</label>
+            <div class="flex gap-2 items-center">
+              <input type="date" class="w-full px-3 py-2 border rounded text-sm">
+              <span>至</span>
+              <input type="date" class="w-full px-3 py-2 border rounded text-sm">
+            </div>
+          </div>
+          <div>
+            <label class="text-sm font-medium block mb-2">风险等级</label>
+            <select class="w-full px-3 py-2 border rounded text-sm">
+              <option>全部</option><option>高风险断链</option><option>一般近效期</option><option>无风险</option>
+            </select>
+          </div>
+        </div>
+        <div class="flex justify-end gap-3 mt-4">
+          <button class="px-4 py-2 bg-slate-100 rounded">取消</button>
+          <button class="px-4 py-2 gradient-teal text-white rounded">应用筛选</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 图表双栏 -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+    <div class="card-shadow bg-white p-6 rounded-xl hover-scale">
+      <div class="flex justify-between items-center mb-6">
+        <h3 class="font-semibold text-lg">各区县追溯批次分布</h3>
+        <div class="flex gap-2">
+          <button class="px-3 py-1.5 text-xs bg-teal-50 text-teal-700 rounded">本月</button>
+          <button class="px-3 py-1.5 text-xs bg-slate-100 rounded">上月</button>
+        </div>
+      </div>
+      <div id="districtBar" style="width:100%;height:380px;"></div>
+      <div class="mt-4 text-xs flex flex-wrap gap-4">
+        <span class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-teal-500"></span>完整追溯</span>
+        <span class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-red-500"></span>断链批次</span>
+        <span class="ml-auto"><button id="exportBar" class="text-teal-600"><i class="bi bi-download"></i>导出图表</button></span>
+      </div>
+    </div>
+    <div class="card-shadow bg-white p-6 rounded-xl hover-scale">
+      <div class="flex justify-between items-center mb-6">
+        <h3 class="font-semibold text-lg">药品品类追溯占比</h3>
+        <div class="flex gap-2">
+          <button id="exportPie" class="px-3 py-1.5 text-xs bg-slate-100 rounded"><i class="bi bi-download"></i>导出</button>
+        </div>
+      </div>
+      <div id="drugPie" style="width:100%;height:380px;"></div>
+      <div class="mt-4 p-3 bg-teal-50 rounded text-xs">
+        <div class="flex items-center gap-2 text-teal-700 font-medium mb-1"><i class="bi bi-lightbulb"></i>追溯分析</div>
+        <p>注射剂高风险品类断链预警重点管控，零售药店流通环节为追溯核查核心场景，系统自动标记缺失上下游批次推送监管任务。</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 风险预警面板 -->
+  <div class="card-shadow bg-white p-6 rounded-xl mb-8">
+    <h3 class="font-semibold text-xl mb-6">药品追溯风险预警</h3>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div class="border border-red-200 p-4 rounded-lg bg-red-50/30">
+        <div class="flex justify-between mb-4">
+          <h4 class="font-medium text-red-700 flex items-center"><i class="bi bi-exclamation-triangle mr-2"></i>追溯断链批次</h4>
+          <span class="w-8 h-8 rounded-full bg-red-100 text-red-700 text-sm flex items-center justify-center">4263</span>
+        </div>
+        <div class="space-y-3 max-h-48 overflow-y-auto pr-2">
+          <div class="p-2 bg-white rounded flex justify-between">
+            <div><span class="text-sm">某注射液250ml</span><p class="text-xs">批发到零售记录缺失</p></div>
+            <button class="text-red-600 text-sm">核查任务</button>
+          </div>
+          <div class="p-2 bg-white rounded flex justify-between">
+            <div><span class="text-sm">感冒颗粒</span><p class="text-xs">无上游生产溯源码</p></div>
+            <button class="text-red-600 text-sm">核查任务</button>
+          </div>
+        </div>
+        <button class="w-full mt-4 py-2 border border-red-200 rounded text-sm text-red-700">全部断链台账</button>
+      </div>
+      <div class="border border-amber-200 p-4 rounded-lg bg-amber-50/30">
+        <div class="flex justify-between mb-4">
+          <h4 class="font-medium text-amber-700 flex items-center"><i class="bi bi-alarm mr-2"></i>近30天到期药品</h4>
+          <span class="w-8 h-8 rounded-full bg-amber-100 text-amber-700 text-sm flex items-center justify-center">12847</span>
+        </div>
+        <div class="space-y-3 max-h-48 overflow-y-auto pr-2">
+          <div class="p-2 bg-white rounded flex justify-between">
+            <div><span class="text-sm">头孢类口服片</span><p class="text-xs">6月28日到期</p></div>
+            <button class="text-amber-600 text-sm">门店排查</button>
+          </div>
+          <div class="p-2 bg-white rounded flex justify-between">
+            <div><span class="text-sm">葡萄糖注射液</span><p class="text-xs">6月30日到期</p></div>
+            <button class="text-amber-600 text-sm">门店排查</button>
+          </div>
+        </div>
+        <button class="w-full mt-4 py-2 border border-amber-200 rounded text-sm text-amber-700">近效期清单</button>
+      </div>
+      <div class="border border-blue-200 p-4 rounded-lg bg-blue-50/30">
+        <div class="flex justify-between mb-4">
+          <h4 class="font-medium text-blue-700 flex items-center"><i class="bi bi-calendar-event mr-2"></i>本周追溯核查计划</h4>
+          <span class="w-8 h-8 rounded-full bg-blue-100 text-blue-700 text-sm flex items-center justify-center">36</span>
+        </div>
+        <div class="space-y-3 max-h-48 overflow-y-auto pr-2">
+          <div class="p-2 bg-white rounded flex justify-between">
+            <div><span class="text-sm">城区连锁药店全覆盖</span><p class="text-xs">6.23-6.25现场扫码</p></div>
+            <button class="text-blue-600 text-sm">生成任务</button>
+          </div>
+          <div class="p-2 bg-white rounded flex justify-between">
+            <div><span class="text-sm">器械批发企业专项</span><p class="text-xs">6月26日追溯抽检</p></div>
+            <button class="text-blue-600 text-sm">生成任务</button>
+          </div>
+        </div>
+        <button class="w-full mt-4 py-2 border border-blue-200 rounded text-sm text-blue-700">本周核查清单</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 药品追溯台账 -->
+  <div class="card-shadow bg-white rounded-xl overflow-hidden">
+    <div class="p-6 border-b flex justify-between flex-wrap gap-4 items-center">
+      <h3 class="font-semibold text-xl">药品追溯台账</h3>
+      <div class="flex gap-3">
+        <select class="px-3 py-2 border rounded text-sm">
+          <option>默认时间倒序</option><option>断链优先</option><option>近效期优先</option><option>品类排序</option>
+        </select>
+        <button id="exportTable" class="px-4 py-2 bg-slate-100 rounded text-sm hover-scale"><i class="bi bi-download mr-2"></i>导出台账</button>
+        <button id="printTable" class="px-4 py-2 bg-slate-100 rounded text-sm hover-scale"><i class="bi bi-printer mr-2"></i>打印</button>
+      </div>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead class="bg-slate-50 text-slate-600">
+        <tr>
+          <th class="px-5 py-4 text-left"><input id="checkAll" type="checkbox"></th>
+          <th class="px-5 py-4 text-left">追溯码</th>
+          <th class="px-5 py-4 text-left">药品名称</th>
+          <th class="px-5 py-4 text-left">品类</th>
+          <th class="px-5 py-4 text-left">生产厂家</th>
+          <th class="px-5 py-4 text-left">流通环节</th>
+          <th class="px-5 py-4 text-left">经营门店/公司</th>
+          <th class="px-5 py-4 text-left">追溯状态</th>
+          <th class="px-5 py-4 text-left">有效期至</th>
+          <th class="px-5 py-4 text-left">操作</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr class="border-b hover:bg-slate-50">
+          <td class="px-5 py-5"><input class="rowCheck" type="checkbox"></td>
+          <td class="px-5 py-5 font-mono">91640XXXX8901</td>
+          <td class="px-5 py-5 font-medium">0.9%氯化钠注射液</td>
+          <td class="px-5 py-5"><span class="cat-inj px-2 py-1 rounded text-xs">注射剂</span></td>
+          <td class="px-5 py-5">XX制药有限公司</td>
+          <td class="px-5 py-5">零售药店</td>
+          <td class="px-5 py-5">银川康泰大药房</td>
+          <td class="px-5 py-5"><span class="trace-break px-2 py-1 rounded-full text-xs">断链</span></td>
+          <td class="px-5 py-5 text-red-600">2026-06-28</td>
+          <td class="px-5 py-5 flex gap-2">
+            <button class="text-teal-600"><i class="bi-upc-scan"></i></button>
+            <button class="text-red-600"><i class="bi-exclamation-circle"></i></button>
+          </td>
+        </tr>
+        <tr class="border-b hover:bg-slate-50">
+          <td class="px-5 py-5"><input class="rowCheck" type="checkbox"></td>
+          <td class="px-5 py-5 font-mono">91640XXXX7643</td>
+          <td class="px-5 py-5">复方感冒灵颗粒</td>
+          <td class="px-5 py-5"><span class="cat-oral px-2 py-1 rounded text-xs">口服制剂</span></td>
+          <td class="px-5 py-5">XX中药厂</td>
+          <td class="px-5 py-5">批发企业</td>
+          <td class="px-5 py-5">中卫药品批发公司</td>
+          <td class="px-5 py-5"><span class="trace-normal px-2 py-1 rounded-full text-xs">完整</span></td>
+          <td class="px-5 py-5 text-emerald-600">2027-03-15</td>
+          <td class="px-5 py-5 flex gap-2">
+            <button class="text-teal-600"><i class="bi-upc-scan"></i></button>
+            <button class="text-slate-600"><i class="bi-journal-text"></i></button>
+          </td>
+        </tr>
+        <tr class="border-b hover:bg-slate-50">
+          <td class="px-5 py-5"><input class="rowCheck" type="checkbox"></td>
+          <td class="px-5 py-5 font-mono">91640XXXX5129</td>
+          <td class="px-5 py-5">三七中药材饮片</td>
+          <td class="px-5 py-5"><span class="cat-herb px-2 py-1 rounded text-xs">中药材</span></td>
+          <td class="px-5 py-5">XX饮片加工厂</td>
+          <td class="px-5 py-5">零售药店</td>
+          <td class="px-5 py-5">固原惠民药店</td>
+          <td class="px-5 py-5"><span class="trace-expire px-2 py-1 rounded-full text-xs">近效期</span></td>
+          <td class="px-5 py-5 text-amber-600">2026-06-30</td>
+          <td class="px-5 py-5 flex gap-2">
+            <button class="text-teal-600"><i class="bi-upc-scan"></i></button>
+            <button class="text-amber-600"><i class="bi-alarm"></i></button>
+          </td>
+        </tr>
+        <tr class="border-b hover:bg-slate-50">
+          <td class="px-5 py-5"><input class="rowCheck" type="checkbox"></td>
+          <td class="px-5 py-5 font-mono">91640XXXX3376</td>
+          <td class="px-5 py-5">一次性注射器</td>
+          <td class="px-5 py-5"><span class="cat-device px-2 py-1 rounded text-xs">器械</span></td>
+          <td class="px-5 py-5">XX医疗器械厂</td>
+          <td class="px-5 py-5">批发企业</td>
+          <td class="px-5 py-5">吴忠器械连锁公司</td>
+          <td class="px-5 py-5"><span class="trace-normal px-2 py-1 rounded-full text-xs">完整</span></td>
+          <td class="px-5 py-5 text-emerald-600">2028-01-22</td>
+          <td class="px-5 py-5 flex gap-2">
+            <button class="text-teal-600"><i class="bi-upc-scan"></i></button>
+            <button class="text-slate-600"><i class="bi-journal-text"></i></button>
+          </td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+    <!-- 分页 -->
+    <div class="p-6 border-t flex flex-wrap justify-between items-center gap-4">
+      <div class="text-sm text-slate-500">当前追溯批次186.3万条，断链4263条，每日自动同步生产流通零售数据</div>
+      <div class="flex gap-2">
+        <button disabled class="w-10 h-10 border rounded text-slate-400"><i class="bi-chevron-left"></i></button>
+        <button class="w-10 h-10 border bg-teal-50 text-teal-700 rounded">1</button>
+        <button class="w-10 h-10 border rounded">2</button>
+        <button class="w-10 h-10 border rounded">3</button>
+        <button class="w-10 h-10 border rounded"><i class="bi-chevron-right"></i></button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function(){
+    // 加载遮罩
+    setTimeout(()=>{
+      const mask = document.getElementById('loading-mask');
+      mask.style.opacity = '0';
+      setTimeout(()=>mask.style.display='none',300);
+    },800);
+    // 高级筛选折叠
+    const advToggle = document.getElementById('adv-filter-toggle');
+    const advPanel = document.getElementById('adv-filter-panel');
+    advToggle.onclick = ()=>{
+      advPanel.classList.toggle('hidden');
+      advToggle.querySelector('.bi-chevron-down').classList.toggle('rotate-180');
+    };
+    // 区县柱状图
+    const barChart = echarts.init(document.getElementById('districtBar'));
+    barChart.setOption({
+      tooltip:{trigger:'axis'},
+      legend:{data:['完整追溯','断链批次'],left:'center'},
+      grid:{left:'3%',right:'4%',bottom:'3%',containLabel:true},
+      xAxis:{type:'category',data:['银川','石嘴山','吴忠','固原','中卫']},
+      yAxis:{type:'value'},
+      series:[
+        {name:'完整追溯',type:'bar',data:[621000,312000,308000,296000,284000],itemStyle:{color:'#0d9488'}},
+        {name:'断链批次',type:'bar',data:[1682,946,723,514,398],itemStyle:{color:'#ef4444'}}
+      ]
+    });
+    // 药品饼图
+    const pieChart = echarts.init(document.getElementById('drugPie'));
+    pieChart.setOption({
+      tooltip:{trigger:'item',formatter:'{b}:{c}万批 ({d}%)'},
+      legend:{orient:'vertical',left:'left',textStyle:{fontSize:11}},
+      series:[{
+        type:'pie',radius:['40%','70%'],
+        itemStyle:{borderColor:'#fff',borderWidth:2,borderRadius:8},
+        data:[
+          {value:68.3,name:注射剂,itemStyle:{color:'#ef4444'}},
+          {value:56.7,name:口服制剂,itemStyle:{color:'#0d9488'}},
+          {value:32.6,name:中药材,itemStyle:{color:'#f97316'}},
+          {value:28.7,name:医疗器械,itemStyle:{color:'#3b82f6'}}
+        ]
+      }]
+    });
+    // 窗口自适应
+    window.addEventListener('resize',()=>{
+      barChart.resize();
+      pieChart.resize();
+    });
+    // 全选复选框
+    const checkAll = document.getElementById('checkAll');
+    const rowChecks = document.querySelectorAll('.rowCheck');
+    checkAll.onchange = ()=> rowChecks.forEach(item=>item.checked = checkAll.checked);
+    // 查询表单
+    document.getElementById('filter-form').onsubmit = e=>{
+      e.preventDefault();
+      alert('执行药品追溯多条件查询');
+    };
+    document.getElementById('filter-form').onreset = ()=> setTimeout(()=>alert('筛选条件重置'),100);
+    // 按钮交互
+    document.getElementById('scan-btn').onclick = ()=>alert('打开扫码追溯弹窗，支持摄像头/输入追溯码');
+    document.getElementById('break-btn').onclick = ()=>alert('跳转断链药品专项台账');
+    document.getElementById('exportTable').onclick = ()=>alert('导出当前页追溯台账Excel');
+    document.getElementById('printTable').onclick = ()=>window.print();
+    document.getElementById('exportBar').onclick = ()=>alert('导出区县追溯分布图');
+    document.getElementById('exportPie').onclick = ()=>alert('导出品类占比饼图');
+    // 侧边快捷操作
+    document.getElementById('quick-scan').onclick = ()=>alert('扫码追溯查询');
+    document.getElementById('quick-break').onclick = ()=>alert('断链预警台账');
+    document.getElementById('quick-import').onclick = ()=>alert('追溯数据批量导入');
+    document.getElementById('quick-stat').onclick = ()=>alert('追溯统计报表');
+  });
+</script>
+</body>
+</html>

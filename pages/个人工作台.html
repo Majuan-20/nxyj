@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>个人工作台 - 宁夏药监局数据中台</title>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <style type="text/tailwindcss">
+    @layer utilities {
+      .card-shadow {box-shadow: 0 4px 20px rgba(0,0,0,0.05);}
+      .hover-scale {transition: transform 0.2s ease;}
+      .hover-scale:hover {transform: translateY(-2px);}
+      .gradient-blue {background: linear-gradient(135deg,#3b82f6,#2563eb);}
+      .gradient-green {background: linear-gradient(135deg,#10b981,#059669);}
+      .gradient-amber {background: linear-gradient(135deg,#f59e0b,#d97706);}
+      .gradient-red {background: linear-gradient(135deg,#ef4444,#dc2626);}
+      .gradient-gray {background: linear-gradient(135deg,#64748b,#475569);}
+      .progress-bar {height:8px;border-radius:4px;background:#f1f5f9;overflow:hidden;}
+      .progress-value {height:100%;border-radius:4px;transition:width 1s;}
+      .fade-in {animation:fadeIn 0.3s forwards;}
+      .rotate-180 {transform:rotate(180deg);transition:0.2s;}
+      /* 任务状态标签 */
+      .task-pending {color:#f59e0b;background:rgba(245,158,11,0.1);}
+      .task-doing {color:#3b82f6;background:rgba(59,130,246,0.1);}
+      .task-done {color:#059669;background:rgba(5,150,105,0.1);}
+      .task-overdue {color:#dc2626;background:rgba(220,38,38,0.1);}
+    }
+  </style>
+  <style>
+    body {font-family:system-ui,-apple-system,sans-serif;scroll-behavior:smooth;}
+    .sidebar {z-index:100;transition:all 0.3s cubic-bezier(0.4,0,0.2,1);}
+    ::-webkit-scrollbar {width:8px;height:8px;}
+    ::-webkit-scrollbar-track {background:#f8fafc;border-radius:4px;}
+    ::-webkit-scrollbar-thumb {background:#cbd5e1;border-radius:4px;}
+    .echarts-tooltip {border-radius:8px!important;box-shadow:0 10px 25px rgba(0,0,0.1)!important;padding:12px!important;border:none!important;}
+    @keyframes countUp {from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+    .count-animate {animation:countUp 0.8s ease-out;}
+    @keyframes fadeIn {from{opacity:0}to{opacity:1}}
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800">
+<!-- 加载遮罩 -->
+<div id="loading-mask" class="fixed inset-0 bg-white z-50 flex flex-col items-center justify-center">
+  <div class="w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mb-4"></div>
+  <p class="text-slate-600">工作台数据加载中...</p>
+</div>
+
+<!-- 侧边导航 -->
+<aside class="sidebar fixed top-0 left-0 bottom-0 w-64 bg-white border-r border-slate-200">
+  <div class="p-5 border-b border-slate-200 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-lg gradient-blue flex items-center justify-center text-white">
+        <i class="bi bi-shield-lock text-xl"></i>
+      </div>
+      <div>
+        <div class="font-bold text-lg">宁夏药监局</div>
+        <div class="text-xs text-slate-500">数据中台 V2.0</div>
+      </div>
+    </div>
+    <button id="theme-toggle" class="w-8 h-8 rounded-full hover:bg-slate-100 flex items-center justify-center text-slate-600">
+      <i class="bi bi-moon-stars"></i>
+    </button>
+  </div>
+  <nav class="p-4">
+    <!-- 当前登录用户信息 -->
+    <div class="mb-8 p-3 bg-blue-50 rounded-lg flex items-center gap-3">
+      <img src="https://picsum.photos/id/1005/40/40" alt="头像" class="w-10 h-10 rounded-full border-2 border-white">
+      <div>
+        <div class="font-medium text-sm">李监管员</div>
+        <div class="text-xs text-slate-500">待办任务：16条</div>
+      </div>
+    </div>
+    <!-- 快捷操作 -->
+    <div class="mb-8">
+      <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">快捷操作</div>
+      <div class="grid grid-cols-2 gap-2">
+        <button id="quick-task" class="hover-scale p-3 bg-amber-50 text-amber-700 rounded-lg text-sm flex flex-col items-center">
+          <i class="bi bi-list-check text-lg mb-1"></i><span>我的待办</span>
+        </button>
+        <button id="quick-calendar" class="hover-scale p-3 bg-blue-50 text-blue-700 rounded-lg text-sm flex flex-col items-center">
+          <i class="bi bi-calendar3 text-lg mb-1"></i><span>工作计划</span>
+        </button>
+        <button id="quick-notice" class="hover-scale p-3 bg-green-50 text-green-700 rounded-lg text-sm flex flex-col items-center">
+          <i class="bi bi-bell text-lg mb-1"></i><span>通知公告</span>
+        </button>
+        <button id="quick-file" class="hover-scale p-3 bg-slate-50 text-slate-700 rounded-lg text-sm flex flex-col items-center">
+          <i class="bi bi-folder text-lg mb-1"></i><span>我的案卷</span>
+        </button>
+      </div>
+    </div>
+    <!-- 总览菜单（当前高亮） -->
+    <div class="mb-6">
+      <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">总览</div>
+      <a href="#" class="flex items-center gap-3 px-3 py-3 rounded-lg bg-blue-50 text-blue-700 border-l-4 border-blue-500 font-medium">
+        <i class="bi bi-table w-5 text-center text-blue-600"></i><span>个人工作台</span>
+      </a>
+      <a href="#" class="flex items-center gap-3 px-3 py-3 rounded-lg text-slate-600 hover:bg-slate-100">
+        <i class="bi bi-speedometer2 w-5 text-center"></i><span>数据驾驶舱</span>
+      </a>
+    </div>
+    <!-- 系统管理 -->
+    <div class="mb-6">
+      <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">系统管理</div>
+      <a href="#" class="flex items-center gap-3 px-3 py-3 rounded-lg text-slate-600 hover:bg-slate-100">
+        <i class="bi bi-shield-check w-5 text-center"></i><span>角色权限</span>
+      </a>
+      <a href="#" class="flex items-center gap-3 px-3 py-3 rounded-lg text-slate-600">
+        <i class="bi bi-file-text w-5 text-center"></i><span>操作审计</span>
+      </a>
+    </div>
+    <!-- 核心业务导航 -->
+    <div>
+      <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">核心业务</div>
+      <a href="#" class="flex items-center gap-3 px-3 py-3 rounded-lg text-slate-600 hover:bg-slate-100">
+        <i class="bi bi-check2-circle w-5 text-center"></i><span>行政审批</span>
+      </a>
+      <a href="#" class="flex items-center gap-3 px-3 py-3 rounded-lg text-slate-600 hover:bg-slate-100">
+        <i class="bi bi-eye w-5 text-center"></i><span>日常监管</span>
+      </a>
+      <a href="#" class="flex items-center gap-3 px-3 py-3 rounded-lg text-slate-600 hover:bg-slate-100">
+        <i class="bi bi-flask w-5 text-center"></i><span>检验检测</span>
+      </a>
+      <a href="#" class="flex items-center gap-3 px-3 py-3 rounded-lg text-slate-600 hover:bg-slate-100">
+        <i class="bi bi-gavel w-5 text-center"></i><span>执法办案</span>
+      </a>
+      <a href="#" class="flex items-center gap-3 px-3 py-3 rounded-lg text-slate-600 hover:bg-slate-100">
+        <i class="bi bi-shop w-5 text-center"></i><span>阳光药店</span>
+      </a>
+      <a href="#" class="flex items-center gap-3 px-3 py-3 rounded-lg text-slate-600 hover:bg-slate-100">
+        <i class="bi bi-bar-chart-fill w-5 text-center"></i><span>风险分级管控</span>
+      </a>
+    </div>
+  </nav>
+  <div class="absolute bottom-0 left-0 right-0 p-4 border-t border-slate-200 flex justify-between text-xs text-slate-500">
+    <span>版本：v2.1.8</span>
+    <button class="hover:text-slate-700"><i class="bi bi-question-circle"></i> 帮助</button>
+  </div>
+</aside>
+
+<!-- 主内容区域 -->
+<div class="ml-64 min-h-screen p-6">
+  <!-- 页面头部 -->
+  <div class="mb-8">
+    <div class="flex flex-wrap justify-between items-center gap-4 mb-4">
+      <div>
+        <h1 class="text-2xl md:text-3xl font-bold text-slate-900">个人工作台</h1>
+        <div class="flex flex-wrap items-center gap-3 mt-2 text-sm text-slate-500">
+          <span>今日日期：2026-06-22 星期一</span>
+          <span class="w-1 h-1 bg-slate-400 rounded-full"></span>
+          <span>当前登录：李监管员 | 药品监管科</span>
+          <span class="w-1 h-1 bg-slate-400 rounded-full"></span>
+          <span class="text-emerald-600 flex items-center"><i class="bi bi-clock-history mr-1"></i>今日登录08:25</span>
+        </div>
+      </div>
+      <div class="flex flex-wrap gap-3">
+        <button id="refresh-btn" class="px-4 py-2 border border-slate-200 rounded-lg text-sm hover-scale flex items-center gap-2 bg-white">
+          <i class="bi bi-arrow-clockwise"></i>刷新数据
+        </button>
+        <button id="new-plan-btn" class="px-4 py-2 gradient-blue text-white rounded-lg text-sm hover-scale flex items-center gap-2">
+          <i class="bi bi-plus-circle"></i>新建工作计划
+        </button>
+      </div>
+    </div>
+    <!-- 个人工作统计卡片 -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="card-shadow hover-scale bg-white p-5 rounded-xl">
+        <div class="flex justify-between items-start mb-4">
+          <div>
+            <p class="text-sm text-slate-500">待办任务总数</p>
+            <h3 class="text-4xl font-mono font-bold count-animate mt-1 text-amber-600">16</h3>
+            <p class="text-xs text-red-600 mt-2 flex items-center"><i class="bi bi-exclamation-circle mr-1"></i>超期任务3条</p>
+          </div>
+          <div class="w-14 h-14 rounded-full bg-amber-50 flex items-center justify-center text-amber-600">
+            <i class="bi bi-list-task text-2xl"></i>
+          </div>
+        </div>
+        <div class="progress-bar"><div class="progress-value gradient-amber" style="width:22%"></div></div>
+        <div class="flex justify-between mt-2 text-xs text-slate-500">
+          <button id="todo-btn" class="text-amber-600"><i class="bi bi-list-check mr-1"></i>查看全部待办</button>
+          <span>本周任务72条</span>
+        </div>
+      </div>
+      <div class="card-shadow hover-scale bg-white p-5 rounded-xl">
+        <div class="flex justify-between items-start mb-4">
+          <div>
+            <p class="text-sm text-slate-500">本周已办结任务</p>
+            <h3 class="text-4xl font-mono font-bold count-animate mt-1 text-emerald-600">56</h3>
+            <p class="text-xs text-emerald-600 mt-2 flex items-center"><i class="bi bi-arrow-up mr-1"></i>环比+12%</p>
+          </div>
+          <div class="w-14 h-14 rounded-full bg-green-50 flex items-center justify-center text-green-600">
+            <i class="bi bi-check-circle text-2xl"></i>
+          </div>
+        </div>
+        <div class="progress-bar"><div class="progress-value gradient-green" style="width:78%"></div></div>
+        <div class="flex justify-between mt-2 text-xs text-slate-500">
+          <span>本周办结率78%</span>
+          <span>上周49条</span>
+        </div>
+      </div>
+      <div class="card-shadow hover-scale bg-white p-5 rounded-xl">
+        <div class="flex justify-between items-start mb-4">
+          <div>
+            <p class="text-sm text-slate-500">待阅通知公告</p>
+            <h3 class="text-4xl font-mono font-bold count-animate mt-1 text-blue-600">7</h3>
+            <p class="text-xs text-blue-600 mt-2 flex items-center"><i class="bi bi-megaphone mr-1"></i>紧急通知2条</p>
+          </div>
+          <div class="w-14 h-14 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
+            <i class="bi bi-bell text-2xl"></i>
+          </div>
+        </div>
+        <div class="progress-bar"><div class="progress-value gradient-blue" style="width:14%"></div></div>
+        <div class="flex justify-between mt-2 text-xs text-slate-500">
+          <button id="notice-btn" class="text-blue-600"><i class="bi bi-bell-fill mr-1"></i>查看公告</button>
+          <span>本月累计49条</span>
+        </div>
+      </div>
+      <div class="card-shadow hover-scale bg-white p-5 rounded-xl">
+        <div class="flex justify-between items-start mb-4">
+          <div>
+            <p class="text-sm text-slate-500">在办执法案卷</p>
+            <h3 class="text-4xl font-mono font-bold count-animate mt-1 text-red-600">9</h3>
+            <p class="text-xs text-amber-600 mt-2 flex items-center"><i class="bi bi-calendar-event mr-1"></i>本周听证2件</p>
+          </div>
+          <div class="w-14 h-14 rounded-full bg-red-50 flex items-center justify-center text-red-600">
+            <i class="bi bi-folder text-2xl"></i>
+          </div>
+        </div>
+        <div class="progress-bar"><div class="progress-value gradient-red" style="width:12%"></div></div>
+        <div class="flex justify-between mt-2 text-xs text-slate-500">
+          <button id="case-btn" class="text-red-600"><i class="bi bi-journal-text mr-1"></i>我的案卷</button>
+          <span>本月立案17件</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+    <!-- 左侧：本周工作统计图 -->
+    <div class="lg:col-span-2 card-shadow bg-white p-6 rounded-xl hover-scale">
+      <div class="flex justify-between items-center mb-6">
+        <h3 class="font-semibold text-lg">本周工作完成统计</h3>
+        <div class="flex gap-2">
+          <button class="px-3 py-1.5 text-xs bg-blue-50 text-blue-700 rounded">本周</button>
+          <button class="px-3 py-1.5 text-xs bg-slate-100 rounded">上月</button>
+          <button id="export-chart" class="px-3 py-1.5 text-xs bg-slate-100 rounded"><i class="bi bi-download"></i>导出</button>
+        </div>
+      </div>
+      <div id="workChart" style="width:100%;height:340px;"></div>
+    </div>
+    <!-- 右侧：今日工作计划 -->
+    <div class="card-shadow bg-white p-6 rounded-xl hover-scale">
+      <div class="flex justify-between items-center mb-6">
+        <h3 class="font-semibold text-lg">今日工作计划</h3>
+        <button id="add-day-plan" class="text-blue-600 text-sm"><i class="bi bi-plus-circle"></i>新增</button>
+      </div>
+      <div class="space-y-4 max-h-[340px] overflow-y-auto pr-2">
+        <div class="flex items-start gap-3 p-3 bg-amber-50 rounded-lg">
+          <input type="checkbox" class="mt-1 w-4 h-4">
+          <div>
+            <p class="text-sm font-medium">辖区药店现场复查（3家）</p>
+            <p class="text-xs text-slate-500 mt-1">09:00-12:00 兴庆区</p>
+          </div>
+        </div>
+        <div class="flex items-start gap-3 p-3 bg-red-50 rounded-lg">
+          <input type="checkbox" class="mt-1 w-4 h-4">
+          <div>
+            <p class="text-sm font-medium">不合格器械企业约谈</p>
+            <p class="text-xs text-red-500 mt-1">14:00 超期紧急任务</p>
+          </div>
+        </div>
+        <div class="flex items-start gap-3 p-3 bg-blue-50 rounded-lg">
+          <input type="checkbox" class="mt-1 w-4">
+          <div>
+            <p class="text-sm font-medium">科室周工作例会</p>
+            <p class="text-xs text-slate-500 mt-1">15:30 三楼会议室</p>
+          </div>
+        </div>
+        <div class="flex items-start gap-3 p-3 bg-green-50 rounded-lg">
+          <input type="checkbox" checked class="mt-1 w-4 h-4">
+          <div class="line-through text-slate-400">
+            <p class="text-sm font-medium">检验报告复核</p>
+            <p class="text-xs text-slate-400 mt-1">已完成 08:40</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+    <!-- 我的待办任务 -->
+    <div class="card-shadow bg-white p-6 rounded-xl hover-scale">
+      <div class="flex justify-between items-center mb-6">
+        <h3 class="font-semibold text-lg">我的待办任务</h3>
+        <button id="all-todo" class="text-amber-600 text-sm">查看全部 ></button>
+      </div>
+      <div class="space-y-4 max-h-[320px] overflow-y-auto pr-2">
+        <div class="border-l-4 border-red-50 p-4 rounded bg-red-50/30">
+          <div class="flex justify-between">
+            <span class="task-overdue px-2 py-1 rounded text-xs">超期</span>
+            <span class="text-xs text-slate-500">任务编号：RW20260620</span>
+          </div>
+          <p class="text-sm font-medium mt-2">某器械厂不合格处置立案审批</p>
+          <p class="text-xs text-slate-500 mt-1">来源：执法办案模块 | 截止6月20日</p>
+          <button class="mt-2 text-red-600 text-sm">立即处理</button>
+        </div>
+        <div class="border-l-4 border-amber-50 p-4 rounded bg-amber-50/30">
+          <div class="flex justify-between">
+            <span class="task-pending px-2 py-1 rounded text-xs">待处理</span>
+            <span class="text-xs text-slate-500">任务编号：RW20260622</span>
+          </div>
+          <p class="text-sm font-medium mt-2">乡镇药店风险复核巡查计划</p>
+          <p class="text-xs text-slate-500 mt-1">来源：风险分级管控 | 截止6月24日</p>
+          <button class="mt-2 text-amber-600 text-sm">办理</button>
+        </div>
+        <div class="border-l-4 border-blue-50 p-4 rounded bg-blue-50/30">
+          <div class="flex justify-between">
+            <span class="task-doing px-2 py-1 rounded text-xs">办理中</span>
+            <span class="text-xs text-slate-500">任务编号：RW20260621</span>
+          </div>
+          <p class="text-sm font-medium mt-2">6月抽检样品汇总审核</p>
+          <p class="text-xs text-slate-500 mt-1">来源：检验检测模块</p>
+          <button class="mt-2 text-blue-600 text-sm">继续处理</button>
+        </div>
+      </div>
+    </div>
+    <!-- 最新通知公告 -->
+    <div class="card-shadow bg-white p-6 rounded-xl hover-scale">
+      <div class="flex justify-between items-center mb-6">
+        <h3 class="font-semibold text-lg">最新通知公告</h3>
+        <button id="all-notice" class="text-blue-600 text-sm">全部公告 ></button>
+      </div>
+      <div class="space-y-4 max-h-[320px] overflow-y-auto pr-2">
+        <div class="p-4 border border-red-200 rounded-lg bg-red-50/30">
+          <div class="flex justify-between">
+            <span class="text-red-600 text-sm font-medium">【紧急通知】</span>
+            <span class="text-xs text-slate-500">2026-06-21</span>
+          </div>
+          <p class="text-sm mt-2">关于开展无菌医疗器械专项整治工作的紧急部署，请各监管人员本周内完成辖区企业排查。</p>
+          <button class="mt-2 text-red-600 text-sm">查看详情</button>
+        </div>
+        <div class="p-4 border border-blue-200 rounded-lg bg-blue-50/30">
+          <div class="flex justify-between">
+            <span class="text-blue-600 text-sm font-medium">【科室通知】</span>
+            <span class="text-xs text-slate-500">2026-06-21</span>
+          </div>
+          <p class="text-sm mt-2">本周三下午15:30召开药品监管月度工作会议，请携带个人工作台账参会。</p>
+          <button class="mt-2 text-blue-600 text-sm">查看详情</button>
+        </div>
+        <div class="p-4 border border-slate-200 rounded-lg">
+          <div class="flex justify-between">
+            <span class="text-slate-700 text-sm font-medium">【系统通知】</span>
+            <span class="text-xs text-slate-500">2026-06-20</span>
+          </div>
+          <p class="text-sm mt-2">数据中台将于6月25日晚22:00-次日02:00进行维护，期间暂停业务查询功能。</p>
+          <button class="mt-2 text-slate-600 text-sm">查看详情</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 我的案卷快捷列表 -->
+  <div class="card-shadow bg-white p-6 rounded-xl mb-8">
+    <div class="flex justify-between items-center mb-6">
+      <h3 class="font-semibold text-lg">我的在办执法案卷</h3>
+      <div class="flex gap-3">
+        <select class="px-3 py-2 border rounded text-sm">
+          <option>全部在办</option><option>听证阶段</option><option>调查中</option>
+        </select>
+        <button id="all-case" class="text-red-600 text-sm">进入执法办案 ></button>
+      </div>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead class="bg-slate-50 text-slate-600">
+        <tr>
+          <th class="px-4 py-3 text-left">案号</th>
+          <th class="px-4 py-3 text-left">当事人</th>
+          <th class="px-4 py-3 text-left">违法案由</th>
+          <th class="px-4 py-3 text-left">案件阶段</th>
+          <th class="px-4 py-3 text-left">立案日期</th>
+          <th class="px-4 py-3 text-left">操作</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr class="border-b hover:bg-slate-50">
+          <td class="px-4 py-3 font-mono">ZF202606003</td>
+          <td class="px-4 py-3">石嘴某器械经营部</td>
+          <td class="px-4 py-3">无证三类器械经营</td>
+          <td class="px-4 py-3"><span class="task-hearing px-2 py-1 rounded text-xs">听证阶段</span></td>
+          <td class="px-4 py-3">2026-06-08</td>
+          <td class="px-4 py-3 flex gap-2">
+            <button class="text-red-600"><i class="bi bi-journal-text"></i>案卷</button>
+          </td>
+        </tr>
+        <tr class="border-b hover:bg-slate-50">
+          <td class="px-4 py-3 font-mono">ZF202606007</td>
+          <td class="px-4 py-3">中卫某药店</td>
+          <td class="px-4 py-3">过期药品陈列销售</td>
+          <td class="px-4 py-3"><span class="task-doing px-2 py-1 rounded text-xs">调查中</span></td>
+          <td class="px-4 py-3">2026-06-15</td>
+          <td class="px-4 py-3 flex gap-2">
+            <button class="text-slate-600"><i class="bi bi-pencil"></i>编辑</button>
+          </td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function(){
+    // 加载遮罩关闭
+    setTimeout(()=>{
+      const mask = document.getElementById('loading-mask');
+      mask.style.opacity = '0';
+      setTimeout(()=>mask.style.display='none',300);
+    },800);
+
+    // 本周工作柱状图
+    const workChart = echarts.init(document.getElementById('workChart'));
+    workChart.setOption({
+      tooltip:{trigger:'axis'},
+      legend:{data:['已完成','待办'],left:'center'},
+      grid:{left:'3%',right:'4%',bottom:'3%',containLabel:true},
+      xAxis:{type:'category',data:['周一','周二','周三','周四','周五','周六','周日']},
+      yAxis:{type:'value'},
+      series:[
+        {name:'已完成',type:'bar',data:[12,9,11,8,10,4,2],itemStyle:{color:'#10b981'}},
+        {name:'待办',type:'bar',data:[3,2,4,1,3,2,1],itemStyle:{color:'#f59e0b'}}
+      ]
+    });
+
+    // 窗口自适应
+    window.addEventListener('resize',()=>{
+      workChart.resize();
+    });
+
+    // 按钮交互
+    document.getElementById('refresh-btn').onclick = ()=>alert('工作台数据已刷新');
+    document.getElementById('new-plan-btn').onclick = ()=>alert('弹出新建周工作计划表单');
+    document.getElementById('todo-btn').onclick = ()=>alert('跳转全部待办任务页面');
+    document.getElementById('notice-btn').onclick = ()=>alert('跳转通知公告列表');
+    document.getElementById('case-btn').onclick = ()=>alert('跳转我的执法案卷');
+    document.getElementById('export-chart').onclick = ()=>alert('导出本周工作统计图');
+    document.getElementById('add-day-plan').onclick = ()=>alert('新增今日待办事项');
+    document.getElementById('all-todo').onclick = ()=>alert('查看完整待办清单');
+    document.getElementById('all-notice').onclick = ()=>alert('进入公告中心');
+    document.getElementById('all-case').onclick = ()=>alert('跳转执法办案模块');
+
+    // 侧边快捷操作
+    document.getElementById('quick-task').onclick = ()=>alert('我的全部待办任务');
+    document.getElementById('quick-calendar').onclick = ()=>alert('月度工作计划日历');
+    document.getElementById('quick-notice').onclick = ()=>alert('通知公告中心');
+    document.getElementById('quick-file').onclick = ()=>alert('个人案卷归档列表');
+  });
+</script>
+</body>
+</html>

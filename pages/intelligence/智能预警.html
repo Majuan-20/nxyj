@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <style type="text/tailwindcss">
+    @layer utilities {
+      .card-shadow {box-shadow: 0 4px 20px rgba(0,0,0,0.05);}
+      .hover-scale {transition: transform 0.2s ease;}
+      .hover-scale:hover {transform: translateY(-2px);}
+      .gradient-purple {background: linear-gradient(135deg,#7c3aed,#6d28d9);}
+      .gradient-red {background: linear-gradient(135deg,#ef4444,#dc2626);}
+      .gradient-amber {background: linear-gradient(135deg,#f59e0b,#d97706);}
+      .gradient-green {background: linear-gradient(135deg,#10b981,#059669);}
+      .gradient-blue {background: linear-gradient(135deg,#3b82f6,#2563eb);}
+      .progress-bar {height:8px;border-radius:4px;background:#f1f5f9;overflow:hidden;}
+      .progress-value {height:100%;border-radius:4px;transition:width 1s;}
+      .fade-in {animation:fadeIn 0.3s forwards;}
+      .rotate-180 {transform:rotate(180deg);transition:0.2s;}
+      /* 风险等级标签 */
+      .risk-critical {color:#dc2626;background:rgba(220,38,38,0.1);}
+      .risk-major {color:#f59e0b;background:rgba(245,158,11,0.1);}
+      .risk-minor {color:#3b82f6;background:rgba(59,130,246,0.1);}
+      .risk-safe {color:#10b981;background:rgba(5,150,105,0.1);}
+      /* 预警类型 */
+      .warn-trace {color:#0d9488;background:rgba(13,148,136,0.1);}
+      .warn-inspect {color:#7c3aed;background:rgba(124,58,237,0.1);}
+      .warn-expire {color:#f97316;background:rgba(249,115,22,0.1);}
+      .warn-illegal {color:#dc2626;background:rgba(220,38,38,0.1);}
+    }
+  </style>
+  <style>
+    body {font-family:system-ui,-apple-system,sans-serif;scroll-behavior:smooth;}
+    .sidebar {z-index:100;transition:all 0.3s cubic-bezier(0.4,0,0.2,1);}
+    ::-webkit-scrollbar {width:8px;height:8px;}
+    ::-webkit-scrollbar-track {background:#f8fafc;border-radius:4px;}
+    ::-webkit-scrollbar-thumb {background:#cbd5e1;border-radius:4px;}
+    .echarts-tooltip {border-radius:8px!important;box-shadow:0 10px 25px rgba(0,0,0,0.1)!important;padding:12px!important;border:none!important;}
+    @keyframes countUp {from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+    .count-animate {animation:countUp 0.8s ease-out;}
+    @keyframes fadeIn {from{opacity:0}to{opacity:1}}
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800">
+<!-- 加载遮罩 -->
+<div id="loading-mask" class="fixed inset-0 bg-white z-50 flex flex-col items-center justify-center">
+  <div class="w-16 h-16 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin mb-4"></div>
+  <p class="text-slate-600">智能风险预警数据加载中...</p>
+</div>
+
+<!-- 侧边导航栏 -->
+<aside class="sidebar fixed top-0 left-0 bottom-0 w-64 bg-white border-r border-slate-200">
+  <div class="p-5 border-b border-slate-200 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-lg gradient-blue flex items-center justify-center text-white">
+        <i class="bi bi-shield-lock text-xl"></i>
+      </div>
+      <div>
+        <div class="font-bold text-lg">宁夏药监局</div>
+        <div class="text-xs text-slate-500">数据中台 V2.0</div>
+      </div>
+    </div>
+    <button id="theme-toggle" class="w-8 h-8 rounded-full hover:bg-slate-100 flex items-center justify-center text-slate-600">
+      <i class="bi bi-moon-stars"></i>
+    </button>
+  </div>
+  <nav class="p-4">
+    <div class="mb-8 p-3 bg-purple-50 rounded-lg flex items-center gap-3">
+      <img src="https://picsum.photos/id/1005/40/40" alt="头像" class="w-10 h-10 rounded-full border-2 border-white">
+      <div>
+        <div class="font-medium text-sm">风险管控专员</div>
+        <div class="text-xs text-slate-500">今日高危预警：39条</div>
+      </div>
+    </div>
+    <div class="mb-8">
+      <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">快捷操作</div>
+      <div class="grid grid-cols-2 gap-2">
+        <button id="quick-high-warn" class="hover-scale p-3 bg-red-50 text-red-700 rounded-lg text-sm flex flex-col items-center">
+          <i class="bi bi-exclamation-triangle text-lg mb-1"></i><span>高危预警</span>
+        </button>
+        <button id="quick-rule-set" class="hover-scale p-3 bg-purple-50 text-purple-700 rounded-lg text-sm flex flex-col items-center">
+          <i class="bi bi-sliders text-lg mb-1"></i><span>预警规则</span>
+        </button>
+        <button id="quick-task-gen" class="hover-scale p-3 bg-blue-50 text-blue-700 rounded-lg text-sm flex flex-col items-center">
+          <i class="bi bi-calendar-check text-lg mb-1"></i><span>生成核查</span>
+        </button>
+        <button id="quick-warn-stat" class="hover-scale p-3 bg-slate-50 text-slate-700 rounded-lg text-sm flex flex-col items-center">
+          <i class="bi bi-bar-chart text-lg mb-1"></i><span>预警报表</span>
+        </button>
+      </div>
+    </div>
+    <div class="mb-6">
+      <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">总览</div>
+      <a href="#" class="flex items-center gap-3 px-3 py-3 rounded-lg text-slate-600 hover:bg-slate-100">
+        <i class="bi bi-table w-5 text-center"></i><span>个人工作台</span>
+      </a>
+      <a href="#" class="flex items-center gap-3 px-3 py-3 rounded-lg text-slate-600 hover:bg-slate-100">
+        <i class="bi bi-speedometer2 w-5 text-center"></i><span>数据驾驶舱</span>
+        <span class="ml-auto w-6 h-6 rounded-full bg-blue-100 text-blue-700 text-xs flex items-center justify-center">9+</span>
+      </a>
+    </div>
+    <div class="mb-6">
+      <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">系统管理</div>
+      <a href="#" class="flex items-center gap-3 px-3 py-3 rounded-lg text-slate-600 hover:bg-slate-100">
+        <i class="bi bi-shield-check w-5 text-center"></i><span>角色权限</span>
+      </a>
+      <a href="#" class="flex items-center gap-3 px-3 py-3 rounded-lg text-slate-600 hover:bg-slate-100">
+        <i class="bi bi-file-text w-5 text-center"></i><span>操作审计</span>
+      </a>
+    </div>
+    <div>
+      <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">核心业务</div>
+      <a href="#" class="flex items-center gap-3 px-3 py-3 rounded-lg text-slate-600 hover:bg-slate-100">
+        <i class="bi bi-check2-circle w-5 text-center"></i><span>行政审批</span>
+      </a>
+      <a href="#" class="flex items-center gap-3 px-3 py-3 rounded-lg text-slate-600 hover:bg-slate-100">
+        <i class="bi bi-eye w-5 text-center"></i><span>日常监管</span>
+      </a>
+      <a href="#" class="flex items-center gap-3 px-3 py-3 rounded-lg text-slate-600 hover:bg-slate-100">
+        <i class="bi bi-flask w-5 text-center"></i><span>检验检测</span>
+      </a>
+      <a href="#" class="flex items-center gap-3 px-3 py-3 rounded-lg text-slate-600 hover:bg-slate-100">
+        <i class="bi bi-gavel w-5 text-center"></i><span>执法办案</span>
+      </a>
+      <a href="#" class="flex items-center gap-3 px-3 py-3 rounded-lg text-slate-600 hover:bg-slate-100">
+        <i class="bi bi-shop w-5 text-center"></i><span>阳光药店</span>
+      </a>
+      <a href="#" class="flex items-center gap-3 px-3 py-3 rounded-lg text-slate-600 hover:bg-slate-100">
+        <i class="bi bi-bar-chart-fill w-5 text-center"></i><span>风险分级管控</span>
+      </a>
+      <a href="#" class="flex items-center gap-3 px-3 py-3 rounded-lg text-slate-600 hover:bg-slate-100">
+        <i class="bi bi-upc-scan w-5 text-center"></i><span>药品追溯</span>
+      </a>
+      <a href="#" class="flex items-center gap-3 px-3 py-3 rounded-lg bg-purple-50 text-purple-700 border-l-4 border-purple-500 font-medium">
+        <i class="bi bi-radar w-5 text-center text-purple-600"></i><span>智能风险预警</span>
+      </a>
+    </div>
+  </nav>
+  <div class="absolute bottom-0 left-0 right-0 p-4 border-t border-slate-200 flex justify-between text-xs text-slate-500">
+    <span>版本：v2.1.8</span>
+    <button class="hover:text-slate-700"><i class="bi bi-question-circle"></i> 帮助</button>
+  </div>
+</aside>
+
+<!-- 主内容区 -->
+<div class="ml-64 min-h-screen p-6">
+  <!-- 页面头部 -->
+  <div class="mb-8">
+    <div class="flex flex-wrap justify-between items-center gap-4 mb-4">
+      <div>
+        <h1 class="text-2xl md:text-3xl font-bold text-slate-900">智能风险预警</h1>
+        <div class="flex flex-wrap items-center gap-3 mt-2 text-sm text-slate-500">
+          <span>统计日期：2026-06-22</span>
+          <span class="w-1 h-1 bg-slate-400 rounded-full"></span>
+          <span>AI模型自动识别 | 多维度数据联动</span>
+          <span class="w-1 h-1 bg-slate-400 rounded-full"></span>
+          <span class="text-red-600 flex items-center"><i class="bi bi-exclamation-triangle mr-1"></i>今日极高危39条</span>
+        </div>
+      </div>
+      <div class="flex flex-wrap gap-3">
+        <div class="relative">
+          <input id="search-input" placeholder="企业/药店/预警类型/风险等级" class="pl-10 pr-4 py-2 border border-slate-200 rounded-lg text-sm w-72 focus:ring-2 focus:ring-purple-200">
+          <i class="bi bi-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+        </div>
+        <button class="px-4 py-2 border border-slate-200 rounded-lg text-sm hover-scale flex items-center gap-2">
+          <i class="bi bi-calendar-range"></i>日期筛选
+        </button>
+        <button id="new-rule-btn" class="px-4 py-2 gradient-purple text-white rounded-lg text-sm hover-scale flex items-center gap-2">
+          <i class="bi bi-sliders"></i>配置预警规则
+        </button>
+      </div>
+    </div>
+    <!-- 预警指标卡片 -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="card-shadow hover-scale bg-white p-5 rounded-xl">
+        <div class="flex justify-between items-start mb-4">
+          <div>
+            <p class="text-sm text-slate-500">今日全部预警</p>
+            <h3 class="text-4xl font-mono font-bold count-animate mt-1">1284</h3>
+            <p class="text-xs text-emerald-600 mt-2 flex items-center"><i class="bi bi-arrow-up mr-1"></i>环比+8.6%</p>
+          </div>
+          <div class="w-14 h-14 rounded-full bg-purple-50 flex items-center justify-center text-purple-600">
+            <i class="bi bi-radar text-2xl"></i>
+          </div>
+        </div>
+        <div class="progress-bar"><div class="progress-value gradient-purple" style="width:100%"></div></div>
+        <div class="flex justify-between mt-2 text-xs text-slate-500">
+          <span>AI自动生成1284条</span><span>实时推送</span>
+        </div>
+      </div>
+      <div class="card-shadow hover-scale bg-white p-5 rounded-xl">
+        <div class="flex justify-between items-start mb-4">
+          <div>
+            <p class="text-sm text-slate-500">极高危预警（红色）</p>
+            <h3 class="text-4xl font-mono font-bold count-animate mt-1 text-red-600">39</h3>
+            <p class="text-xs text-red-600 mt-2 flex items-center"><i class="bi bi-exclamation-triangle mr-1"></i>限期24小时处置</p>
+          </div>
+          <div class="w-14 h-14 rounded-full bg-red-50 flex items-center justify-center text-red-600">
+            <i class="bi bi-x-octagon text-2xl"></i>
+          </div>
+        </div>
+        <div class="progress-bar"><div class="progress-value gradient-red" style="width:3%"></div></div>
+        <div class="flex justify-between mt-2 text-xs text-slate-500">
+          <button id="high-warn-btn" class="text-red-600"><i class="bi bi-list-check mr-1"></i>极高危台账</button>
+          <span>占比3.0%</span>
+        </div>
+      </div>
+      <div class="card-shadow hover-scale bg-white p-5 rounded-xl">
+        <div class="flex justify-between items-start mb-4">
+          <div>
+            <p class="text-sm text-slate-500">中风险预警（黄色）</p>
+            <h3 class="text-4xl font-mono font-bold count-animate mt-1 text-amber-600">416</h3>
+            <p class="text-xs text-amber-600 mt-2 flex items-center"><i class="bi bi-clock mr-1"></i>7日内核查</p>
+          </div>
+          <div class="w-14 h-14 rounded-full bg-amber-50 flex items-center justify-center text-amber-600">
+            <i class="bi bi-exclamation-circle text-2xl"></i>
+          </div>
+        </div>
+        <div class="progress-bar"><div class="progress-value gradient-amber" style="width:32.4%"></div></div>
+        <div class="flex justify-between mt-2 text-xs text-slate-500">
+          <span>季度全覆盖</span><span>占比32.4%</span>
+        </div>
+      </div>
+      <div class="card-shadow hover-scale bg-white p-5 rounded-xl">
+        <div class="flex justify-between items-start mb-4">
+          <div>
+            <p class="text-sm text-slate-500">低风险提示（蓝色）</p>
+            <h3 class="text-4xl font-mono font-bold count-animate mt-1 text-blue-600">829</h3>
+            <p class="text-xs text-emerald-600 mt-2 flex items-center"><i class="bi bi-check-circle mr-1"></i>年度抽查</p>
+          </div>
+          <div class="w-14 h-14 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
+            <i class="bi bi-info-circle text-2xl"></i>
+          </div>
+        </div>
+        <div class="progress-bar"><div class="progress-value gradient-blue" style="width:64.6%"></div></div>
+        <div class="flex justify-between mt-2 text-xs text-slate-500">
+          <span>常规提示</span><span>占比64.6%</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 筛选面板 -->
+  <div class="card-shadow bg-white p-5 rounded-xl mb-8">
+    <form id="filter-form" class="flex flex-wrap gap-4 items-center">
+      <div class="flex items-center gap-3">
+        <label class="w-20 text-sm font-medium text-slate-600">风险等级</label>
+        <select class="px-4 py-2.5 border rounded-lg text-sm">
+          <option selected>全部</option><option>极高危(红)</option><option>中风险(黄)</option><option>低风险(蓝)</option>
+        </select>
+      </div>
+      <div class="flex items-center gap-3">
+        <label class="w-20 text-sm font-medium text-slate-600">预警类型</label>
+        <select class="px-4 py-2.5 border rounded-lg text-sm">
+          <option selected>全部</option><option>追溯断链</option><option>巡查超期</option><option>近效期</option><option>违法线索</option>
+        </select>
+      </div>
+      <div class="flex items-center gap-3">
+        <label class="w-20 text-sm font-medium text-slate-600">主体类型</label>
+        <select class="px-4 py-2.5 border rounded-lg text-sm">
+          <option selected>全部</option><option>生产企业</option><option>批发</option><option>零售药店</option>
+        </select>
+      </div>
+      <div class="flex items-center gap-3">
+        <label class="w-20 text-sm font-medium text-slate-600">辖区</label>
+        <select class="px-4 py-2.5 border rounded-lg text-sm">
+          <option selected>全部</option><option>银川</option><option>石嘴山</option><option>吴忠</option><option>固原</option><option>中卫</option>
+        </select>
+      </div>
+      <div class="flex items-center gap-3">
+        <label class="w-20 text-sm font-medium text-slate-600">处置状态</label>
+        <select class="px-4 py-2.5 border rounded-lg text-sm">
+          <option selected>全部</option><option>未处置</option><option>处置中</option><option>已闭环</option>
+        </select>
+      </div>
+      <div class="flex-grow flex items-center gap-3">
+        <input placeholder="企业名称/信用代码/药店检索" class="flex-grow px-4 py-2.5 border rounded-lg text-sm">
+        <button type="submit" class="px-5 py-2.5 gradient-purple text-white rounded-lg hover-scale">查询</button>
+        <button type="reset" class="px-5 py-2.5 bg-slate-100 rounded-lg hover-scale">重置</button>
+      </div>
+    </form>
+    <div class="mt-4 pt-4 border-t">
+      <button id="adv-filter-toggle" class="text-purple-600 text-sm flex items-center">
+        <i class="bi bi-funnel mr-2"></i>高级筛选<i class="bi bi-chevron-down ml-1"></i>
+      </button>
+      <div id="adv-filter-panel" class="hidden mt-4 fade-in">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label class="text-sm font-medium block mb-2">AI模型来源</label>
+            <select class="w-full px-3 py-2 border rounded text-sm">
+              <option>全部</option><option>追溯分析</option><option>巡查频次</option><option>抽检数据</option><option>投诉线索</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-sm font-medium block mb-2">预警时效</label>
+            <div class="flex gap-2">
+              <input type="date" class="w-full px-3 py-2 border rounded text-sm">
+              <span>至</span>
+              <input type="date" class="w-full px-3 py-2 border rounded text-sm">
+            </div>
+          </div>
+          <div>
+            <label class="text-sm font-medium block mb-2">到期处置时限</label>
+            <select class="w-full px-3 py-2 border rounded text-sm">
+              <option>全部</option><option>24小时内</option><option>7天内</option><option>30天</option>
+            </select>
+          </div>
+        </div>
+        <div class="flex justify-end gap-3 mt-4">
+          <button class="px-4 py-2 bg-slate-100 rounded">取消</button>
+          <button class="px-4 py-2 gradient-purple text-white rounded">应用筛选</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 图表双栏 -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+    <div class="card-shadow bg-white p-6 rounded-xl hover-scale">
+      <div class="flex justify-between items-center mb-6">
+        <h3 class="font-semibold text-lg">今日预警分时趋势</h3>
+        <div class="flex gap-2">
+          <button class="px-3 py-1.5 text-xs bg-purple-50 text-purple-700 rounded">今日</button>
+          <button class="px-3 py-1.5 text-xs bg-slate-100 rounded">昨日</button>
+          <button id="exportLine" class="px-3 py-1.5 text-xs bg-slate-100 rounded"><i class="bi bi-download"></i>导出</button>
+        </div>
+      </div>
+      <div id="timeLineChart" style="width:100%;height:380px;"></div>
+    </div>
+    <div class="card-shadow bg-white p-6 rounded-xl hover-scale">
+      <div class="flex justify-between items-center mb-6">
+        <h3 class="font-semibold text-lg">预警类型占比</h3>
+        <div class="flex gap-2">
+          <button id="exportPie" class="px-3 py-1.5 text-xs bg-slate-100 rounded"><i class="bi bi-download"></i>导出</button>
+        </div>
+      </div>
+      <div id="warnPie" style="width:100%;height:380px;"></div>
+      <div class="mt-4 p-3 bg-purple-50 rounded text-xs">
+        <div class="flex items-center gap-2 text-purple-700 font-medium mb-1"><i class="bi bi-lightbulb"></i>AI预警逻辑</div>
+        <p>系统联动药品追溯、巡查记录、抽检、投诉多源数据机器学习打分，自动划分红黄绿蓝四级预警，高风险一键生成现场核查任务推送对应监管人员。</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 高危预警面板 -->
+  <div class="card-shadow bg-white p-6 rounded-xl mb-8">
+    <h3 class="font-semibold text-xl mb-6">今日极高危预警清单（24小时限期处置）</h3>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div class="border border-red-200 p-4 rounded-lg bg-red-50/30">
+        <div class="flex justify-between mb-4">
+          <h4 class="font-medium text-red-700 flex items-center"><i class="bi bi-upc-scan mr-2"></i>追溯断链高危</h4>
+          <span class="w-8 h-8 rounded-full bg-red-100 text-red-700 text-sm flex items-center justify-center">17</span>
+        </div>
+        <div class="space-y-3 max-h-48 overflow-y-auto pr-2">
+          <div class="p-2 bg-white rounded flex justify-between">
+            <div><span class="text-sm">无菌注射器厂</span><p class="text-xs">上游批次完全缺失</p></div>
+            <button class="text-red-600 text-sm">生成任务</button>
+          </div>
+        </div>
+        <button class="w-full mt-4 py-2 border border-red-200 rounded text-sm text-red-700">全部断链预警</button>
+      </div>
+      <div class="border border-red-200 p-4 rounded-lg bg-red-50/30">
+        <div class="flex justify-between mb-4">
+          <h4 class="font-medium text-red-700 flex items-center"><i class="bi bi-exclamation-triangle mr-2"></i>超期未巡查</h4>
+          <span class="w-8 h-8 rounded-full bg-red-100 text-red-700 text-sm flex items-center justify-center">14</span>
+        </div>
+        <div class="space-y-3 max-h-48 overflow-y-auto pr-2">
+          <div class="p-2 bg-white rounded flex justify-between">
+            <div><span class="text-sm">高风险注射剂批发</span><p class="text-xs">超期45天未核查</p></div>
+            <button class="text-red-600 text-sm">生成任务</button>
+          </div>
+        </div>
+        <button class="w-full mt-4 py-2 border border-red-200 rounded text-sm text-red-700">超期企业清单</button>
+      </div>
+      <div class="border border-red-200 p-4 rounded-lg bg-red-50/30">
+        <div class="flex justify-between mb-4">
+          <h4 class="font-medium text-red-700 flex items-center"><i class="bi bi-gavel mr-2"></i>重复违法线索</h4>
+          <span class="w-8 h-8 rounded-full bg-red-100 text-red-700 text-sm flex items-center justify-center">8</span>
+        </div>
+        <div class="space-y-3 max-h-48 overflow-y-auto pr-2">
+          <div class="p-2 bg-white rounded flex justify-between">
+            <div><span class="text-sm">违规零售药店</span><p class="text-xs">连续2次抽检不合格</p></div>
+            <button class="text-red-600 text-sm">立案核查</button>
+          </div>
+        </div>
+        <button class="w-full mt-4 py-2 border border-red-200 rounded text-sm text-red-700">违法线索台账</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 智能预警台账 -->
+  <div class="card-shadow bg-white rounded-xl overflow-hidden">
+    <div class="p-6 border-b flex justify-between flex-wrap gap-4 items-center">
+      <h3 class="font-semibold text-xl">AI智能预警台账</h3>
+      <div class="flex gap-3">
+        <select class="px-3 py-2 border rounded text-sm">
+          <option>默认高危优先</option><option>时间倒序</option><option>辖区分组</option>
+        </select>
+        <button id="exportTable" class="px-4 py-2 bg-slate-100 rounded text-sm hover-scale"><i class="bi bi-download mr-2"></i>导出台账</button>
+        <button id="printTable" class="px-4 py-2 bg-slate-100 rounded text-sm hover-scale"><i class="bi bi-printer mr-2"></i>打印</button>
+      </div>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead class="bg-slate-50 text-slate-600">
+        <tr>
+          <th class="px-5 py-4 text-left"><input id="checkAll" type="checkbox"></th>
+          <th class="px-5 py-4 text-left">预警ID</th>
+          <th class="px-5 py-4 text-left">主体名称</th>
+          <th class="px-5 py-4 text-left">主体类型</th>
+          <th class="px-5 py-4 text-left">预警类型</th>
+          <th class="px-5 py-4 text-left">风险等级</th>
+          <th class="px-5 py-4 text-left">AI判定依据</th>
+          <th class="px-5 py-4 text-left">处置时限</th>
+          <th class="px-5 py-4 text-left">处置状态</th>
+          <th class="px-5 py-4 text-left">操作</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr class="border-b hover:bg-slate-50">
+          <td class="px-5 py-5"><input class="rowCheck" type="checkbox"></td>
+          <td class="px-5 py-5 font-mono">W20260622001</td>
+          <td class="px-5 py-5 font-medium">银川无菌注射器有限公司</td>
+          <td class="px-5 py-5">生产企业</td>
+          <td class="px-5 py-5"><span class="warn-trace px-2 py-1 rounded text-xs">追溯断链</span></td>
+          <td class="px-5 py-5"><span class="risk-critical px-2 py-1 rounded-full text-xs">极高危</span></td>
+          <td class="px-5 py-5">上游原料追溯全部缺失</td>
+          <td class="px-5 py-5 text-red-600">24小时内</td>
+          <td class="px-5 py-5 text-red-600">未处置</td>
+          <td class="px-5 py-5 flex gap-2">
+            <button class="text-purple-600"><i class="bi-file-text"></i></button>
+            <button class="text-red-600"><i class="bi-calendar-check"></i></button>
+          </td>
+        </tr>
+        <tr class="border-b hover:bg-slate-50">
+          <td class="px-5 py-5"><input class="rowCheck" type="checkbox"></td>
+          <td class="px-5 py-5 font-mono">W20260622047</td>
+          <td class="px-5 py-5 font-medium">中卫康泰药品批发</td>
+          <td class="px-5 py-5">批发企业</td>
+          <td class="px-5 py-5"><span class="warn-inspect px-2 py-1 rounded text-xs">巡查超期</span></td>
+          <td class="px-5 py-5"><span class="risk-major px-2 py-1 rounded-full text-xs">中风险</span></td>
+          <td class="px-5 py-5">季度巡查逾期32天</td>
+          <td class="px-5 py-5 text-amber-600">7日内</td>
+          <td class="px-5 py-5 text-amber-600">处置中</td>
+          <td class="px-5 py-5 flex gap-2">
+            <button class="text-purple-600"><i class="bi-file-text"></i></button>
+            <button class="text-slate-600"><i class="bi-pencil"></i></button>
+          </td>
+        </tr>
+        <tr class="border-b hover:bg-slate-50">
+          <td class="px-5 py-5"><input class="rowCheck" type="checkbox"></td>
+          <td class="px-5 py-5 font-mono">W20260622109</td>
+          <td class="px-5 py-5 font-medium">固原惠民药店</td>
+          <td class="px-5 py-5">零售药店</td>
+          <td class="px-5 py-5"><span class="warn-expire px-2 py-1 rounded text-xs">近效期</span></td>
+          <td class="px-5 py-5"><span class="risk-minor px-2 py-1 rounded-full text-xs">低风险</span></td>
+          <td class="px-5 py-5">30天内多批次过期药品</td>
+          <td class="px-5 py-5 text-blue-600">30天</td>
+          <td class="px-5 py-5 text-emerald-600">已闭环</td>
+          <td class="px-5 py-5 flex gap-2">
+            <button class="text-purple-600"><i class="bi-file-text"></i></button>
+          </td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+    <!-- 分页 -->
+    <div class="p-6 border-t flex flex-wrap justify-between items-center gap-4">
+      <div class="text-sm text-slate-500">今日AI智能预警共1284条，极高危39条，系统自动多源数据建模生成</div>
+      <div class="flex gap-2">
+        <button disabled class="w-10 h-10 border rounded text-slate-400"><i class="bi-chevron-left"></i></button>
+        <button class="w-10 h-10 border bg-purple-50 text-purple-700 rounded">1</button>
+        <button class="w-10 h-10 border rounded">2</button>
+        <button class="w-10 h-10 border rounded">3</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function(){
+    // 加载遮罩
+    setTimeout(()=>{
+      const mask = document.getElementById('loading-mask');
+      mask.style.opacity = '0';
+      setTimeout(()=>mask.style.display='none',300);
+    },800);
+    // 高级筛选折叠
+    const advToggle = document.getElementById('adv-filter-toggle');
+    const advPanel = document.getElementById('adv-filter-panel');
+    advToggle.onclick = ()=>{
+      advPanel.classList.toggle('hidden');
+      advToggle.querySelector('.bi-chevron-down').classList.toggle('rotate-180');
+    };
+    // 分时折线图
+    const lineChart = echarts.init(document.getElementById('timeLineChart'));
+    lineChart.setOption({
+      tooltip:{trigger:'axis'},
+      grid:{left:'3%',right:'4%',bottom:'3%',containLabel:true},
+      xAxis:{type:'category',data:['08','09','10','11','12','13','14','15','16','17']},
+      yAxis:{type:'value'},
+      series:[
+        {name:'极高危',type:'bar',stack:'total',data:[4,6,7,5,3,2,4,5,2,1],itemStyle:{color:'#dc2626'}},
+        {name:'中风险',type:'bar',stack:'total',data:[26,38,42,46,32,36,44,38,34,20],itemStyle:{color:'#f59e0b'}},
+        {name:'低风险',type:'bar',stack:'total',data:[62,84,96,102,86,78,92,88,76,65],itemStyle:{color:'#3b82f6'}}
+      ]
+    });
+    // 预警饼图
+    const pieChart = echarts.init(document.getElementById('warnPie'));
+    pieChart.setOption({
+      tooltip:{trigger:'item',formatter:'{b}:{c}条 ({d}%)'},
+      legend:{orient:'vertical',left:'left',textStyle:{fontSize:11}},
+      series:[{
+        type:'pie',radius:['40%','70%'],
+        itemStyle:{borderColor:'#fff',borderWidth:2,borderRadius:8},
+        data:[
+          {value:467,name:追溯断链预警,itemStyle:{color:'#0d9488'}},
+          {value:382,name:巡查超期预警,itemStyle:{color:'#7c3aed'}},
+          {value:276,name:近效期药品,itemStyle:{color:'#f97316'}},
+          {value:159,name:违法线索,itemStyle:{color:'#dc2626'}}
+        ]
+      }]
+    });
+    // 窗口自适应
+    window.addEventListener('resize',()=>{
+      lineChart.resize();
+      pieChart.resize();
+    });
+    // 全选复选框
+    const checkAll = document.getElementById('checkAll');
+    const rowChecks = document.querySelectorAll('.rowCheck');
+    checkAll.onchange = ()=> rowChecks.forEach(item=>item.checked = checkAll.checked);
+    // 查询表单
+    document.getElementById('filter-form').onsubmit = e=>{
+      e.preventDefault();
+      alert('执行智能预警多条件筛选查询');
+    };
+    document.getElementById('filter-form').onreset = ()=> setTimeout(()=>alert('筛选条件重置'),100);
+    // 按钮交互
+    document.getElementById('new-rule-btn').onclick = ()=>alert('打开AI预警规则配置页面');
+    document.getElementById('high-warn-btn').onclick = ()=>alert('跳转极高危预警专项台账');
+    document.getElementById('exportTable').onclick = ()=>alert('导出当前页预警台账Excel');
+    document.getElementById('printTable').onclick = ()=>window.print();
+    document.getElementById('exportLine').onclick = ()=>alert('导出分时预警趋势图');
+    document.getElementById('exportPie').onclick = ()=>alert('导出预警类型占比图');
+    // 侧边快捷操作
+    document.getElementById('quick-high-warn').onclick = ()=>alert('极高危预警清单');
+    document.getElementById('quick-rule-set').onclick = ()=>alert>预警规则配置;
+    document.getElementById('quick-task-gen').onclick = ()=>alert('批量生成巡查任务');
+    document.getElementById('quick-warn-stat').onclick = ()=>alert('预警统计报表');
+  });
+</script>
+</body>
+</html>

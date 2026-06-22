@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <style type="text/tailwindcss">
+    @layer utilities {
+      .card-shadow {box-shadow: 0 4px 20px rgba(0,0,0,0.05);}
+      .hover-scale {transition: transform 0.2s ease;}
+      .hover-scale:hover {transform: translateY(-2px);}
+      .gradient-cyan {background: linear-gradient(135deg,#0891b2,#0284c7);}
+      .gradient-green {background: linear-gradient(135deg,#10b981,#059669);}
+      .gradient-amber {background: linear-gradient(135deg,#f59e0b,#d97706);}
+      .gradient-red {background: linear-gradient(135deg,#ef4444,#dc2626);}
+      .gradient-blue {background: linear-gradient(135deg,#3b82f6,#2563eb);}
+      .progress-bar {height:8px;border-radius:4px;background:#f1f5f9;overflow:hidden;}
+      .progress-value {height:100%;border-radius:4px;transition:width 1s;}
+      .fade-in {animation:fadeIn 0.3s forwards;}
+      .rotate-180 {transform:rotate(180deg);transition:0.2s;}
+      /* 同步状态标签 */
+      .sync-su {color:#059669;background:rgba(16,185,129,0.1);}
+      .sync-ing {color:#3b82f6;background:rgba(59,130,246,0.1);}
+      .sync-delay {color:#f59e0b;background:rgba(245,158,11,0.1);}
+      .sync-fail {color:#dc2626;background:rgba(220,38,38,0.1);}
+    }
+  </style>
+  <style>
+    body {font-family:system-ui,-apple-system,sans-serif;scroll-behavior:smooth;}
+    .sidebar {z-index:100;transition:all 0.3s cubic-bezier(0.4,0,0.2,1);}
+    ::-webkit-scrollbar {width:8px;height:8px;}
+    ::-webkit-scrollbar-track {background:#f8fafc;border-radius:4px;}
+    ::-webkit-scrollbar-thumb {background:#cbd5e1;border-radius:4px;}
+    .echarts-tooltip {border-radius:8px!important;box-shadow:0 10px 25px rgba(0,0,0,0.1)!important;padding:12px!important;border:none!important;}
+    @keyframes countUp {from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+    .count-animate {animation:countUp 0.8s ease-out;}
+    @keyframes fadeIn {from{opacity:0}to{opacity:1}}
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800">
+<!-- 加载遮罩 -->
+<div id="loading-mask" class="fixed inset-0 bg-white z-50 flex flex-col items-center justify-center">
+  <div class="w-16 h-16 border-4 border-cyan-200 border-t-cyan-600 rounded-full animate-spin mb-4"></div>
+  <p class="text-slate-600">数据同步监控加载中...</p>
+</div>
+
+<!-- 侧边导航栏 -->
+<aside class="sidebar fixed top-0 left-0 bottom-0 w-64 bg-white border-r border-slate-200">
+  <div class="p-5 border-b border-slate-200 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-lg gradient-blue flex items-center justify-center text-white">
+        <i class="bi bi-shield-lock text-xl"></i>
+      </div>
+      <div>
+        <div class="font-bold text-lg">宁夏药监局</div>
+        <div class="text-xs text-slate-500">数据中台 V2.0</div>
+      </div>
+    </div>
+    <button id="theme-toggle" class="w-8 h-8 rounded-full hover:bg-slate-100 flex items-center justify-center text-slate-600">
+      <i class="bi bi-moon-stars"></i>
+    </button>
+  </div>
+  <nav class="p-4">
+    <div class="mb-8 p-3 bg-cyan-50 rounded-lg flex items-center gap-3">
+      <img src="https://picsum.photos/id/1005/40/40" alt="头像" class="w-10 h-10 rounded-full border-2 border-white">
+      <div>
+        <div class="font-medium text-sm">数据运维管理员</div>
+        <div class="text-xs text-slate-500">今日同步失败：3条</div>
+      </div>
+    </div>
+    <div class="mb-8">
+      <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">快捷操作</div>
+      <div class="grid grid-cols-2 gap-2">
+        <button id="quick-manual" class="hover-scale p-3 bg-cyan-50 text-cyan-700 rounded-lg text-sm flex flex-col items-center">
+          <i class="bi bi-arrow-repeat text-lg mb-1"></i><span>手动同步</span>
+        </button>
+        <button id="quick-fail" class="hover-scale p-3 bg-red-50 text-red-700 rounded-lg text-sm flex flex-col items-center">
+          <i class="bi bi-exclamation-triangle text-lg mb-1"></i><span>失败任务</span>
+        </button>
+        <button id="quick-log" class="hover-scale p-3 bg-blue-50 text-blue-700 rounded-lg text-sm flex flex-col items-center">
+          <i class="bi bi-file-text text-lg mb-1"></i><span>同步日志</span>
+        </button>
+        <button id="quick-stat" class="hover-scale p-3 bg-slate-50 text-slate-700 rounded-lg text-sm flex flex-col items-center">
+          <i class="bi bi-bar-chart text-lg mb-1"></i><span>同步报表</span>
+        </button>
+      </div>
+    </div>
+    <div class="mb-6">
+      <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">总览</div>
+      <a href="#" class="flex items-center gap-3 px-3 py-3 rounded-lg text-slate-600 hover:bg-slate-100">
+        <i class="bi bi-table w-5 text-center"></i><span>个人工作台</span>
+      </a>
+      <a href="#" class="flex items-center gap-3 px-3 py-3 rounded-lg text-slate-600 hover:bg-slate-100">
+        <i class="bi bi-speedometer2 w-5 text-center"></i><span>数据驾驶舱</span>
+        <span class="ml-auto w-6 h-6 rounded-full bg-blue-100 text-blue-700 text-xs flex items-center justify-center">9+</span>
+      </a>
+    </div>
+    <div class="mb-6">
+      <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">系统管理</div>
+      <a href="#" class="flex items-center gap-3 px-3 py-3 rounded-lg text-slate-600 hover:bg-slate-100">
+        <i class="bi bi-shield-check w-5 text-center"></i><span>角色权限</span>
+      </a>
+      <a href="#" class="flex items-center gap-3 px-3 py-3 rounded-lg text-slate-600 hover:bg-slate-100">
+        <i class="bi bi-file-text w-5 text-center"></i><span>操作审计</span>
+      </a>
+    </div>
+    <div>
+      <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">核心业务</div>
+      <a href="#" class="flex items-center gap-3 px-3 py-3 rounded-lg text-slate-600 hover:bg-slate-100">
+        <i class="bi bi-check2-circle w-5 text-center"></i><span>行政审批</span>
+      </a>
+      <a href="#" class="flex items-center gap-3 px-3 py-3 rounded-lg text-slate-600 hover:bg-slate-100">
+        <i class="bi bi-eye w-5 text-center"></i><span>日常监管</span>
+      </a>
+      <a href="#" class="flex items-center gap-3 px-3 py-3 rounded-lg text-slate-600 hover:bg-slate-100">
+        <i class="bi bi-flask w-5 text-center"></i><span>检验检测</span>
+      </a>
+      <a href="#" class="flex items-center gap-3 px-3 py-3 rounded-lg text-slate-600 hover:bg-slate-100">
+        <i class="bi bi-gavel w-5 text-center"></i><span>执法办案</span>
+      </a>
+      <a href="#" class="flex items-center gap-3 px-3 py-3 rounded-lg text-slate-600 hover:bg-slate-100">
+        <i class="bi bi-shop w-5 text-center"></i><span>阳光药店</span>
+      </a>
+      <a href="#" class="flex items-center gap-3 px-3 py-3 rounded-lg text-slate-600 hover:bg-slate-100">
+        <i class="bi bi-bar-chart-fill w-5 text-center"></i><span>风险分级管控</span>
+      </a>
+      <a href="#" class="flex items-center gap-3 px-3 py-3 rounded-lg text-slate-600 hover:bg-slate-100">
+        <i class="bi bi-upc-scan w-5 text-center"></i><span>药品追溯</span>
+      </a>
+      <a href="#" class="flex items-center gap-3 px-3 py-3 rounded-lg text-slate-600 hover:bg-slate-100">
+        <i class="bi bi-radar w-5 text-center"></i><span>智能风险预警</span>
+      </a>
+      <a href="#" class="flex items-center gap-3 px-3 py-3 rounded-lg bg-cyan-50 text-cyan-700 border-l-4 border-cyan-500 font-medium">
+        <i class="bi bi-arrow-repeat w-5 text-center text-cyan-600"></i><span>数据同步监控</span>
+      </a>
+    </div>
+  </nav>
+  <div class="absolute bottom-0 left-0 right-0 p-4 border-t border-slate-200 flex justify-between text-xs text-slate-500">
+    <span>版本：v2.1.8</span>
+    <button class="hover:text-slate-700"><i class="bi bi-question-circle"></i> 帮助</button>
+  </div>
+</aside>
+
+<!-- 主内容区 -->
+<div class="ml-64 min-h-screen p-6">
+  <!-- 页面头部 -->
+  <div class="mb-8">
+    <div class="flex flex-wrap justify-between items-center gap-4 mb-4">
+      <div>
+        <h1 class="text-2xl md:text-3xl font-bold text-slate-900">数据同步监控</h1>
+        <div class="flex flex-wrap items-center gap-3 mt-2 text-sm text-slate-500">
+          <span>监控日期：2026-06-22</span>
+          <span class="w-1 h-1 bg-slate-400 rounded-full"></span>
+          <span>数据源：本地业务库/自治区药监API</span>
+          <span class="w-1 h-1 bg-slate-400 rounded-full"></span>
+          <span class="text-red-600 flex items-center"><i class="bi bi-exclamation-triangle mr-1"></i>同步失败3条待处理</span>
+        </div>
+      </div>
+      <div class="flex flex-wrap gap-3">
+        <div class="relative">
+          <input id="search-input" placeholder="数据源/表名/同步任务/执行结果" class="pl-10 pr-4 py-2 border border-slate-200 rounded-lg text-sm w-72 focus:ring-2 focus:ring-cyan-200">
+          <i class="bi bi-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+        </div>
+        <button class="px-4 py-2 border border-slate-200 rounded-lg text-sm hover-scale flex items-center gap-2">
+          <i class="bi bi-calendar-range"></i>日期筛选
+        </button>
+        <button id="manual-btn" class="px-4 py-2 gradient-cyan text-white rounded-lg text-sm hover-scale flex items-center gap-2">
+          <i class="bi bi-arrow-repeat"></i>手动触发同步
+        </button>
+      </div>
+    </div>
+    <!-- 同步统计卡片 -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="card-shadow hover-scale bg-white p-5 rounded-xl">
+        <div class="flex justify-between items-start mb-4">
+          <div>
+            <p class="text-sm text-slate-500">今日同步总任务</p>
+            <h3 class="text-4xl font-mono font-bold count-animate mt-1">1268</h3>
+            <p class="text-xs text-emerald-600 mt-2 flex items-center"><i class="bi bi-arrow-up mr-1"></i>环比+7.2%</p>
+          </div>
+          <div class="w-14 h-14 rounded-full bg-cyan-50 flex items-center justify-center text-cyan-600">
+            <i class="bi bi-arrow-repeat text-2xl"></i>
+          </div>
+        </div>
+        <div class="progress-bar"><div class="progress-value gradient-cyan" style="width:100%"></div></div>
+        <div class="flex justify-between mt-2 text-xs text-slate-500">
+          <span>定时1245</span><span>手动23</span>
+        </div>
+      </div>
+      <div class="card-shadow hover-scale bg-white p-5 rounded-xl">
+        <div class="flex justify-between items-start mb-4">
+          <div>
+            <p class="text-sm text-slate-500">同步成功任务</p>
+            <h3 class="text-4xl font-mono font-bold count-animate mt-1 text-emerald-600">1265</h3>
+            <p class="text-xs text-emerald-600 mt-2 flex items-center"><i class="bi bi-check-circle mr-1"></i>成功率99.76%</p>
+          </div>
+          <div class="w-14 h-14 rounded-full bg-green-50 flex items-center justify-center text-green-600">
+            <i class="bi bi-shield-check text-2xl"></i>
+          </div>
+        </div>
+        <div class="progress-bar"><div class="progress-value gradient-green" style="width:99.76%"></div></div>
+        <div class="flex justify-between mt-2 text-xs text-slate-500">
+          <span>无延迟1221</span><span>轻微延迟44</span>
+        </div>
+      </div>
+      <div class="card-shadow hover-scale bg-white p-5 rounded-xl">
+        <div class="flex justify-between items-start mb-4">
+          <div>
+            <p class="text-sm text-slate-500">同步失败任务</p>
+            <h3 class="text-4xl font-mono font-bold count-animate mt-1 text-red-600">3</h3>
+            <p class="text-xs text-red-600 mt-2 flex items-center"><i class="bi bi-exclamation-triangle mr-1"></i>接口超时异常</p>
+          </div>
+          <div class="w-14 h-14 rounded-full bg-red-50 flex items-center justify-center text-red-600">
+            <i class="bi bi-x-octagon text-2xl"></i>
+          </div>
+        </div>
+        <div class="progress-bar"><div class="progress-value gradient-red" style="width:0.24%"></div></div>
+        <div class="flex justify-between mt-2 text-xs text-slate-500">
+          <button id="fail-btn" class="text-red-600"><i class="bi bi-list-check mr-1"></i>查看失败台账</button>
+          <span>待重跑3条</span>
+        </div>
+      </div>
+      <div class="card-shadow hover-scale bg-white p-5 rounded-xl">
+        <div class="flex justify-between items-start mb-4">
+          <div>
+            <p class="text-sm text-slate-500">在线数据源总数</p>
+            <h3 class="text-4xl font-mono font-bold count-animate mt-1 text-blue-600">14</h3>
+            <p class="text-xs text-blue-600 mt-2 flex items-center"><i class="bi bi-database mr-1"></i>本地/省级API</p>
+          </div>
+          <div class="w-14 h-14 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
+            <i class="bi bi-database text-2xl"></i>
+          </div>
+        </div>
+        <div class="progress-bar"><div class="progress-value gradient-blue" style="width:100%"></div></div>
+        <div class="flex justify-between mt-2 text-xs text-slate-500">
+          <span>业务库10</span><span>省级接口4</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 筛选面板 -->
+  <div class="card-shadow bg-white p-5 rounded-xl mb-8">
+    <form id="filter-form" class="flex flex-wrap gap-4 items-center">
+      <div class="flex items-center gap-3">
+        <label class="w-20 text-sm font-medium text-slate-600">数据源</label>
+        <select class="px-4 py-2.5 border rounded-lg text-sm">
+          <option selected>全部</option>
+          <option>药品追溯库</option>
+          <option>风险分级库</option>
+          <option>执法办案库</option>
+          <option>阳光药店库</option>
+          <option>自治区API接口</option>
+        </select>
+      </div>
+      <div class="flex items-center gap-3">
+        <label class="w-20 text-sm font-medium text-slate-600">同步类型</label>
+        <select class="px-4 py-2.5 border rounded-lg text-sm">
+          <option selected>全部</option>
+          <option>定时自动</option>
+          <option>手动触发</option>
+          <option>失败重试</option>
+        </select>
+      </div>
+      <div class="flex items-center gap-3">
+        <label class="w-20 text-sm font-medium text-slate-600">同步状态</label>
+        <select class="px-4 py-2.5 border rounded-lg text-sm">
+          <option selected>全部</option>
+          <option>执行成功</option>
+          <option>执行中</option>
+          <option>轻微延迟</option>
+          <option>同步失败</option>
+        </select>
+      </div>
+      <div class="flex items-center gap-3">
+        <label class="w-20 text-sm font-medium text-slate-600">耗时区间</label>
+        <select class="px-4 py-2.5 border rounded-lg text-sm">
+          <option selected>全部</option>
+          <option>0-100ms</option>
+          <option>100-500ms</option>
+          <option>500ms以上</option>
+        </select>
+      </div>
+      <div class="flex items-center gap-3">
+        <label class="w-20 text-sm font-medium text-slate-600">执行账号</label>
+        <select class="px-4 py-2.5 border rounded-lg text-sm">
+          <option selected>全部</option>
+          <option>系统自动</option>
+          <option>运维管理员</option>
+        </select>
+      </div>
+      <div class="flex-grow flex items-center gap-3">
+        <input placeholder="表名/任务名称/数据源检索" class="flex-grow px-4 py-2.5 border rounded-lg text-sm">
+        <button type="submit" class="px-5 py-2.5 gradient-cyan text-white rounded-lg hover-scale">查询</button>
+        <button type="reset" class="px-5 py-2.5 bg-slate-100 rounded-lg hover-scale">重置</button>
+      </div>
+    </form>
+    <div class="mt-4 pt-4 border-t">
+      <button id="adv-filter-toggle" class="text-cyan-600 text-sm flex items-center">
+        <i class="bi bi-funnel mr-2"></i>高级筛选<i class="bi bi-chevron-down ml-1"></i>
+      </button>
+      <div id="adv-filter-panel" class="hidden mt-4 fade-in">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label class="text-sm font-medium block mb-2">同步起止日期</label>
+            <div class="flex gap-2 items-center">
+              <input type="date" class="w-full px-3 py-2 border rounded text-sm">
+              <span>至</span>
+              <input type="date" class="w-full px-3 py-2 border rounded text-sm">
+            </div>
+          </div>
+          <div>
+            <label class="text-sm font-medium block mb-2">失败原因</label>
+            <select class="w-full px-3 py-2 border rounded text-sm">
+              <option>全部</option>
+              <option>接口超时</option>
+              <option>字段不匹配</option>
+              <option>数据库连接异常</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-sm font-medium block mb-2">单次同步条数</label>
+            <select class="w-full px-3 py-2 border rounded text-sm">
+              <option>全部</option>
+              <option>1000条以内</option>
+              <option>1000-10000</option>
+              <option>1万条以上</option>
+            </select>
+          </div>
+        </div>
+        <div class="flex justify-end gap-3 mt-4">
+          <button class="px-4 py-2 bg-slate-100 rounded">取消</button>
+          <button class="px-4 py-2 gradient-cyan text-white rounded">应用筛选</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 图表双栏 -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+    <div class="card-shadow bg-white p-6 rounded-xl hover-scale">
+      <div class="flex justify-between items-center mb-6">
+        <h3 class="font-semibold text-lg">今日分时同步趋势</h3>
+        <div class="flex gap-2">
+          <button class="px-3 py-1.5 text-xs bg-cyan-50 text-cyan-700 rounded">今日</button>
+          <button class="px-3 py-1.5 text-xs bg-slate-100 rounded">昨日</button>
+          <button id="export-line" class="px-3 py-1.5 text-xs bg-slate-100 rounded"><i class="bi bi-download"></i>导出</button>
+        </div>
+      </div>
+      <div id="timeLineChart" style="width:100%;height:380px;"></div>
+    </div>
+    <div class="card-shadow bg-white p-6 rounded-xl hover-scale">
+      <div class="flex justify-between items-center mb-6">
+        <h3 class="font-semibold text-lg">各数据源同步量占比</h3>
+        <div class="flex gap-2">
+          <button id="export-pie" class="px-3 py-1.5 text-xs bg-slate-100 rounded"><i class="bi bi-download"></i>导出</button>
+        </div>
+      </div>
+      <div id="sourcePie" style="width:100%;height:380px;"></div>
+      <div class="mt-4 p-3 bg-cyan-50 rounded text-xs">
+        <div class="flex items-center gap-2 text-cyan-700 font-medium mb-1"><i class="bi bi-lightbulb"></i>同步说明</div>
+        <p>系统每30秒轮询自动执行跨库/跨API同步，失败自动重试2次，仍异常推送运维告警，保证药品追溯、风险分级数据实时互通。</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 同步失败告警面板 -->
+  <div class="card-shadow bg-white p-6 rounded-xl mb-8">
+    <h3 class="font-semibold text-xl mb-6">同步失败告警清单</h3>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div class="border border-red-200 p-4 rounded-lg bg-red-50/30">
+        <div class="flex justify-between mb-4">
+          <h4 class="font-medium text-red-700 flex items-center"><i class="bi bi-wifi-off mr-2"></i>自治区API超时</h4>
+          <span class="w-8 h-8 rounded-full bg-red-100 text-red-700 text-sm flex items-center justify-center">2</span>
+        </div>
+        <div class="space-y-3 max-h-48 overflow-y-auto pr-2">
+          <div class="p-2 bg-white rounded flex justify-between">
+            <div><span class="text-sm">药品追溯全量同步</span><p class="text-xs">接口响应30s超时</p></div>
+            <button class="text-red-600 text-sm">立即重跑</button>
+          </div>
+        </div>
+        <button class="w-full mt-4 py-2 border border-red-200 rounded text-sm text-red-700">API失败任务</button>
+      </div>
+      <div class="border border-amber-200 p-4 rounded-lg bg-amber-50/30">
+        <div class="flex justify-between mb-4">
+          <h4 class="font-medium text-amber-700 flex items-center"><i class="bi bi-table mr-2"></i>数据表字段不匹配</h4>
+          <span class="w-8 h-8 rounded-full bg-amber-100 text-amber-700 text-sm flex items-center justify-center">1</span>
+        </div>
+        <div class="space-y-3 max-h-48 overflow-y-auto pr-2">
+          <div class="p-2 bg-white rounded flex justify-between">
+            <div><span class="text-sm">风险企业新增字段缺失</span><p class="text-xs">本地库与上游结构不一致</p></div>
+            <button class="text-amber-600 text-sm">查看表结构</button>
+          </div>
+        </div>
+        <button class="w-full mt-4 py-2 border border-amber-200 rounded text-sm text-amber-700">字段异常任务</button>
+      </div>
+      <div class="border border-blue-200 p-4 rounded-lg bg-blue-50/30">
+        <div class="flex justify-between mb-4">
+          <h4 class="font-medium text-blue-700 flex items-center"><i class="bi bi-clock mr-2"></i>延迟同步监控</h4>
+          <span class="w-8 h-8 rounded-full bg-blue-100 text-blue-700 text-sm flex items-center justify-center">44</span>
+        </div>
+        <div class="space-y-3 max-h-48 overflow-y-auto pr-2">
+          <div class="p-2 bg-white rounded flex justify-between">
+            <div><span class="text-sm">药店零售增量同步</span><p class="text-xs">耗时500ms+轻微延迟</p></div>
+            <button class="text-blue-600 text-sm">优化配置</button>
+          </div>
+        </div>
+        <button class="w-full mt-4 py-2 border border-blue-200 rounded text-sm text-blue-700">延迟任务列表</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 同步监控台账表格 -->
+  <div class="card-shadow bg-white rounded-xl overflow-hidden">
+    <div class="p-6 border-b flex justify-between flex-wrap gap-4 items-center">
+      <h3 class="font-semibold text-xl">同步任务监控台账</h3>
+      <div class="flex gap-3">
+        <select class="px-3 py-2 border rounded text-sm">
+          <option>默认时间倒序</option>
+          <option>失败优先</option>
+          <option>数据源分组</option>
+          <option>耗时降序</option>
+        </select>
+        <button id="export-table" class="px-4 py-2 bg-slate-100 rounded text-sm hover-scale"><i class="bi bi-download mr-2"></i>导出当前页</button>
+        <button id="print-table" class="px-4 py-2 bg-slate-100 rounded text-sm hover-scale"><i class="bi bi-printer mr-2"></i>打印</button>
+      </div>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead class="bg-slate-50 text-slate-600">
+        <tr>
+          <th class="px-5 py-4 text-left"><input id="checkAll" type="checkbox"></th>
+          <th class="px-5 py-4 text-left">同步ID</th>
+          <th class="px-5 py-4 text-left">任务名称</th>
+          <th class="px-5 py-4 text-left">数据源</th>
+          <th class="px-5 py-4 text-left">同步类型</th>
+          <th class="px-5 py-4 text-left">执行状态</th>
+          <th class="px-5 py-4 text-left">耗时</th>
+          <th class="px-5 py-4 text-left">同步条数</th>
+          <th class="px-5 py-4 text-left">执行时间</th>
+          <th class="px-5 py-4 text-left">操作</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr class="border-b hover:bg-slate-50">
+          <td class="px-5 py-5"><input class="rowCheck" type="checkbox"></td>
+          <td class="px-5 py-5 font-mono">SY20260622164301</td>
+          <td class="px-5 py-5 font-medium">药品追溯全量同步</td>
+          <td class="px-5 py-5">自治区药品API</td>
+          <td class="px-5 py-5"><span class="sync-su px-2 py-1 rounded text-xs">定时自动</span></td>
+          <td class="px-5 py-5"><span class="sync-f px-2 py-1 rounded-full text-xs">失败</span></td>
+          <td class="px-5 py-5 font-mono">3200ms</td>
+          <td class="px-5 py-5 font-mono">0</td>
+          <td class="px-5 py-5 font-mono">2026-06-22 16:43</td>
+          <td class="px-5 py-5 flex gap-2">
+            <button class="text-slate-600"><i class="bi-file-text"></i></button>
+            <button class="text-red-600"><i class="bi-arrow-repeat"></i></button>
+          </td>
+        </tr>
+        <tr class="border-b hover:bg-slate-50">
+          <td class="px-5 py-5"><input class="rowCheck" type="checkbox"></td>
+          <td class="px-5 py-5 font-mono">SY20260622164217</td>
+          <td class="px-5 py-5 font-medium">风险分级企业增量</td>
+          <td class="px-5 py-5">本地风险库</td>
+          <td class="px-5 py-5"><span class="sync-su px-2 py-1 rounded text-xs">定时自动</span></td>
+          <td class="px-5 py-5"><span class="sync-su px-2 py-1 rounded-full text-xs">成功</span></td>
+          <td class="px-5 py-5 font-mono">86ms</td>
+          <td class="px-5 py-5 font-mono">146</td>
+          <td class="px-5 py-5 font-mono">2026-06-22 16:42</td>
+          <td class="px-5 py-5 flex gap-2">
+            <button class="text-slate-600"><i class="bi-file-text"></i></button>
+          </td>
+        </tr>
+        <tr class="border-b hover:bg-slate-50">
+          <td class="px-5 py-5"><input class="rowCheck" type="checkbox"></td>
+          <td class="px-5 py-5 font-mono">SY20260622164109</td>
+          <td class="px-5 py-5 font-medium">阳光药店零售数据</td>
+          <td class="px-5 py-5">药店业务库</td>
+          <td class="px-5 py-5"><span class="sync-su px-2 py-1 rounded text-xs">定时自动</span></td>
+          <td class="px-5 py-5"><span class="sync-delay px-2 py-1 rounded-full text-xs">延迟</span></td>
+          <td class="px-5 py-5 font-mono">542ms</td>
+          <td class="px-5 py-5 font-mono">328</td>
+          <td class="px-5 py-5 font-mono">2026-06-22 16:41</td>
+          <td class="px-5 py-5 flex gap-2">
+            <button class="text-slate-600"><i class="bi-file-text"></i></button>
+          </td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+    <!-- 分页 -->
+    <div class="p-6 border-t flex flex-wrap justify-between items-center gap-4">
+      <div class="text-sm text-slate-500">今日同步任务1268条，成功1265条，失败3条，每日自动同步生产、流通、药店全链条数据</div>
+      <div class="flex gap-2">
+        <button disabled class="w-10 h-10 border rounded text-slate-400"><i class="bi-chevron-left"></i></button>
+        <button class="w-10 h-10 border bg-cyan-50 text-cyan-700 rounded">1</button>
+        <button class="w-10 h-10 border rounded">2</button>
+        <button class="w-10 h-10 border rounded">3</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function(){
+    // 加载遮罩
+    setTimeout(()=>{
+      const mask = document.getElementById('loading-mask');
+      mask.style.opacity = '0';
+      setTimeout(()=>mask.style.display='none',300);
+    },800);
+    // 高级筛选折叠
+    const advToggle = document.getElementById('adv-filter-toggle');
+    const advPanel = document.getElementById('adv-filter-panel');
+    advToggle.onclick = ()=>{
+      advPanel.classList.toggle('hidden');
+      advToggle.querySelector('.bi-chevron-down').classList.toggle('rotate-180');
+    };
+    // 分时折线图
+    const lineChart = echarts.init(document.getElementById('timeLineChart'));
+    lineChart.setOption({
+      tooltip:{trigger:'axis'},
+      grid:{left:'3%',right:'4%',bottom:'3%',containLabel:true},
+      xAxis:{type:'category',data:['08','09','10','11','12','13','14','15','16']},
+      yAxis:{type:'value'},
+      series:[
+        {name:'成功',type:'line',smooth:true,data:[102,136,248,316,184,92,146,172,136],itemStyle:{color:'#10b981'}},
+        {name:'失败',type:'line',smooth:true,data:[0,1,0,2,0,0,0,0,0],itemStyle:{color:'#ef4444'}}
+      ]
+    });
+    // 数据源饼图
+    const pieChart = echarts.init(document.getElementById('sourcePie'));
+    pieChart.setOption({
+      tooltip:{trigger:'item',formatter:'{b}:{c}次 ({d}%)'},
+      legend:{orient:'vertical',left:'left',textStyle:{fontSize:11}},
+      series:[{
+        type:'pie',radius:['40%','70%'],
+        itemStyle:{borderColor:'#fff',borderWidth:2,borderRadius:8},
+        data:[
+          {value:462,name:药品追溯API,itemStyle:{color:'#0891b2'}},
+          {value:382,name:风险分级本地库,itemStyle:{color:'#3b82f6'}},
+          {value:274,name:阳光药店库,itemStyle:{color:'#f97316'}},
+          {value:150,name:其他业务表,itemStyle:{color:'#7c3aed'}}
+        ]
+      }]
+    });
+    // 窗口自适应
+    window.addEventListener('resize',()=>{
+      lineChart.resize();
+      pieChart.resize();
+    });
+    // 全选复选框
+    const checkAll = document.getElementById('checkAll');
+    const rowChecks = document.querySelectorAll('.rowCheck');
+    checkAll.onchange = ()=> rowChecks.forEach(item=>item.checked = checkAll.checked);
+    // 查询表单
+    document.getElementById('filter-form').onsubmit = e=>{
+      e.preventDefault();
+      alert('执行多条件同步任务查询');
+    };
+    document.getElementById('filter-form').onreset = ()=> setTimeout(()=>alert('筛选条件重置'),100);
+    // 按钮交互
+    document.getElementById('manual-btn').onclick = ()=>alert('打开手动同步弹窗，选择数据源执行全量/增量同步');
+    document.getElementById('fail-btn').onclick = ()=>alert('跳转同步失败专项台账页面');
+    document.getElementById('export-table').onclick = ()=>alert('导出当前页同步台账Excel文件');
+    document.getElementById('print-table').onclick = ()=>window.print();
+    document.getElementById('export-line').onclick = ()=>alert('导出分时同步趋势图表');
+    document.getElementById('export-pie').onclick = ()=>alert('导出数据源占比饼图');
+    // 侧边快捷操作
+    document.getElementById('quick-manual').onclick = ()=>alert('手动触发跨库/接口同步');
+    document.getElementById('quick-fail').onclick = ()=>alert('同步失败告警任务清单');
+    document.getElementById('quick-log').onclick = ()=>alert('完整同步执行日志');
+    document.getElementById('quick-stat').onclick = ()=>alert('同步运行统计报表');
+  });
+</script>
+</body>
+</html>
