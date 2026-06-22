@@ -4,22 +4,19 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>药品监管智能驾驶舱 | 宁夏药监局数据中台</title>
-
-  <!-- 资源引入 -->
+  <!-- 公共CDN -->
   <link href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
-
   <style>
-    /* 全局基础样式 */
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       font-family: 'Inter', 'PingFang SC', 'Microsoft YaHei', sans-serif;
       background: radial-gradient(circle at 10% 20%, #0a0f1a, #03060c);
       color: #e2e8f0;
       overflow-x: hidden;
+      line-height: 1.5;
     }
-
     /* 科技网格背景 */
     .bg-grid {
       position: fixed;
@@ -30,69 +27,37 @@
       background-size: 40px 40px;
       pointer-events: none;
       z-index: 0;
+      animation: gridMove 20s linear infinite;
     }
-
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: "Microsoft Yahei", sans-serif;
+    @keyframes gridMove {
+      0% { background-position: 0 0; }
+      100% { background-position: 40px 40px; }
     }
-    body {
-      background-color: #0f172a;
-      padding: 20px;
-      color: #e2e8f0;
+    /* 加载动画 */
+    .loader {
+      width: 48px;
+      height: 48px;
+      border: 5px solid rgba(59,130,246,0.2);
+      border-bottom-color: #3b82f6;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto;
     }
-    .glass-card {
-      background: rgba(30, 41, 59, 0.6);
-      border: 1px solid rgba(59, 130, 246, 0.2);
-      border-radius: 12px;
-      backdrop-filter: blur(8px);
-      padding: 20px;
-      margin-top: 24px;
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
     }
-    .header-wrap {
+    .loader-container {
+      position: absolute;
+      inset: 0;
       display: flex;
-      justify-content: space-between;
       align-items: center;
-      margin-bottom: 12px;
+      justify-content: center;
+      background: rgba(10, 20, 35, 0.6);
+      z-index: 10;
+      border-radius: inherit;
     }
-    .tab-group {
-      display: flex;
-      gap: 8px;
-    }
-    .tab-btn {
-      padding: 6px 18px;
-      border: 1px solid rgba(59, 130, 246, 0.4);
-      background: transparent;
-      color: #94a3b8;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 14px;
-      transition: all 0.2s ease;
-    }
-    .tab-btn.active {
-      background: #3b82f6;
-      color: #fff;
-      border-color: #3b82f6;
-    }
-    .tab-btn:hover:not(.active) {
-      border-color: rgba(59, 130, 246, 0.8);
-      color: #cbd5e1;
-    }
-    .map-title {
-      font-size: 24px;
-      font-weight: 500;
-    }
-    .text-blue-400 {
-      color: #60a5fa;
-      margin-right: 8px;
-    }
-    #ningxiaMap {
-      height: 350px;
-      width: 100%;
-    }
-    /* 玻璃态卡片 */
+    /* 玻璃卡片通用样式 */
     .glass-card {
       background: rgba(10, 20, 35, 0.65);
       backdrop-filter: blur(12px);
@@ -100,14 +65,26 @@
       border-radius: 1.5rem;
       transition: all 0.3s ease;
       box-shadow: 0 8px 20px -6px rgba(0,0,0,0.4);
+      position: relative;
+      overflow: hidden;
     }
+    .glass-card::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent);
+      transition: left 0.8s ease;
+    }
+    .glass-card:hover::before { left: 100%; }
     .glass-card:hover {
       border-color: #3b82f680;
       box-shadow: 0 12px 28px -10px rgba(59,130,246,0.2);
       transform: translateY(-2px);
     }
-
-    /* 数字渐变样式 */
+    /* KPI渐变文字 */
     .kpi-number {
       font-size: 2rem;
       font-weight: 800;
@@ -116,43 +93,79 @@
       background-clip: text;
       color: transparent;
       line-height: 1.2;
+      transition: all 0.3s ease;
     }
-
+    .kpi-number.negative {
+      background: linear-gradient(135deg, #fca5a5, #ef4444, #b91c1c);
+    }
+    .kpi-card:hover .kpi-number { transform: scale(1.05); }
     /* 预警条目动效 */
     .warning-item {
       transition: all 0.2s;
       cursor: pointer;
+      position: relative;
+      overflow: hidden;
+    }
+    .warning-item::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(59,130,246,0.1), transparent);
+      transform: translateX(-100%);
+      transition: transform 0.5s ease;
     }
     .warning-item:hover {
       background: rgba(59,130,246,0.15);
       transform: translateX(4px);
     }
-
+    .warning-item:hover::after { transform: translateX(100%); }
     /* 自定义滚动条 */
     .custom-scroll::-webkit-scrollbar {
-      width: 4px;
+      width: 6px;
+      height: 6px;
     }
     .custom-scroll::-webkit-scrollbar-track {
-      background: #1e293b;
+      background: rgba(10, 20, 35, 0.3);
+      border-radius: 3px;
     }
     .custom-scroll::-webkit-scrollbar-thumb {
       background: #3b82f6;
-      border-radius: 4px;
+      border-radius: 3px;
+      transition: background 0.2s ease;
     }
-
-    /* 侧边栏样式 */
+    .custom-scroll::-webkit-scrollbar-thumb:hover { background: #60a5fa; }
+    /* 侧边导航 */
     .sidebar-nav {
       background: rgba(0, 0, 0, 0.65);
       backdrop-filter: blur(16px);
       border-right: 1px solid rgba(59,130,246,0.3);
+      transition: all 0.3s ease;
+    }
+    .nav-link {
+      position: relative;
+      overflow: hidden;
+    }
+    .nav-link::after {
+      content: "";
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 2px;
+      background: #3b82f6;
+      transform: scaleX(0);
+      transition: transform 0.3s ease;
     }
     .nav-link.active {
       background: linear-gradient(90deg, rgba(59,130,246,0.2), transparent);
       border-left: 3px solid #3b82f6;
       color: white;
     }
-
-    /* 标签按钮组 */
+    .nav-link:hover:not(.active)::after { transform: scaleX(1); }
+    /* 切换按钮 */
     .tab-btn {
       background: rgba(51,65,85,0.6);
       color: #cbd5e1;
@@ -161,14 +174,31 @@
       padding: 0.2rem 0.8rem;
       font-size: 0.75rem;
       font-weight: 500;
+      position: relative;
+      overflow: hidden;
+    }
+    .tab-btn::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(255,255,255,0.1);
+      transform: translateY(-100%);
+      transition: transform 0.2s ease;
     }
     .tab-btn.active {
       background: #3b82f6;
       color: white;
       box-shadow: 0 0 8px #3b82f6;
     }
-
-    /* 脉冲红点动画 */
+    .tab-btn:hover:not(.active) {
+      background: rgba(51,65,85,0.8);
+      transform: translateY(-1px);
+    }
+    .tab-btn:hover::before { transform: translateY(0); }
+    /* 脉冲红点 */
     .pulse-dot {
       display: inline-block;
       width: 8px;
@@ -176,22 +206,64 @@
       background-color: #ef4444;
       border-radius: 50%;
       animation: pulse 1.5s infinite;
+      box-shadow: 0 0 8px rgba(239, 68, 68, 0.5);
     }
     @keyframes pulse {
       0% { opacity: 0.4; transform: scale(0.8); }
-      50% { opacity: 1; transform: scale(1.2); }
+      50% { opacity: 1; transform: scale(1.2); box-shadow: 0 0 12px rgba(239, 68, 68, 0.8); }
       100% { opacity: 0.4; transform: scale(0.8); }
     }
-
-    /* 全屏模式适配 */
+    /* 全屏样式 */
     .fullscreen-mode .sidebar-nav { display: none; }
     .fullscreen-mode #mainContent { margin-left: 0 !important; }
-
+    /* 状态标签 */
+    .status-tag {
+      padding: 0.1rem 0.4rem;
+      border-radius: 0.3rem;
+      font-size: 0.7rem;
+      font-weight: 500;
+    }
+    .status-pending { background: rgba(249, 115, 22, 0.2); color: #f97316; }
+    .status-processing { background: rgba(234, 179, 8, 0.2); color: #eab308; }
+    .status-completed { background: rgba(34, 197, 94, 0.2); color: #22c55e; }
+    .status-danger { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
+    /* 移动端适配 */
+    @media (max-width: 768px) {
+      .sidebar-nav {
+        transform: translateX(-100%);
+        position: fixed;
+        z-index: 100;
+      }
+      .sidebar-nav.show { transform: translateX(0); }
+      #mainContent { margin-left: 0 !important; }
+      .mobile-menu-btn { display: block !important; }
+      .kpi-number { font-size: 1.5rem; }
+    }
+    .mobile-menu-btn {
+      display: none;
+      background: rgba(59,130,246,0.2);
+      border: 1px solid rgba(59,130,246,0.4);
+      color: white;
+      padding: 0.5rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+    }
+    /* ========== 图表容器强制固定高度（解决初始化高度为0渲染失败） ========== */
+    #ningxiaMap { height: 420px; width: 100%; position: relative; }
+    #mapChart { height: 280px; width: 100%; position: relative; }
+    #trendChart { height: 300px; width: 100%; position: relative; }
+    #radarChart { height: 300px; width: 100%; position: relative; }
+    #pieChart { height: 210px; width: 100%; position: relative; }
+    #creditChart { height: 120px; width: 100%; position: relative; }
+    #riskTrendMini { height: 220px; width: 100%; position: relative; }
   </style>
 </head>
 <body>
 <div class="bg-grid"></div>
-
+<!-- 移动端菜单按钮 -->
+<button class="mobile-menu-btn fixed top-4 left-4 z-50" id="mobileMenuBtn">
+  <i class="fas fa-bars"></i>
+</button>
 <!-- 侧边导航栏 -->
 <aside class="sidebar-nav fixed left-0 top-0 h-full w-64 z-50 overflow-y-auto custom-scroll" id="sidebar">
   <div class="p-6 border-b border-blue-500/20">
@@ -226,7 +298,6 @@
     </div>
   </nav>
 </aside>
-
 <!-- 主内容区域 -->
 <div class="ml-64 min-h-screen relative z-10 transition-all duration-300" id="mainContent">
   <!-- 顶部导航栏 -->
@@ -235,9 +306,8 @@
       <h1 class="text-xl font-bold flex items-center gap-2"><i class="fas fa-chart-simple text-blue-400"></i>药品监管大数据驾驶舱</h1>
       <div class="text-xs text-slate-400 font-mono" id="currentTime">--:--:--</div>
     </div>
-
     <div class="flex items-center gap-3 flex-wrap">
-      <select id="regionSelect" class="bg-slate-800/80 border border-blue-500/40 rounded-lg px-3 py-1.5 text-sm text-white focus:ring-1 focus:ring-blue-400">
+      <select id="regionSelect" class="bg-slate-800/80 border border-blue-500/40 rounded-lg px-3 py-1.5 text-sm text-white focus:ring-1 focus:ring-blue-400 outline-none">
         <option value="640000">宁夏全区</option>
         <option value="640100">银川市</option>
         <option value="640200">石嘴山市</option>
@@ -250,104 +320,116 @@
         <button class="tab-btn" data-range="week">本周</button>
         <button class="tab-btn" data-range="month">本月</button>
       </div>
-      <button id="refreshBtn" class="bg-blue-600/20 hover:bg-blue-600/40 p-2 rounded-lg text-blue-300 transition"><i class="fas fa-sync-alt"></i></button>
-      <button id="fullscreenBtn" class="bg-slate-700/50 p-2 rounded-lg hover:text-white"><i class="fas fa-expand"></i></button>
+      <button id="refreshBtn" class="bg-blue-600/20 hover:bg-blue-600/40 p-2 rounded-lg text-blue-300 transition" title="刷新数据">
+        <i class="fas fa-sync-alt"></i>
+      </button>
+      <button id="fullscreenBtn" class="bg-slate-700/50 p-2 rounded-lg hover:text-white transition" title="全屏显示">
+        <i class="fas fa-expand"></i>
+      </button>
       <div class="flex items-center gap-2 pl-3 border-l border-slate-700">
         <div class="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-white font-bold">张</div>
         <span class="text-sm hidden sm:inline">张局长</span>
       </div>
     </div>
   </header>
-
-  <!-- 主要内容区 -->
+  <!-- 主体内容 -->
   <main class="p-5 md:p-6 space-y-6">
-    <!-- KPI 核心指标卡片区 -->
-
-
-
+    <!-- KPI核心指标卡片 -->
     <div class="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-8 gap-4">
-      <div class="glass-card p-3 cursor-pointer" data-drill="enterprises">
+      <div class="glass-card p-3 cursor-pointer kpi-card" data-drill="enterprises">
         <div class="flex justify-between">
           <span class="text-slate-300 text-xs">监管企业</span>
           <i class="fas fa-building text-blue-400"></i>
         </div>
-        <div class="kpi-number text-2xl mt-1" id="kpiEnterprises">3,156</div>
-        <span class="text-[10px] text-emerald-400">↑2.3%</span>
+        <div class="kpi-number text-2xl mt-1 number-transition" id="kpiEnterprises">3,156</div>
+        <span class="text-[10px] text-emerald-400 flex items-center">
+          <i class="fas fa-arrow-up text-xs mr-1"></i>2.3%
+        </span>
       </div>
-      <div class="glass-card p-3 cursor-pointer" data-drill="licenses">
+      <div class="glass-card p-3 cursor-pointer kpi-card" data-drill="licenses">
         <div class="flex justify-between">
           <span class="text-slate-300 text-xs">许可审批</span>
           <i class="fas fa-certificate text-cyan-400"></i>
         </div>
-        <div class="kpi-number text-2xl mt-1" id="kpiLicenses">68</div>
-        <span class="text-[10px] text-emerald-400">↑12%</span>
+        <div class="kpi-number text-2xl mt-1 number-transition" id="kpiLicenses">68</div>
+        <span class="text-[10px] text-emerald-400 flex items-center">
+          <i class="fas fa-arrow-up text-xs mr-1"></i>12%
+        </span>
       </div>
-      <div class="glass-card p-3 cursor-pointer" data-drill="inspections">
+      <div class="glass-card p-3 cursor-pointer kpi-card" data-drill="inspections">
         <div class="flex justify-between">
           <span class="text-slate-300 text-xs">监督检查</span>
           <i class="fas fa-clipboard-list text-blue-300"></i>
         </div>
-        <div class="kpi-number text-2xl mt-1" id="kpiInspections">1,452</div>
-        <span class="text-[10px] text-emerald-400">↑8.7%</span>
+        <div class="kpi-number text-2xl mt-1 number-transition" id="kpiInspections">1,452</div>
+        <span class="text-[10px] text-emerald-400 flex items-center">
+          <i class="fas fa-arrow-up text-xs mr-1"></i>8.7%
+        </span>
       </div>
-      <div class="glass-card p-3 cursor-pointer" data-drill="warnings">
+      <div class="glass-card p-3 cursor-pointer kpi-card" data-drill="warnings">
         <div class="flex justify-between">
           <span class="text-slate-300 text-xs">风险预警</span>
           <i class="fas fa-bell text-red-400"></i>
         </div>
-        <div class="kpi-number text-2xl mt-1 text-red-400" id="kpiWarnings" style="background:linear-gradient(135deg,#f97316,#ef4444); -webkit-background-clip:text;">32</div>
-        <span class="text-[10px] text-red-400">↓15%</span>
+        <div class="kpi-number text-2xl mt-1 number-transition negative" id="kpiWarnings" style="background:linear-gradient(135deg,#f97316,#ef4444); -webkit-background-clip:text;">32</div>
+        <span class="text-[10px] text-red-400 flex items-center">
+          <i class="fas fa-arrow-down text-xs mr-1"></i>15%
+        </span>
       </div>
-      <div class="glass-card p-3 cursor-pointer" data-drill="cases">
+      <div class="glass-card p-3 cursor-pointer kpi-card" data-drill="cases">
         <div class="flex justify-between">
           <span class="text-slate-300 text-xs">执法案件</span>
           <i class="fas fa-balance-scale text-orange-400"></i>
         </div>
-        <div class="kpi-number text-2xl mt-1" id="kpiCases">18</div>
-        <span class="text-[10px] text-emerald-400">↑5.8%</span>
+        <div class="kpi-number text-2xl mt-1 number-transition" id="kpiCases">18</div>
+        <span class="text-[10px] text-emerald-400 flex items-center">
+          <i class="fas fa-arrow-up text-xs mr-1"></i>5.8%
+        </span>
       </div>
-      <div class="glass-card p-3 cursor-pointer" data-drill="credit">
+      <div class="glass-card p-3 cursor-pointer kpi-card" data-drill="credit">
         <div class="flex justify-between">
           <span class="text-slate-300 text-xs">信用A级企业</span>
           <i class="fas fa-crown text-yellow-400"></i>
         </div>
-        <div class="kpi-number text-2xl mt-1" id="kpiCreditA">2,847</div>
+        <div class="kpi-number text-2xl mt-1 number-transition" id="kpiCreditA">2,847</div>
         <span class="text-[10px] text-emerald-400">占比90.2%</span>
       </div>
-      <div class="glass-card p-3">
+      <div class="glass-card p-3 cursor-pointer kpi-card">
         <div class="flex justify-between">
           <span class="text-slate-300 text-xs">药品追溯率</span>
           <i class="fas fa-qrcode text-green-400"></i>
         </div>
-        <div class="kpi-number text-2xl mt-1" id="kpiTraceability">98.5<span class="text-base">%</span></div>
-        <span class="text-[10px] text-emerald-400">↑1.2%</span>
+        <div class="kpi-number text-2xl mt-1 number-transition" id="kpiTraceability">98.5<span class="text-base">%</span></div>
+        <span class="text-[10px] text-emerald-400 flex items-center">
+          <i class="fas fa-arrow-up text-xs mr-1"></i>1.2%
+        </span>
       </div>
-      <div class="glass-card p-3">
+      <div class="glass-card p-3 cursor-pointer kpi-card">
         <div class="flex justify-between">
           <span class="text-slate-300 text-xs">抽检合格率</span>
           <i class="fas fa-flask text-purple-400"></i>
         </div>
-        <div class="kpi-number text-2xl mt-1" id="kpiPassRate">99.2<span class="text-base">%</span></div>
+        <div class="kpi-number text-2xl mt-1 number-transition" id="kpiPassRate">99.2<span class="text-base">%</span></div>
         <span class="text-[10px] text-emerald-400">高于国标</span>
       </div>
     </div>
-
-
-    <div class="glass-card">
-      <div class="header-wrap">
-        <h3 class="map-title">
-          <i class="fa fa-map-marked-alt text-blue-400"></i>宁夏各市监管数据地图
-        </h3>
-        <div class="tab-group" id="mapDataType">
+    <!-- 宁夏地图（已彻底修复无限转圈问题） -->
+    <div class="glass-card p-5">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="font-semibold text-base"><i class="fa fa-map-marked-alt text-blue-400"></i>宁夏各市监管数据地图</h3>
+        <div class="flex gap-2" id="mapDataType">
           <button class="tab-btn active" data-map-type="enterprise">企业数</button>
           <button class="tab-btn" data-map-type="warning">预警数</button>
           <button class="tab-btn" data-map-type="inspection">检查数</button>
         </div>
       </div>
-      <div id="ningxiaMap"></div>
+      <div id="ningxiaMap">
+        <div class="loader-container" id="mapLoader">
+          <div class="loader"></div>
+        </div>
+      </div>
     </div>
-
-    <!-- 企业分布热力图（矩形树图） -->
+    <!-- 企业分布矩形树图 -->
     <div class="glass-card p-5">
       <div class="flex justify-between items-center mb-3">
         <h3 class="font-semibold text-base"><i class="fas fa-chart-tree text-blue-400 mr-2"></i>监管企业分布热力 (矩形树图)</h3>
@@ -355,14 +437,18 @@
           <span class="flex items-center gap-1"><span class="w-2 h-2 bg-blue-500 rounded-full"></span>银川</span>
           <span class="flex items-center gap-1"><span class="w-2 h-2 bg-cyan-500 rounded-full"></span>石嘴山</span>
           <span class="flex items-center gap-1"><span class="w-2 h-2 bg-teal-400 rounded-full"></span>吴忠</span>
+          <span class="flex items-center gap-1"><span class="w-2 h-2 bg-emerald-500 rounded-full"></span>固原</span>
+          <span class="flex items-center gap-1"><span class="w-2 h-2 bg-sky-500 rounded-full"></span>中卫</span>
         </div>
       </div>
-      <div id="mapChart" style="height: 280px; width: 100%;"></div>
+      <div id="mapChart">
+        <div class="loader-container">
+          <div class="loader"></div>
+        </div>
+      </div>
     </div>
-
-    <!-- 监管趋势 + 风险雷达图 -->
+    <!-- 监管趋势 + 风险雷达 -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <!-- 监管趋势图表 -->
       <div class="glass-card p-5">
         <div class="flex flex-wrap items-center justify-between mb-3">
           <h3 class="font-semibold text-base"><i class="fas fa-chart-line text-cyan-400 mr-2"></i>监管趋势分析</h3>
@@ -372,631 +458,624 @@
             <button class="tab-btn" data-type="case">案件</button>
           </div>
         </div>
-        <div id="trendChart" style="height: 300px; width: 100%;"></div>
+        <div id="trendChart">
+          <div class="loader-container">
+            <div class="loader"></div>
+          </div>
+        </div>
       </div>
-
-      <!-- 风险维度雷达图 -->
       <div class="glass-card p-5">
         <h3 class="font-semibold text-base mb-3"><i class="fas fa-chart-pie text-purple-400 mr-2"></i>风险维度雷达图</h3>
-        <div id="radarChart" style="height: 300px; width: 100%;"></div>
+        <div id="radarChart">
+          <div class="loader-container">
+            <div class="loader"></div>
+          </div>
+        </div>
       </div>
     </div>
-
-    <!-- 药品安全指数 + 高风险企业动态监控 -->
+    <!-- 安全指数仪表盘 + 高风险趋势 -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <!-- 安全指数仪表盘 -->
       <div class="glass-card p-5 flex flex-col items-center justify-center">
         <h3 class="font-semibold text-base self-start"><i class="fas fa-chart-simple text-emerald-400 mr-2"></i>药品安全指数</h3>
         <div class="relative mt-2 flex justify-center">
           <canvas id="gaugeCanvas" width="160" height="160" class="w-36 h-36 md:w-40 md:h-40"></canvas>
           <div class="absolute inset-0 flex flex-col items-center justify-center">
-            <span class="text-3xl md:text-4xl font-bold text-white" id="safetyScore">94.2</span>
+            <span class="text-3xl md:text-4xl font-bold text-white number-transition" id="safetyScore">94.2</span>
             <span class="text-[10px] text-slate-400">安全等级 A+</span>
           </div>
         </div>
-        <div class="text-center text-xs text-slate-300 mt-2 bg-slate-800/40 px-3 py-1 rounded-full">同比上升 <span class="text-green-400 font-medium">+2.1%</span></div>
+        <div class="text-center text-xs text-slate-300 mt-2 bg-slate-800/40 px-3 py-1 rounded-full">
+          同比上升 <span class="text-green-400 font-medium">+2.1%</span>
+        </div>
         <div class="grid grid-cols-2 gap-3 w-full mt-3 text-center text-xs">
-          <div class="bg-slate-800/30 rounded-lg p-2">
+          <div class="bg-slate-800/30 rounded-lg p-2 hover:bg-slate-800/50 transition">
             <span class="text-slate-400">综合风险指数</span>
-            <div class="text-white font-bold">12.8</div>
+            <div class="text-white font-bold number-transition">12.8</div>
           </div>
-          <div class="bg-slate-800/30 rounded-lg p-2">
+          <div class="bg-slate-800/30 rounded-lg p-2 hover:bg-slate-800/50 transition">
             <span class="text-slate-400">应急响应率</span>
-            <div class="text-white font-bold">100%</div>
+            <div class="text-white font-bold number-transition">100%</div>
           </div>
         </div>
       </div>
-
-      <!-- 高风险企业动态监控 -->
       <div class="glass-card p-5">
         <h3 class="font-semibold text-base mb-2"><i class="fas fa-chart-line text-amber-400 mr-2"></i>高风险企业动态监控</h3>
-        <div id="riskTrendMini" style="height: 220px; width: 100%;"></div>
+        <div id="riskTrendMini">
+          <div class="loader-container">
+            <div class="loader"></div>
+          </div>
+        </div>
         <div class="flex justify-between text-xs text-slate-400 mt-1">
           <span>本月高风险趋势</span>
-          <span class="text-red-300">重点关注+2家</span>
+          <span class="text-red-300 flex items-center">
+            <i class="fas fa-exclamation-circle mr-1"></i>重点关注+2家
+          </span>
         </div>
       </div>
     </div>
-
-    <!-- 企业类型分布 + 信用分布 + 实时预警列表 -->
+    <!-- 企业饼图/信用柱状/实时预警 -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-      <!-- 企业类型饼图 -->
       <div class="glass-card p-5">
         <h3 class="font-semibold text-sm mb-2"><i class="fas fa-building-user text-blue-400 mr-1"></i>企业类型分布</h3>
-        <div id="pieChart" style="height: 210px;"></div>
+        <div id="pieChart">
+          <div class="loader-container">
+            <div class="loader"></div>
+          </div>
+        </div>
       </div>
-
-      <!-- 信用等级分布 -->
       <div class="glass-card p-5">
         <h3 class="font-semibold text-sm mb-2"><i class="fas fa-chart-simple text-emerald-400 mr-1"></i>信用等级分布 & 高风险企业榜</h3>
-        <div id="creditChart" style="height: 120px;"></div>
+        <div id="creditChart">
+          <div class="loader-container">
+            <div class="loader"></div>
+          </div>
+        </div>
         <div id="highRiskTop" class="mt-2 text-xs space-y-2"></div>
       </div>
-
-      <!-- 实时预警列表 -->
       <div class="glass-card p-5">
         <div class="flex justify-between items-center mb-2">
           <h3 class="font-semibold text-sm"><span class="pulse-dot mr-2"></span>实时风险预警</h3>
-          <a href="#" id="viewAllWarnings" class="text-xs text-blue-400 hover:underline">查看全部 <i class="fas fa-arrow-right"></i></a>
+          <a href="#" id="viewAllWarnings" class="text-xs text-blue-400 hover:underline flex items-center">
+            查看全部 <i class="fas fa-arrow-right ml-1"></i>
+          </a>
         </div>
         <div id="warningList" class="space-y-2 max-h-[260px] overflow-y-auto custom-scroll pr-1"></div>
       </div>
     </div>
   </main>
 </div>
-
-<!-- 预警详情模态窗 -->
+<!-- 预警弹窗 -->
 <div id="warningModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden items-center justify-center">
-  <div class="glass-card w-full max-w-md p-0 overflow-hidden">
+  <div class="glass-card w-full max-w-md p-0 overflow-hidden transform transition-all duration-300 scale-95 opacity-0" id="modalContent">
     <div class="p-5 border-b border-blue-500/20 flex justify-between items-center">
       <h3 class="font-bold">预警详情</h3>
-      <button id="closeModalBtn"><i class="fas fa-times text-slate-400 hover:text-white"></i></button>
+      <button id="closeModalBtn" class="p-1 rounded-full hover:bg-slate-700 transition">
+        <i class="fas fa-times text-slate-400 hover:text-white"></i>
+      </button>
     </div>
     <div id="warningModalContent" class="p-5"></div>
     <div class="p-4 flex justify-end gap-3">
-      <button id="modalHandleBtn" class="bg-blue-600 px-5 py-1.5 rounded-lg text-sm hover:bg-blue-500">立即处置</button>
+      <button id="modalHandleBtn" class="bg-blue-600 px-5 py-1.5 rounded-lg text-sm hover:bg-blue-500 transition shadow-lg shadow-blue-600/20">立即处置</button>
     </div>
   </div>
 </div>
-
-
 <script>
-  (function(){
-    // 全局状态管理
-    const state = {
+  // ===================== 全局工具函数 =====================
+  const utils = {
+    // 防抖
+    debounce(fn, delay = 300) {
+      let timer = null;
+      return function (...args) {
+        clearTimeout(timer);
+        timer = setTimeout(() => fn.apply(this, args), delay);
+      }
+    },
+    // 数字千分位格式化
+    formatNumber(num) {
+      if (typeof num !== 'number') return num;
+      return num.toLocaleString('zh-CN', {
+        minimumFractionDigits: num % 1 === 0 ? 0 : 1,
+        maximumFractionDigits: 2
+      })
+    },
+    // 延迟关闭loading兜底
+    hideLoader(elId, delay = 500) {
+      setTimeout(() => {
+        const loader = document.querySelector(`#${elId} .loader-container`);
+        if (loader) loader.style.display = 'none';
+      }, delay)
+    },
+    // 状态映射
+    getStatusClass(status) {
+      const map = {
+        '未处置': 'status-pending',
+        '处置中': 'status-processing',
+        '已处置': 'status-completed'
+      }
+      return map[status] || 'status-danger';
+    },
+    // ECharts单例获取（防重复初始化核心）
+    getChartInstance(domId) {
+      const dom = document.getElementById(domId);
+      if (!dom) return null;
+      window.chartInstances = window.chartInstances || {};
+      // 已有实例直接复用
+      if (window.chartInstances[domId]) return window.chartInstances[domId];
+      const chart = echarts.init(dom);
+      // 窗口自适应
+      const resizeFn = utils.debounce(() => chart.resize());
+      window.addEventListener('resize', resizeFn);
+      window.chartInstances[domId] = chart;
+      return chart;
+    }
+  }
+
+  // ===================== 全局业务对象 =====================
+  const dashboard = {
+    state: {
       currentRegion: '640000',
-      charts: {},
-      warningMock: [
-        { id:'w1', title:'宁夏国大药房温湿度超标', level:'严重', levelColor:'#f97316', source:'IoT监测', region:'银川市', time:'12分钟前', status:'未处置' },
-        { id:'w2', title:'启元药业生产批号异常', level:'重大', levelColor:'#ef4444', source:'追溯平台', region:'吴忠市', time:'35分钟前', status:'处置中' },
-        { id:'w3', title:'百姓乐大药房GSP证书临期', level:'较重', levelColor:'#f59e0b', source:'系统预警', region:'石嘴山', time:'1小时前', status:'未处置' },
-        { id:'w4', title:'化妆品不良反应报告激增', level:'一般', levelColor:'#10b981', source:'监测中心', region:'固原市', time:'2小时前', status:'已处置' },
-        { id:'w5', title:'医疗器械冷链运输偏离', level:'严重', levelColor:'#f97316', source:'物流轨迹', region:'中卫市', time:'3小时前', status:'未处置' }
-      ],
-      safetyScore: 94.2
-    };
-
-    // 实时时间更新
-    function updateTime() {
-      document.getElementById('currentTime').innerText = new Date().toLocaleString('zh-CN',{hour12:false});
-    }
-    updateTime();
-    setInterval(updateTime, 1000);
-
-    // KPI 数据更新
-    let mockKPI = {
-      enterprises:3156, licenses:68, inspections:1452, warnings:32,
-      cases:18, creditA:2847, traceability:98.5, passRate:99.2
-    };
-
-    function updateKPI() {
-      document.getElementById('kpiEnterprises').innerText = mockKPI.enterprises.toLocaleString();
-      document.getElementById('kpiLicenses').innerText = mockKPI.licenses;
-      document.getElementById('kpiInspections').innerText = mockKPI.inspections.toLocaleString();
-      document.getElementById('kpiWarnings').innerHTML = mockKPI.warnings;
-      document.getElementById('kpiCases').innerText = mockKPI.cases;
-      document.getElementById('kpiCreditA').innerText = mockKPI.creditA.toLocaleString();
-      document.getElementById('kpiTraceability').innerHTML = mockKPI.traceability+'<span class="text-base">%</span>';
-      document.getElementById('kpiPassRate').innerHTML = mockKPI.passRate+'<span class="text-base">%</span>';
-    }
-    updateKPI();
-
-    // 渲染预警列表
-    function renderWarningList() {
-      const container = document.getElementById('warningList');
-      if(!container) return;
-
-      container.innerHTML = state.warningMock.map(w => `
+      isMobile: window.innerWidth <= 768,
+      mock: {
+        kpi: { enterprises: 3156, licenses: 68, inspections: 1452, warnings: 32, cases: 18, creditA: 2847, traceability: 98.5, passRate: 99.2 },
+        warnings: [
+          { id: 'w1', title: '宁夏国大药房温湿度超标', level: '严重', levelColor: '#f97316', source: 'IoT监测', region: '银川市', time: '12分钟前', status: '未处置' },
+          { id: 'w2', title: '启元药业生产批号异常', level: '重大', levelColor: '#ef4444', source: '追溯平台', region: '吴忠市', time: '35分钟前', status: '处置中' },
+          { id: 'w3', title: '百姓乐大药房GSP证书临期', level: '较重', levelColor: '#f59e0b', source: '系统预警', region: '石嘴山', time: '1小时前', status: '未处置' },
+          { id: 'w4', title: '化妆品不良反应报告激增', level: '一般', levelColor: '#10b981', source: '监测中心', region: '固原市', time: '2小时前', status: '已处置' },
+          { id: 'w5', title: '医疗器械冷链运输偏离', level: '严重', levelColor: '#f97316', source: '物流轨迹', region: '中卫市', time: '3小时前', status: '未处置' }
+        ],
+        safetyScore: 94.2
+      }
+    },
+    // 入口初始化
+    init() {
+      this.bindEvents();
+      this.startClock();
+      this.renderKPI();
+      this.renderWarningList();
+      this.renderRiskRank();
+      // 关键：先注册宁夏地图GeoJSON，再初始化所有图表
+      this.registerNingxiaGeo();
+      // DOM完全加载后渲染图表，避免容器未渲染初始化失败
+      window.addEventListener('load', () => {
+        this.initAllCharts();
+      })
+      window.addEventListener('resize', utils.debounce(() => {
+        this.state.isMobile = window.innerWidth <= 768;
+        Object.values(window.chartInstances || {}).forEach(c => c.resize());
+      }))
+      // 45秒自动刷新
+      setInterval(() => this.refreshAllData(), 45000);
+    },
+    // 注册宁夏地理数据（解决地图找不到mapType转圈核心）
+    registerNingxiaGeo() {
+      const ningxiaGeo = {
+        "type": "FeatureCollection",
+        "features": [
+          {
+            "type": "Feature",
+            "properties": { "name": "银川市" },
+            "geometry": { "type": "Polygon", "coordinates": [[[105.9, 38.6], [106.7, 38.7], [106.8, 38.1], [105.8, 38.0], [105.9, 38.6]]] }
+          },
+          {
+            "type": "Feature",
+            "properties": { "name": "石嘴山市" },
+            "geometry": { "type": "Polygon", "coordinates": [[[106.0, 39.3], [106.8, 39.4], [106.9, 38.7], [105.9, 38.6], [106.0, 39.3]]] }
+          },
+          {
+            "type": "Feature",
+            "properties": { "name": "吴忠市" },
+            "geometry": { "type": "Polygon", "coordinates": [[[105.7, 38.0], [106.6, 38.1], [106.7, 37.3], [105.6, 37.2], [105.7, 38.0]]] }
+          },
+          {
+            "type": "Feature",
+            "properties": { "name": "固原市" },
+            "geometry": { "type": "Polygon", "coordinates": [[[105.3, 36.6], [106.5, 36.7], [106.6, 35.8], [105.2, 35.7], [105.3, 36.6]]] }
+          },
+          {
+            "type": "Feature",
+            "properties": { "name": "中卫市" },
+            "geometry": { "type": "Polygon", "coordinates": [[[104.5, 37.5], [105.8, 37.6], [105.9, 36.7], [104.4, 36.6], [104.5, 37.5]]] }
+          }
+        ]
+      }
+      // 全局注册地图，后续mapType:"宁夏"可直接使用
+      echarts.registerMap('宁夏', ningxiaGeo);
+    },
+    // 绑定页面所有事件
+    bindEvents() {
+      // 侧边栏切换
+      document.getElementById('mobileMenuBtn').addEventListener('click', () => {
+        document.getElementById('sidebar').classList.toggle('show');
+      })
+      // 弹窗关闭
+      document.getElementById('closeModalBtn').addEventListener('click', () => this.closeModal());
+      document.getElementById('modalHandleBtn').addEventListener('click', () => this.handleWarning());
+      // 时间切换
+      document.querySelectorAll('#timeRangeGroup .tab-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          document.querySelectorAll('#timeRangeGroup .tab-btn').forEach(b => b.classList.remove('active'));
+          e.target.classList.add('active');
+          this.refreshAllData();
+        })
+      })
+      // 地图类型切换
+      document.querySelectorAll('#mapDataType .tab-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          document.querySelectorAll('#mapDataType .tab-btn').forEach(b => b.classList.remove('active'));
+          e.target.classList.add('active');
+          this.initNingxiaMap(e.target.dataset.mapType);
+        })
+      })
+      // 趋势图切换
+      document.querySelectorAll('#trendTabGroup .tab-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          document.querySelectorAll('#trendTabGroup .tab-btn').forEach(b => b.classList.remove('active'));
+          e.target.classList.add('active');
+          this.initTrendChart(e.target.dataset.type);
+        })
+      })
+      // 全屏
+      document.getElementById('fullscreenBtn').addEventListener('click', () => {
+        document.body.classList.toggle('fullscreen-mode');
+      })
+      // 手动刷新
+      document.getElementById('refreshBtn').addEventListener('click', () => this.refreshAllData());
+      // KPI点击弹窗
+      document.querySelectorAll('[data-drill]').forEach(el => {
+        el.addEventListener('click', () => {
+          const title = el.querySelector('.text-slate-300').innerText;
+          const area = document.getElementById('regionSelect').options[document.getElementById('regionSelect').selectedIndex].text;
+          alert(`📊 跳转【${title}】明细页面\n筛选区域：${area}`);
+        })
+      })
+      document.getElementById('viewAllWarnings').addEventListener('click', e => {
+        e.preventDefault();
+        alert('🔍 预警管理模块开发中，即将上线全量处置台账');
+      })
+    },
+    // 实时时钟
+    startClock() {
+      const update = () => {
+        const now = new Date();
+        const date = now.toLocaleDateString('zh-CN');
+        const time = now.toLocaleTimeString('zh-CN', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        document.getElementById('currentTime').innerText = `${date} ${time}`;
+      }
+      update();
+      setInterval(update, 1000);
+    },
+    // 渲染KPI
+    renderKPI() {
+      const k = this.state.mock.kpi;
+      document.getElementById('kpiEnterprises').innerText = utils.formatNumber(k.enterprises);
+      document.getElementById('kpiLicenses').innerText = utils.formatNumber(k.licenses);
+      document.getElementById('kpiInspections').innerText = utils.formatNumber(k.inspections);
+      document.getElementById('kpiWarnings').innerHTML = utils.formatNumber(k.warnings);
+      document.getElementById('kpiCases').innerText = utils.formatNumber(k.cases);
+      document.getElementById('kpiCreditA').innerText = utils.formatNumber(k.creditA);
+      document.getElementById('kpiTraceability').innerHTML = `${utils.formatNumber(k.traceability)}<span class="text-base">%</span>`;
+      document.getElementById('kpiPassRate').innerHTML = `${utils.formatNumber(k.passRate)}<span class="text-base">%</span>`;
+    },
+    // 预警列表渲染
+    renderWarningList() {
+      const wrap = document.getElementById('warningList');
+      wrap.innerHTML = this.state.mock.warnings.map(w => `
         <div class="warning-item p-2 rounded-lg border-l-4 transition" style="border-left-color:${w.levelColor}; background:rgba(0,0,0,0.2)" data-id="${w.id}">
           <div class="flex justify-between items-center">
             <span class="text-sm font-medium">${w.title}</span>
-            <span class="text-xs px-1.5 rounded-full" style="background:${w.levelColor}20;color:${w.levelColor}">${w.level}</span>
+            <span class="status-tag ${utils.getStatusClass(w.status)}">${w.level}</span>
           </div>
           <div class="flex gap-3 text-[10px] text-slate-400 mt-1">
             <span><i class="far fa-clock"></i> ${w.time}</span>
             <span><i class="fas fa-map-marker-alt"></i> ${w.region}</span>
+            <span><i class="fas fa-database"></i> ${w.source}</span>
           </div>
-          <div class="text-right text-[10px] ${w.status==='未处置'?'text-red-400':w.status==='处置中'?'text-yellow-400':'text-green-400'}">${w.status}</div>
+          <div class="text-right text-[10px] mt-1">
+            <span class="status-tag ${utils.getStatusClass(w.status)}">${w.status}</span>
+          </div>
         </div>`).join('');
-
-      // 绑定预警详情点击事件
-      document.querySelectorAll('.warning-item[data-id]').forEach(el => {
-        el.addEventListener('click', (e) => viewWarningDetail(el.dataset.id));
-      });
-    }
-
-    // 查看预警详情
-    function viewWarningDetail(id) {
-      const w = state.warningMock.find(i=>i.id===id);
-      if(w){
-        document.getElementById('warningModalContent').innerHTML = `
-          <div class="space-y-2">
-            <div class="font-bold text-base">${w.title}</div>
-            <div class="grid grid-cols-2 gap-2 text-sm">
-              <span>等级：${w.level}</span>
-              <span>来源：${w.source}</span>
-              <span>地区：${w.region}</span>
-              <span>时间：${w.time}</span>
-            </div>
-            <div class="text-sm bg-slate-800/40 p-2 rounded">
-              建议立即联动属地监管，现场核查并上传处置记录。
-            </div>
-          </div>`;
-        document.getElementById('warningModal').style.display = 'flex';
-      }
-    }
-
-    // 初始化预警列表
-    renderWarningList();
-
-    // 关闭模态窗
-    document.getElementById('closeModalBtn')?.addEventListener('click',()=>{
-      document.getElementById('warningModal').style.display='none';
-    });
-
-    // 处置预警
-    document.getElementById('modalHandleBtn')?.addEventListener('click',()=>{
-      alert('已生成处置工单，任务派发至属地');
-      document.getElementById('warningModal').style.display='none';
-    });
-
-    // 渲染高风险企业榜
-    document.getElementById('highRiskTop').innerHTML = `
-      <div class="flex justify-between text-amber-400">
-        <span>⚠️ 宁夏康泰药业</span>
-        <span>风险指数 92</span>
-      </div>
-      <div class="flex justify-between text-orange-300">
-        <span>⚠️ 国大药房(宝湖店)</span>
-        <span>87</span>
-      </div>
-      <div class="flex justify-between">
-        <span>⚠️ 同仁堂(银川店)</span>
-        <span>78</span>
-      </div>`;
-
-    // ============ ECharts 图表初始化 ============
-    // 企业分布矩形树图
-    function initMapChart() {
-      const dom = document.getElementById('mapChart');
-      const chart = echarts.init(dom);
-      chart.setOption({
-        backgroundColor:'transparent',
-        tooltip:{trigger:'item',formatter:'{b}<br/>企业数:{c}'},
-        series:[{
-          type:'treemap',
-          data:[
-            {name:'银川市',value:1256,itemStyle:{color:'#3b82f6'}},
-            {name:'石嘴山市',value:423,itemStyle:{color:'#0ea5e9'}},
-            {name:'吴忠市',value:568,itemStyle:{color:'#06b6d4'}},
-            {name:'固原市',value:489,itemStyle:{color:'#22d3ee'}},
-            {name:'中卫市',value:420,itemStyle:{color:'#7dd3fc'}}
-          ],
-          label:{show:true,formatter:'{b}\n{c}家',color:'#fff',fontSize:12},
-          breadcrumb:{show:false},
-          itemStyle:{borderColor:'#1e293b',borderWidth:2}
-        }]
-      });
-      state.charts.map = chart;
-    }
-
-    // 监管趋势折线图
-    function initTrendChart(type='check') {
-      const dom = document.getElementById('trendChart');
-      if(!state.charts.trend) state.charts.trend = echarts.init(dom);
-
-      let dates=[], data1=[], data2=[];
-      // 生成近30天日期
-      for(let i=29;i>=0;i--){
-        let d=new Date();
-        d.setDate(d.getDate()-i);
-        dates.push(`${d.getMonth()+1}/${d.getDate()}`);
-      }
-
-      // 根据类型生成不同模拟数据
-      if(type==='check'){
-        data1=Array(30).fill().map(()=>Math.floor(Math.random()*45+35));
-        data2=Array(30).fill().map(()=>Math.floor(Math.random()*30+20));
-      }
-      if(type==='license'){
-        data1=Array(30).fill().map(()=>Math.floor(Math.random()*12+4));
-        data2=Array(30).fill().map(()=>Math.floor(Math.random()*8+2));
-      }
-      if(type==='case'){
-        data1=Array(30).fill().map(()=>Math.floor(Math.random()*6+1));
-        data2=Array(30).fill().map(()=>Math.floor(Math.random()*4+0.5));
-      }
-
-      state.charts.trend.setOption({
-        backgroundColor:'transparent',
-        tooltip:{trigger:'axis'},
-        legend:{data:['当期数值','对比基数'],textStyle:{color:'#94a3b8'},bottom:0},
-        grid:{containLabel:true,top:30,left:40,right:20},
-        xAxis:{data:dates,axisLabel:{rotate:30,fontSize:9,color:'#94a3b8'}},
-        yAxis:{splitLine:{lineStyle:{color:'rgba(59,130,246,0.2)'}},axisLabel:{color:'#cbd5e1'}},
-        series:[
-          {
-            name:'当期数值',type:'line',smooth:true,data:data1,
-            lineStyle:{color:'#3b82f6',width:2},
-            areaStyle:{opacity:0.2,color:'#3b82f6'},
-            symbol:'circle'
-          },
-          {
-            name:'对比基数',type:'line',data:data2,
-            lineStyle:{color:'#10b981',width:2}
-          }
-        ]
-      });
-    }
-
-    // 风险雷达图
-    function initRadarChart() {
-      const dom = document.getElementById('radarChart');
-      const chart = echarts.init(dom);
-      chart.setOption({
-        backgroundColor:'transparent',
-        radar:{
-          indicator:[
-            {name:'生产合规',max:100},
-            {name:'经营规范',max:100},
-            {name:'药品追溯',max:100},
-            {name:'投诉下降率',max:100},
-            {name:'抽检合格',max:100}
-          ],
-          shape:'circle',
-          center:['50%','50%'],
-          radius:'65%',
-          name:{textStyle:{color:'#cbd5e6'}}
-        },
-        series:[{
-          type:'radar',
-          data:[{
-            value:[92,88,96,74,99],
-            name:'当前风险',
-            areaStyle:{ color:'rgba(59,130,246,0.2)' },
-            lineStyle:{ color:'#3b82f6', width:2 },
-            itemStyle:{ color:'#60a5fa' }
-          }]
-        }]
-      });
-      state.charts.radar = chart;
-    }
-
-    // 企业类型饼图 + 信用等级柱状图
-    function initPieCredit() {
-      // 企业类型饼图
-      const pie = echarts.init(document.getElementById('pieChart'));
-      pie.setOption({
-        tooltip:{trigger:'item'},
-        legend:{show:false},
-        series:[{
-          type:'pie',
-          radius:'60%',
-          data:[
-            {value:856,name:'药品生产'},
-            {value:623,name:'药品经营'},
-            {value:892,name:'零售药店'},
-            {value:412,name:'医疗机构'}
-          ],
-          label:{show:true,formatter:'{b}',color:'#cbd5e1'},
-          itemStyle:{borderRadius:8,borderColor:'#0f172a'}
-        }]
-      });
-
-      // 信用等级柱状图
-      const credit = echarts.init(document.getElementById('creditChart'));
-      credit.setOption({
-        grid:{top:15,left:20,right:5,containLabel:true},
-        xAxis:{ type:'category', data:['A级','B级','C级','D级'], axisLabel:{color:'#94a3b8'} },
-        yAxis:{show:false},
-        series:[{
-          type:'bar',
-          data:[2847,512,128,36],
-          itemStyle:{color:'#10b981',borderRadius:[6,6,0,0]},
-          label:{show:true,position:'top',color:'white'}
-        }]
-      });
-
-      state.charts.pie = pie;
-      state.charts.credit = credit;
-    }
-
-    // 高风险企业趋势迷你图
-    function initRiskMini() {
-      const line = echarts.init(document.getElementById('riskTrendMini'));
-      line.setOption({
-        grid:{top:25,left:35,right:10,containLabel:true},
-        xAxis:{ data:['1月','2月','3月','4月','5月','6月'], axisLabel:{fontSize:10,color:'#94a3b8'} },
-        yAxis:{show:false},
-        series:[{
-          type:'line',
-          data:[12,15,10,8,9,7],
-          smooth:true,
-          lineStyle:{color:'#f97316',width:2},
-          areaStyle:{opacity:0.2,color:'#f97316'},
-          symbol:'circle',
-          symbolSize:6,
-          label:{show:true,color:'#f97316'}
-        }]
-      });
-      state.charts.riskLine = line;
-    }
-
-    // 安全指数仪表盘绘制
-    function drawGauge(score=94.2) {
-      const canvas = document.getElementById('gaugeCanvas');
-      if(!canvas) return;
-
-      const ctx = canvas.getContext('2d');
-      const w=160, h=160;
-      canvas.width=w;
-      canvas.height=h;
-
-      const startAng = -Math.PI*0.8; // 起始角度
-      const endAng = Math.PI*0.8;   // 结束角度
-      const current = startAng + (score/100)*(endAng-startAng); // 当前角度
-
-      // 清空画布
-      ctx.clearRect(0,0,w,h);
-
-      // 绘制背景圆弧
-      ctx.beginPath();
-      ctx.arc(80,80,68,startAng,endAng);
-      ctx.strokeStyle='#1e293b';
-      ctx.lineWidth=14;
-      ctx.stroke();
-
-      // 绘制进度圆弧
-      ctx.beginPath();
-      ctx.arc(80,80,68,startAng,current);
-      ctx.strokeStyle='#22d3ee';
-      ctx.lineWidth=14;
-      ctx.stroke();
-    }
-
-    // 初始化仪表盘
-    drawGauge(94.2);
-
-    // 全局数据刷新
-    function refreshAll() {
-      // 更新KPI模拟数据
-      mockKPI.enterprises += Math.floor(Math.random()*6-2);
-      mockKPI.licenses += Math.floor(Math.random()*3-1);
-      mockKPI.inspections += Math.floor(Math.random()*20-8);
-      mockKPI.warnings = Math.max(18, mockKPI.warnings + Math.floor(Math.random()*6-3));
-      mockKPI.cases += Math.floor(Math.random()*2);
-      mockKPI.creditA = Math.max(2700, mockKPI.creditA + Math.floor(Math.random()*12-5));
-      mockKPI.traceability = Math.min(99.9, mockKPI.traceability + (Math.random()*0.4-0.2));
-      mockKPI.passRate = Math.min(99.8, mockKPI.passRate+(Math.random()*0.3-0.1));
-
-      // 更新DOM显示
-      updateKPI();
-
-      // 更新安全指数
-      let newScore = Math.min(99, state.safetyScore + (Math.random()*0.8-0.4));
-      state.safetyScore = newScore.toFixed(1);
-      document.getElementById('safetyScore').innerText = state.safetyScore;
-      drawGauge(state.safetyScore);
-
-      // 更新趋势图和雷达图
-      const activeType = document.querySelector('#trendTabGroup .tab-btn.active')?.dataset.type || 'check';
-      initTrendChart(activeType);
-      initRadarChart();
-    }
-
-    // ============ 事件绑定 ============
-    // 刷新按钮
-    document.getElementById('refreshBtn')?.addEventListener('click', refreshAll);
-
-    // 趋势图标签切换
-    document.querySelectorAll('#trendTabGroup .tab-btn').forEach(btn=>{
-      btn.addEventListener('click',function(){
-        document.querySelectorAll('#trendTabGroup .tab-btn').forEach(b=>b.classList.remove('active'));
-        this.classList.add('active');
-        initTrendChart(this.dataset.type);
-      });
-    });
-
-    // 地区选择切换
-    document.getElementById('regionSelect')?.addEventListener('change', refreshAll);
-
-    // 全屏切换
-    document.getElementById('fullscreenBtn')?.addEventListener('click',()=>{
-      const main = document.getElementById('mainContent');
-      const sidebar = document.getElementById('sidebar');
-
-      if(!document.fullscreenElement){
-        document.documentElement.requestFullscreen();
-        sidebar.style.display='none';
-        main.classList.add('fullscreen-mode');
-        main.style.marginLeft='0';
-      } else {
-        document.exitFullscreen();
-        sidebar.style.display='block';
-        main.classList.remove('fullscreen-mode');
-        main.style.marginLeft='256px';
-      }
-    });
-
-    // 全屏状态变化监听
-    document.addEventListener('fullscreenchange',()=>{
-      if(!document.fullscreenElement){
-        document.getElementById('sidebar').style.display='block';
-        document.getElementById('mainContent').classList.remove('fullscreen-mode');
-        document.getElementById('mainContent').style.marginLeft='256px';
-      }
-    });
-
-    // KPI卡片钻取事件
-    document.querySelectorAll('[data-drill]').forEach(el=>{
-      el.addEventListener('click',()=>{
-        alert(`跳转至${el.innerText.split('\n')[0]}详细分析`);
-      });
-    });
-
-    // 查看全部预警
-    document.getElementById('viewAllWarnings')?.addEventListener('click',(e)=>{
-      e.preventDefault();
-      alert('智能预警中心开发中，即将开放全量预警列表');
-    });
-
-    // 初始化所有图表
-    initMapChart();
-    initTrendChart('check');
-    initRadarChart();
-    initPieCredit();
-    initRiskMini();
-
-    // 自动刷新数据（45秒一次）
-    setInterval(refreshAll, 45000);
-  })();
-
-
-  const state = {
-    charts: { ningxiaMap: null },
-    geoJson: null
-  };
-
-  // 1. 从DataV获取宁夏回族自治区（640000）市级标准GeoJSON
-  async function getNingxiaGeoJson() {
-    const res = await fetch('https://geo.datav.aliyun.com/areas_v3/bound/640000_full.json');
-    return await res.json();
-  }
-
-  // 2. 初始化地图
-  async function initNingxiaMap(mapType = 'enterprise') {
-    const dom = document.getElementById('ningxiaMap');
-    if (!dom) return;
-    // 销毁旧实例防止重复渲染
-    if (state.charts.ningxiaMap) state.charts.ningxiaMap.dispose();
-    const chart = echarts.init(dom);
-
-    // 仅首次加载GeoJSON，避免重复请求
-    if (!state.geoJson) {
-      state.geoJson = await getNingxiaGeoJson();
-      echarts.registerMap('ningxia', state.geoJson);
-    }
-
-    // 业务模拟数据
-    const mapData = {
-      enterprise: [
-        { name: '银川市', value: 1256 },
-        { name: '石嘴山市', value: 423 },
-        { name: '吴忠市', value: 568 },
-        { name: '固原市', value: 489 },
-        { name: '中卫市', value: 420 }
-      ],
-      warning: [
-        { name: '银川市', value: 12 },
-        { name: '石嘴山市', value: 4 },
-        { name: '吴忠市', value: 8 },
-        { name: '固原市', value: 5 },
-        { name: '中卫市', value: 3 }
-      ],
-      inspection: [
-        { name: '银川市', value: 587 },
-        { name: '石嘴山市', value: 189 },
-        { name: '吴忠市', value: 245 },
-        { name: '固原市', value: 218 },
-        { name: '中卫市', value: 213 }
-      ]
-    };
-
-    // 色阶最大值自适应
-    const visualMax = mapType === 'enterprise' ? 1300 : mapType === 'warning' ? 15 : 600;
-    const tipName = mapType === 'enterprise' ? '监管企业数' : mapType === 'warning' ? '风险预警数' : '监督检查数';
-
-    const option = {
-      backgroundColor: 'transparent',
-      tooltip: {
-        trigger: 'item',
-        formatter: params => `
-                        <div style="font-size:12px;">
-                            <div style="font-weight:bold;color:#fff;">${params.name}</div>
-                            <div>${tipName}：${params.value}</div>
-                        </div>
-                    `,
-        backgroundColor: 'rgba(10, 20, 35, 0.85)',
-        borderColor: 'rgba(59, 130, 246, 0.5)',
-        padding: 8
-      },
-      visualMap: {
-        show: true,
-        min: 0,
-        max: visualMax,
-        left: 10,
-        bottom: '5%',
-        text: ['高', '低'],
-        textStyle: { color: '#cbd5e1' },
-        inRange: { color: ['#1e40af', '#3b82f6', '#60a5fa', '#93c5fd', '#bfdbfe'] },
-        backgroundColor: 'rgba(10, 20, 35, 0.5)'
-      },
-      geo: {
-        map: 'ningxia',
-        roam: true,
-        zoom: 1.1,
-        center: [106.2, 37.9],
-        label: { show: true, color: '#e2e8f0', fontSize: 12 },
-        itemStyle: {
-          areaColor: 'rgba(10, 20, 35, 0.6)',
-          borderColor: 'rgba(59, 130, 246, 0.5)',
-          borderWidth: 1.5
-        },
-        emphasis: {
-          itemStyle: { areaColor: 'rgba(59, 130, 246, 0.3)', borderColor: '#3b82f6', borderWidth: 2 },
-          label: { color: '#fff' }
-        }
-      },
-      series: [{ type: 'map', geoIndex: 0, data: mapData[mapType] }]
-    };
-
-    chart.setOption(option);
-    state.charts.ningxiaMap = chart;
-  }
-
-  // 切换按钮事件绑定
-  function bindTabEvent() {
-    document.querySelectorAll('#mapDataType .tab-btn').forEach(btn => {
-      btn.addEventListener('click', function () {
-        document.querySelectorAll('#mapDataType .tab-btn').forEach(b => b.classList.remove('active'));
-        this.classList.add('active');
-        initNingxiaMap(this.dataset.mapType);
+      document.querySelectorAll('.warning-item').forEach(item => {
+        item.addEventListener('click', () => this.openModal(item.dataset.id));
       })
-    })
+    },
+    // 高风险榜单
+    renderRiskRank() {
+      document.getElementById('highRiskTop').innerHTML = `
+        <div class="flex justify-between items-center py-1 px-2 rounded hover:bg-slate-800/30 transition">
+          <span class="text-amber-400 flex items-center"><i class="fas fa-exclamation-triangle mr-1"></i>宁夏康泰药业</span>
+          <span class="status-tag status-danger">风险指数 92</span>
+        </div>
+        <div class="flex justify-between items-center py-1 px-2 rounded hover:bg-slate-800/30 transition">
+          <span class="text-orange-300 flex items-center"><i class="fas fa-exclamation-triangle mr-1"></i>国大药房(宝湖店)</span>
+          <span class="status-tag status-pending">87</span>
+        </div>
+        <div class="flex justify-between items-center py-1 px-2 rounded hover:bg-slate-800/30 transition">
+          <span class="flex items-center"><i class="fas fa-exclamation-triangle mr-1 text-yellow-500"></i>同仁堂(银川店)</span>
+          <span class="status-tag status-processing">78</span>
+        </div>`
+    },
+    // 打开预警弹窗
+    openModal(id) {
+      const warn = this.state.mock.warnings.find(i => i.id === id);
+      if (!warn) return;
+      document.getElementById('warningModalContent').innerHTML = `
+        <div class="space-y-3">
+          <div class="font-bold text-base">${warn.title}</div>
+          <div class="grid grid-cols-2 gap-2 text-sm">
+            <div class="flex flex-col"><span class="text-slate-400 text-xs">预警等级</span><span class="status-tag ${utils.getStatusClass(warn.status)}">${warn.level}</span></div>
+            <div class="flex flex-col"><span class="text-slate-400 text-xs">数据来源</span><span>${warn.source}</span></div>
+            <div class="flex flex-col"><span class="text-slate-400 text-xs">所属地区</span><span>${warn.region}</span></div>
+            <div class="flex flex-col"><span class="text-slate-400 text-xs">预警时间</span><span>${warn.time}</span></div>
+            <div class="flex flex-col col-span-2"><span class="text-slate-400 text-xs">当前状态</span><span class="status-tag ${utils.getStatusClass(warn.status)}">${warn.status}</span></div>
+          </div>
+          <div class="text-sm bg-slate-800/40 p-3 rounded border-l-2 border-blue-400 mt-2">
+            <div class="text-slate-400 text-xs mb-1">处置建议</div>
+            建议立即联动属地监管部门，现场核查并上传处置记录。涉及温湿度/冷链问题需重点检查药品质量是否受影响。
+          </div>
+        </div>`;
+      const modal = document.getElementById('warningModal');
+      const modalBox = document.getElementById('modalContent');
+      modal.style.display = 'flex';
+      setTimeout(() => {
+        modalBox.classList.remove('scale-95', 'opacity-0');
+        modalBox.classList.add('scale-100', 'opacity-100');
+      }, 10);
+    },
+    // 关闭弹窗
+    closeModal() {
+      const modal = document.getElementById('warningModal');
+      const modalBox = document.getElementById('modalContent');
+      modalBox.classList.remove('scale-100', 'opacity-100');
+      modalBox.classList.add('scale-95', 'opacity-0');
+      setTimeout(() => modal.style.display = 'none', 300);
+    },
+    // 处置预警
+    handleWarning() {
+      const hoverItem = document.querySelector('.warning-item:hover');
+      if (!hoverItem) return;
+      const item = this.state.mock.warnings.find(w => w.id === hoverItem.dataset.id);
+      if (item) item.status = '处置中';
+      this.renderWarningList();
+      alert('✅ 处置工单已下发属地监管部门');
+      this.closeModal();
+    },
+    // 初始化全部图表
+    initAllCharts() {
+      this.initNingxiaMap('enterprise');
+      this.initTreeMap();
+      this.initTrendChart('check');
+      this.initRadarChart();
+      this.initPieCreditChart();
+      this.initRiskMiniLine();
+      this.drawGauge();
+    },
+    // 宁夏地图（已修复mapType注册时序）
+    initNingxiaMap(type = 'enterprise') {
+      const chart = utils.getChartInstance('ningxiaMap');
+      if (!chart) return;
+      const dataPool = {
+        enterprise: [
+          { name: '银川市', value: 1256 },
+          { name: '石嘴山市', value: 423 },
+          { name: '吴忠市', value: 568 },
+          { name: '固原市', value: 489 },
+          { name: '中卫市', value: 420 }
+        ],
+        warning: [
+          { name: '银川市', value: 14 },
+          { name: '石嘴山市', value: 5 },
+          { name: '吴忠市', value: 6 },
+          { name: '固原市', value: 3 },
+          { name: '中卫市', value: 4 }
+        ],
+        inspection: [
+          { name: '银川市', value: 586 },
+          { name: '石嘴山市', value: 210 },
+          { name: '吴忠市', value: 276 },
+          { name: '固原市', value: 232 },
+          { name: '中卫市', value: 220 }
+        ]
+      }
+      const data = dataPool[type];
+      chart.setOption({
+        backgroundColor: 'transparent',
+        tooltip: {
+          trigger: 'item',
+          formatter: '{b}<br/>数值：{c}',
+          backgroundColor: 'rgba(10,20,35,0.85)',
+          borderColor: 'rgba(59,130,246,0.5)',
+          textStyle: { color: '#e2e8f0' }
+        },
+        visualMap: {
+          min: 0,
+          max: Math.max(...data.map(d => d.value)),
+          left: 10,
+          bottom: 10,
+          text: ['高', '低'],
+          textStyle: { color: '#fff' },
+          inRange: { color: ['#0f172a', '#0ea5e9', '#3b82f6'] }
+        },
+        series: [{
+          type: 'map',
+          mapType: '宁夏',
+          roam: true,
+          zoom: 1.2,
+          label: { show: true, color: '#fff', fontSize: 11 },
+          itemStyle: { borderColor: 'rgba(59,130,246,0.4)', borderWidth: 1 },
+          emphasis: { itemStyle: { shadowBlur: 12, shadowColor: 'rgba(59,130,246,0.6)' } },
+          data: data
+        }]
+      })
+      utils.hideLoader('ningxiaMap');
+    },
+    // 矩形树图
+    initTreeMap() {
+      const chart = utils.getChartInstance('mapChart');
+      chart.setOption({
+        backgroundColor: 'transparent',
+        tooltip: { trigger: 'item', formatter: '{b}<br/>企业数:{c}', backgroundColor: 'rgba(10,20,35,0.85)' },
+        series: [{
+          type: 'treemap',
+          data: [
+            { name: '银川市', value: 1256, itemStyle: { color: '#3b82f6' } },
+            { name: '石嘴山市', value: 423, itemStyle: { color: '#0ea5e9' } },
+            { name: '吴忠市', value: 568, itemStyle: { color: '#06b6d4' } },
+            { name: '固原市', value: 489, itemStyle: { color: '#22d3ee' } },
+            { name: '中卫市', value: 420, itemStyle: { color: '#7dd3fc' } }
+          ],
+          label: { show: true, formatter: '{b}\n{c}家', color: '#fff' },
+          breadcrumb: { show: false },
+          itemStyle: { borderColor: '#1e293b', borderWidth: 2 }
+        }]
+      })
+      utils.hideLoader('mapChart');
+    },
+    // 趋势折线图
+    initTrendChart(type = 'check') {
+      const chart = utils.getChartInstance('trendChart');
+      const dates = [];
+      for (let i = 29; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        dates.push(`${d.getMonth() + 1}/${d.getDate()}`);
+      }
+      let arr1 = [], arr2 = [];
+      const rnd = (min, max) => Math.floor(Math.random() * (max - min + 1) + min);
+      if (type === 'check') {
+        arr1 = Array(30).fill().map(() => rnd(35, 80));
+        arr2 = Array(30).fill().map(() => rnd(20, 50));
+      } else if (type === 'license') {
+        arr1 = Array(30).fill().map(() => rnd(4, 16));
+        arr2 = Array(30).fill().map(() => rnd(2, 10));
+      } else {
+        arr1 = Array(30).fill().map(() => rnd(1, 7));
+        arr2 = Array(30).fill().map(() => rnd(0, 5));
+      }
+      chart.setOption({
+        backgroundColor: 'transparent',
+        tooltip: { trigger: 'axis', backgroundColor: 'rgba(10,20,35,0.85)' },
+        legend: { data: ['当期数值', '对比基数'], textStyle: { color: '#94a3b8' }, bottom: 0 },
+        grid: { containLabel: true, top: 30, left: 40, right: 20 },
+        xAxis: { data: dates, axisLine: { lineStyle: { color: 'rgba(59,130,246,0.3)' } }, axisLabel: { color: '#94a3b8', fontSize: 10 } },
+        yAxis: { splitLine: { lineStyle: { color: 'rgba(59,130,246,0.1)' } }, axisLine: { lineStyle: { color: 'rgba(59,130,246,0.3)' } }, axisLabel: { color: '#94a3b8' } },
+        series: [
+          { name: '当期数值', type: 'line', smooth: true, data: arr1, lineStyle: { color: '#3b82f6', width: 2 }, areaStyle: { color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{ offset: 0, color: 'rgba(59,130,246,0.4)' }, { offset: 1, color: 'rgba(59,130,246,0)' }]) } },
+          { name: '对比基数', type: 'line', data: arr2, lineStyle: { color: '#10b981', width: 2, type: 'dashed' } }
+        ]
+      })
+      utils.hideLoader('trendChart');
+    },
+    // 雷达图
+    initRadarChart() {
+      const chart = utils.getChartInstance('radarChart');
+      chart.setOption({
+        backgroundColor: 'transparent',
+        radar: {
+          indicator: [{ name: '生产合规', max: 100 }, { name: '经营规范', max: 100 }, { name: '药品追溯', max: 100 }, { name: '投诉下降率', max: 100 }, { name: '抽检合格', max: 100 }],
+          shape: 'circle',
+          splitLine: { lineStyle: { color: 'rgba(59,130,246,0.2)' } },
+          splitArea: { areaStyle: { color: ['rgba(59,130,246,0.05)', 'transparent'] } }
+        },
+        series: [{ type: 'radar', data: [{ value: [92, 88, 96, 74, 99], name: '当前风险', areaStyle: { color: 'rgba(59,130,246,0.2)' }, lineStyle: { color: '#3b82f6' } }] }]
+      })
+      utils.hideLoader('radarChart');
+    },
+    // 饼图+信用柱状
+    initPieCreditChart() {
+      const pie = utils.getChartInstance('pieChart');
+      pie.setOption({
+        backgroundColor: 'transparent',
+        tooltip: { trigger: 'item', formatter: '{b}: {c}家 ({d}%)' },
+        legend: { bottom: 0, textStyle: { color: '#94a3b8', fontSize: 10 } },
+        series: [{ type: 'pie', radius: ['40%', '70%'], data: [{ value: 856, name: '药品生产' }, { value: 623, name: '药品经营' }, { value: 892, name: '零售药店' }, { value: 412, name: '医疗机构' }], itemStyle: { borderRadius: 8 } }]
+      })
+      utils.hideLoader('pieChart');
+      const bar = utils.getChartInstance('creditChart');
+      bar.setOption({
+        backgroundColor: 'transparent',
+        grid: { top: 15, left: 20, right: 5, containLabel: true },
+        xAxis: { data: ['A级', 'B级', 'C级', 'D级'], axisLine: { lineStyle: { color: 'rgba(59,130,246,0.3)' } } },
+        yAxis: { show: false },
+        series: [{ type: 'bar', data: [2847, 512, 128, 36], itemStyle: { color: params => ['#10b981', '#eab308', '#f97316', '#ef4444'][params.dataIndex], borderRadius: [6, 6, 0, 0] }, label: { show: true, position: 'top', color: '#fff', fontSize: 10 } }]
+      })
+      utils.hideLoader('creditChart');
+    },
+    // 高风险迷你折线
+    initRiskMiniLine() {
+      const chart = utils.getChartInstance('riskTrendMini');
+      const data = [12, 15, 10, 8, 9, 7];
+      chart.setOption({
+        backgroundColor: 'transparent',
+        grid: { top: 25, left: 35, right: 10, containLabel: true },
+        xAxis: { data: ['1月', '2月', '3月', '4月', '5月', '6月'], axisLabel: { fontSize: 10, color: '#94a3b8' } },
+        yAxis: { show: false },
+        series: [{ type: 'line', data: data, smooth: true, lineStyle: { color: '#f97316', width: 2 }, areaStyle: { color: 'rgba(249,115,22,0.2)' }, symbolSize: 6 }]
+      })
+      utils.hideLoader('riskTrendMini');
+    },
+    // 安全指数仪表盘
+    drawGauge() {
+      const canvas = document.getElementById('gaugeCanvas');
+      const ctx = canvas.getContext('2d');
+      const score = this.state.mock.safetyScore;
+      const cx = 80, cy = 80, r = 68;
+      const startRad = -Math.PI * 0.8;
+      const endRad = Math.PI * 0.8;
+      const currRad = startRad + (score / 100) * (endRad - startRad);
+      ctx.clearRect(0, 0, 160, 160);
+      // 背景环
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, startRad, endRad);
+      ctx.strokeStyle = '#1e293b';
+      ctx.lineWidth = 14;
+      ctx.stroke();
+      // 渐变进度环
+      const grad = ctx.createLinearGradient(0, 0, 160, 0);
+      grad.addColorStop(0, '#22d3ee');
+      grad.addColorStop(1, '#3b82f6');
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, startRad, currRad);
+      ctx.strokeStyle = grad;
+      ctx.lineWidth = 14;
+      ctx.stroke();
+      // 中心圆点
+      ctx.beginPath();
+      ctx.arc(cx, cy, 8, 0, Math.PI * 2);
+      ctx.fillStyle = '#0f172a';
+      ctx.fill();
+      ctx.strokeStyle = grad;
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    },
+    // 全局刷新数据
+    refreshAllData() {
+      const btn = document.getElementById('refreshBtn');
+      btn.innerHTML = '<i class="fas fa-sync-alt fa-spin"></i>';
+      const k = this.state.mock.kpi;
+      Object.keys(k).forEach(key => {
+        if (['traceability', 'passRate'].includes(key)) {
+          k[key] = Number((k[key] + (Math.random() * 0.4 - 0.2)).toFixed(1));
+          k[key] = Math.min(99.9, Math.max(90, k[key]));
+        } else {
+          k[key] += Math.floor(Math.random() * 10 - 2);
+          k[key] = Math.max(10, k[key]);
+        }
+      })
+      this.renderKPI();
+      const newScore = Number((this.state.mock.safetyScore + (Math.random() * 0.8 - 0.4)).toFixed(1));
+      this.state.mock.safetyScore = Math.min(99, Math.max(85, newScore));
+      document.getElementById('safetyScore').innerText = this.state.mock.safetyScore;
+      this.drawGauge();
+      const activeTrend = document.querySelector('#trendTabGroup .tab-btn.active')?.dataset.type || 'check';
+      this.initTrendChart(activeTrend);
+      const activeMap = document.querySelector('#mapDataType .tab-btn.active')?.dataset.mapType || 'enterprise';
+      this.initNingxiaMap(activeMap);
+      setTimeout(() => btn.innerHTML = '<i class="fas fa-sync-alt"></i>', 800);
+    }
   }
-
-  // 窗口自适应
-  window.addEventListener('resize', () => state.charts.ningxiaMap?.resize());
-
-  // 页面初始化
-  window.onload = () => {
-    initNingxiaMap('enterprise');
-    bindTabEvent();
-  }
-
-  fetch('./ningxia.json').then(res=>res.json()).then(json=>{
-    state.geoJson=json;echarts.registerMap('ningxia',json);initNingxiaMap()
-  })
+  // 启动项目
+  dashboard.init();
 </script>
 </body>
 </html>
